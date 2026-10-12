@@ -1,0 +1,38 @@
+{
+  "clip_id": "text_01_combined_egregious",
+  "source_text_id": 1,
+  "speaker_id": "librivox_reader_01",
+  "speaker_source": "librivox",
+  "flaw_type": "combined",
+  "severity_tier": "egregious",
+  "split": "calibration",
+  "flaw_regions": [
+    {
+      "start_s": 0.0,
+      "end_s": 82.228,
+      "mechanism": "time_stretch_0.65x"
+    },
+    {
+      "start_s": 0.0,
+      "end_s": 82.228,
+      "mechanism": "f0_variance_compress_0.1"
+    },
+    {
+      "start_s": 13.116,
+      "end_s": 14.178,
+      "mechanism": "silence_splice_1.06s_at_13.116s"
+    },
+    {
+      "start_s": 18.665,
+      "end_s": 20.068,
+      "mechanism": "silence_splice_1.40s_at_18.665s"
+    },
+    {
+      "start_s": 27.468,
+      "end_s": 29.359,
+      "mechanism": "silence_splice_1.89s_at_27.468s"
+    }
+  ],
+  "transcript_path": "dataset/transcripts/text_01.txt",
+  "audio_path": "dataset/audio/text_01_combined_egregious.wav"
+}

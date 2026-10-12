@@ -1,0 +1,18 @@
+{
+  "clip_id": "text_06_nearperfect",
+  "source_text_id": 6,
+  "speaker_id": "librivox_reader_06",
+  "speaker_source": "librivox",
+  "flaw_type": "pacing",
+  "severity_tier": "near_perfect",
+  "split": "heldout",
+  "flaw_regions": [
+    {
+      "start_s": 0.0,
+      "end_s": 53.343,
+      "mechanism": "time_stretch_1.15x"
+    }
+  ],
+  "transcript_path": "dataset/transcripts/text_06.txt",
+  "audio_path": "dataset/audio/text_06_nearperfect.wav"
+}

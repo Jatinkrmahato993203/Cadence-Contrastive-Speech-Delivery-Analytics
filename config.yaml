@@ -1,0 +1,91 @@
+whisperx:
+  small_model: small
+  medium_model: medium
+  conf_threshold: 0.6
+  uncertain_threshold: 0.45
+normalization:
+  lufs_target: -23.0
+  bootstrap_words: 10
+sigma_group_librivox:
+  pitch: 3.1532675198742397
+  energy: 18.193103450938473
+  rate: 0.3604051753542105
+  clarity_mfcc: 0.034960925280948546
+  clarity_hnr: 18.25041958297955
+sigma_group_team:
+  pitch: 2.1033197125153706
+  energy: 19.386204134727755
+  rate: 0.37797833193961056
+  clarity_mfcc: 0.030375920577165
+  clarity_hnr: 19.462602649598374
+sigma_pooled_all:
+  pitch: 3.0420121640278346
+  energy: 18.38252576944543
+  rate: 0.3632202808198141
+  clarity_mfcc: 0.03430501628586358
+  clarity_hnr: 18.46745336653558
+grounding:
+  deviance_multiplier: 1.5
+  min_consecutive_deviant: 2
+  merge_gap_ms: 200
+  pause_gap_threshold_s: 0.15
+flaw_params:
+  pacing:
+    near_perfect:
+    - 0.85
+    - 1.15
+    moderate:
+    - 0.75
+    - 1.3
+    egregious:
+    - 0.65
+    - 1.5
+  pitch:
+    near_perfect: 0.7
+    moderate: 0.4
+    egregious: 0.1
+  pause:
+    near_perfect:
+      count: 1
+      duration_range:
+      - 0.2
+      - 0.3
+    moderate:
+      count: 1
+      duration_range:
+      - 0.4
+      - 0.8
+    egregious:
+      count: 3
+      duration_range:
+      - 1.0
+      - 2.0
+  volume:
+    near_perfect:
+      db: -6
+      fraction: 0.1
+    moderate:
+      db: -10
+      fraction: 0.2
+    egregious:
+      db: -18
+      fraction: 0.3
+  clarity:
+    near_perfect:
+      crossfade_ms:
+      - 15
+      - 25
+      smoothing_bins: 3
+      transient_db: -2
+    moderate:
+      crossfade_ms:
+      - 40
+      - 60
+      smoothing_bins: 7
+      transient_db: -4
+    egregious:
+      crossfade_ms:
+      - 70
+      - 90
+      smoothing_bins: 15
+      transient_db: -8

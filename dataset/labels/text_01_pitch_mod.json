@@ -1,0 +1,18 @@
+{
+  "clip_id": "text_01_pitch_mod",
+  "source_text_id": 1,
+  "speaker_id": "librivox_reader_01",
+  "speaker_source": "librivox",
+  "flaw_type": "pitch",
+  "severity_tier": "moderate",
+  "split": "calibration",
+  "flaw_regions": [
+    {
+      "start_s": 0.0,
+      "end_s": 53.448,
+      "mechanism": "f0_variance_compress_0.4"
+    }
+  ],
+  "transcript_path": "dataset/transcripts/text_01.txt",
+  "audio_path": "dataset/audio/text_01_pitch_mod.wav"
+}

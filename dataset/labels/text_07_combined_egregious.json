@@ -1,0 +1,38 @@
+{
+  "clip_id": "text_07_combined_egregious",
+  "source_text_id": 7,
+  "speaker_id": "team_member_01",
+  "speaker_source": "team",
+  "flaw_type": "combined",
+  "severity_tier": "egregious",
+  "split": "calibration",
+  "flaw_regions": [
+    {
+      "start_s": 0.0,
+      "end_s": 94.782,
+      "mechanism": "time_stretch_0.65x"
+    },
+    {
+      "start_s": 0.0,
+      "end_s": 94.782,
+      "mechanism": "f0_variance_compress_0.1"
+    },
+    {
+      "start_s": 24.997,
+      "end_s": 26.319,
+      "mechanism": "silence_splice_1.32s_at_24.997s"
+    },
+    {
+      "start_s": 25.706,
+      "end_s": 27.029,
+      "mechanism": "silence_splice_1.32s_at_25.706s"
+    },
+    {
+      "start_s": 70.019,
+      "end_s": 71.202,
+      "mechanism": "silence_splice_1.18s_at_70.019s"
+    }
+  ],
+  "transcript_path": "dataset/transcripts/text_07.txt",
+  "audio_path": "dataset/audio/text_07_combined_egregious.wav"
+}

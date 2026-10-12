@@ -1,0 +1,18 @@
+{
+  "clip_id": "text_02_clarity_mod",
+  "source_text_id": 2,
+  "speaker_id": "librivox_reader_02",
+  "speaker_source": "librivox",
+  "flaw_type": "clarity",
+  "severity_tier": "moderate",
+  "split": "calibration",
+  "flaw_regions": [
+    {
+      "start_s": 0.0,
+      "end_s": 71.592,
+      "mechanism": "clarity_xfade41ms_smooth7bin_transient-4dB"
+    }
+  ],
+  "transcript_path": "dataset/transcripts/text_02.txt",
+  "audio_path": "dataset/audio/text_02_clarity_mod.wav"
+}

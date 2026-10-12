@@ -1,0 +1,18 @@
+{
+  "clip_id": "text_08_volume_mod",
+  "source_text_id": 8,
+  "speaker_id": "team_member_02",
+  "speaker_source": "team",
+  "flaw_type": "volume",
+  "severity_tier": "moderate",
+  "split": "heldout",
+  "flaw_regions": [
+    {
+      "start_s": 7.646,
+      "end_s": 22.939,
+      "mechanism": "gain_-10dB_over_20pct"
+    }
+  ],
+  "transcript_path": "dataset/transcripts/text_08.txt",
+  "audio_path": "dataset/audio/text_08_volume_mod.wav"
+}

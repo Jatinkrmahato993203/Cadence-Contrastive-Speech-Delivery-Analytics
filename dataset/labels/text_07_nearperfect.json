@@ -1,0 +1,18 @@
+{
+  "clip_id": "text_07_nearperfect",
+  "source_text_id": 7,
+  "speaker_id": "team_member_01",
+  "speaker_source": "team",
+  "flaw_type": "pacing",
+  "severity_tier": "near_perfect",
+  "split": "calibration",
+  "flaw_regions": [
+    {
+      "start_s": 0.0,
+      "end_s": 53.572,
+      "mechanism": "time_stretch_1.15x"
+    }
+  ],
+  "transcript_path": "dataset/transcripts/text_07.txt",
+  "audio_path": "dataset/audio/text_07_nearperfect.wav"
+}

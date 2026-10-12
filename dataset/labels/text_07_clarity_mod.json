@@ -1,0 +1,18 @@
+{
+  "clip_id": "text_07_clarity_mod",
+  "source_text_id": 7,
+  "speaker_id": "team_member_01",
+  "speaker_source": "team",
+  "flaw_type": "clarity",
+  "severity_tier": "moderate",
+  "split": "calibration",
+  "flaw_regions": [
+    {
+      "start_s": 0.0,
+      "end_s": 61.608,
+      "mechanism": "clarity_xfade41ms_smooth7bin_transient-4dB"
+    }
+  ],
+  "transcript_path": "dataset/transcripts/text_07.txt",
+  "audio_path": "dataset/audio/text_07_clarity_mod.wav"
+}

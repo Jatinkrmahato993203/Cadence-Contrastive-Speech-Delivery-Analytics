@@ -1,0 +1,58 @@
+{
+  "text_01": {
+    "speaker_id": "librivox_reader_01_guy",
+    "speaker_source": "librivox",
+    "split": "calibration",
+    "text_id": 1,
+    "title": "Gettysburg Address"
+  },
+  "text_02": {
+    "speaker_id": "librivox_reader_02_chris",
+    "speaker_source": "librivox",
+    "split": "calibration",
+    "text_id": 2,
+    "title": "Give Me Liberty"
+  },
+  "text_03": {
+    "speaker_id": "librivox_reader_03_eric",
+    "speaker_source": "librivox",
+    "split": "calibration",
+    "text_id": 3,
+    "title": "What to the Slave Is Fourth of July"
+  },
+  "text_04": {
+    "speaker_id": "librivox_reader_04_aria",
+    "speaker_source": "librivox",
+    "split": "calibration",
+    "text_id": 4,
+    "title": "Is It a Crime to Vote"
+  },
+  "text_05": {
+    "speaker_id": "librivox_reader_05_roger",
+    "speaker_source": "librivox",
+    "split": "calibration",
+    "text_id": 5,
+    "title": "Farewell Address"
+  },
+  "text_06": {
+    "speaker_id": "librivox_reader_06_jenny",
+    "speaker_source": "librivox",
+    "split": "heldout",
+    "text_id": 6,
+    "title": "Ain't I a Woman"
+  },
+  "text_07": {
+    "speaker_id": "team_member_01_steffan",
+    "speaker_source": "team",
+    "split": "calibration",
+    "text_id": 7,
+    "title": "Team Original Passage 1"
+  },
+  "text_08": {
+    "speaker_id": "team_member_02_ana",
+    "speaker_source": "team",
+    "split": "heldout",
+    "text_id": 8,
+    "title": "Team Original Passage 2"
+  }
+}
