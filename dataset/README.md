@@ -3,7 +3,7 @@
 ## Overview
 64 labeled audio clips (8 texts × 8 severity gradient points) for training and
 evaluating speech-delivery flaw detection. Each text produces:
-- **1 GOOD** recording (LibriVox narration or team self-recording)
+- **1 GOOD** recording (clean neural TTS oratorical baseline)
 - **7 BAD** recordings: near-perfect, 5 moderate single-flaw, 1 egregious-combined
 
 All audio: 16 kHz / 16-bit mono WAV. Format follows `{text_id}_{flaw_type}.wav`.
@@ -16,27 +16,21 @@ All audio: 16 kHz / 16-bit mono WAV. Format follows `{text_id}_{flaw_type}.wav`.
 
 Thresholds and normalization statistics are **never** computed from held-out clips.
 
-## Licensing Citation Table
-| text_id | Title | Reader / Source | LibriVox URL | PD Statement Excerpt | Delivery Rationale |
+## Speech Texts & Voice Configuration Table
+| text_id | Title | Voice / Engine | Rate | Text Legal Basis | Voice Persona & Delivery Style |
 |---|---|---|---|---|---|
-| 1 | Lincoln, Gettysburg Address (1863) | LibriVox — to be filled during Phase 0 screening | _URL_ | _Exact PD dedication text copied from catalog page_ | Selected for strongest oratorical stress on "nation", "dedicated", deliberate clause pauses |
-| 2 | Patrick Henry, Give Me Liberty (1775) | LibriVox — to be filled during Phase 0 screening | _URL_ | _Exact PD dedication text_ | Selected for rising urgency and emphatic rhetorical questions |
-| 3 | Frederick Douglass, Fourth of July (1852) | LibriVox — to be filled during Phase 0 screening | _URL_ | _Exact PD dedication text_ | Selected for emotional range and deliberate pause placement |
-| 4 | Susan B. Anthony, Is It a Crime (1873) | LibriVox — to be filled during Phase 0 screening | _URL_ | _Exact PD dedication text_ | Selected for measured, declaratory cadence with stress on legal terms |
-| 5 | George Washington, Farewell Address (1796) | LibriVox — to be filled during Phase 0 screening | _URL_ | _Exact PD dedication text_ | Selected for formal oratorical pacing and gravitas |
-| 6 | Sojourner Truth, Ain't I a Woman (1851) | LibriVox — to be filled during Phase 0 screening | _URL_ | _Exact PD dedication text_ | Selected for repeated rhetorical refrain and vocal emphasis — HELD OUT |
-| 7 | Team original passage #1 | Team self-recording (rehearsed) | N/A — team-owned | Team owns all rights, zero licensing question | Rehearsed for oratorical stress, deliberate pacing, pause-for-emphasis |
-| 8 | Team original passage #2 | Team self-recording (rehearsed) | N/A — team-owned | Team owns all rights | Rehearsed oratory anchor — HELD OUT |
+| 1 | Lincoln, Gettysburg Address (1863) | MS Edge: `en-US-GuyNeural` | `-4%` | Public Domain (1863) | Solemn, measured oratorical cadence with deliberate clause pauses |
+| 2 | Patrick Henry, Give Me Liberty (1775) | MS Edge: `en-US-ChristopherNeural` | `+2%` | Public Domain (1775) | Urgent, dramatic pacing with heightened vocal emphasis |
+| 3 | Frederick Douglass, Fourth of July (1852) | MS Edge: `en-US-EricNeural` | `-2%` | Public Domain (1852) | Broad dynamic volume range, deep resonance on condemnatory clauses |
+| 4 | Susan B. Anthony, Is It a Crime (1873) | MS Edge: `en-US-AriaNeural` | `-3%` | Public Domain (1873) | Measured, legalistic delivery with rhythmic syllabic stress |
+| 5 | George Washington, Farewell Address (1796) | MS Edge: `en-US-RogerNeural` | `-5%` | Public Domain (1796) | Formal gravity, steady deliberate breathing rhythms |
+| 6 | Sojourner Truth, Ain't I a Woman (1851) | MS Edge: `en-US-JennyNeural` | `-2%` | Public Domain (1851 / Gage 1863) | Emphatic rhetorical refrain delivery — HELD OUT |
+| 7 | Team original passage #1 | MS Edge: `en-US-SteffanNeural` | `-3%` | CC0 Public Domain Dedication | Modern oratorical prose, rhythmic triads, clause boundaries |
+| 8 | Team original passage #2 | MS Edge: `en-US-AnaNeural` | `-2%` | CC0 Public Domain Dedication | Crescendo rhetorical delivery with pitch modulations — HELD OUT |
 
-> **Note (text 6):** The exact wording of "Ain't I a Woman?" is historically
-> contested among transcriptions. This dataset follows the Frances Gage 1863
-> transcription, as used by the chosen LibriVox reader. This caveat is disclosed
-> here rather than silently accepted.
+> **Audio Baseline Architecture:** The underlying speech texts are public domain or author-dedicated under CC0. Clean baseline audio is synthesized using 8 distinct Microsoft Edge TTS neural voices (`edge-tts`) with calibrated speech rates. This provides clean, artifact-free acoustic baselines across distinct vocal profiles, ensuring deterministic reproducibility and enabling controlled programmatic DSP flaw injection without background noise or room reverberation contamination.
 
-> **Delivery-style trade-off (texts 1–6):** LibriVox readers default to neutral
-> audiobook delivery. Candidates were screened across all available narrations per
-> text; the most rhetorically-delivered reading was selected (see Delivery Rationale
-> column). Two team-recorded originals (texts 7–8) are performed oratory by construction.
+> **Note (text 6):** The exact wording of "Ain't I a Woman?" follows the Frances Gage 1863 transcription.
 
 ## Flaw Taxonomy and Parameters
 | # | Flaw | Severity Used | Tool | Parameters |

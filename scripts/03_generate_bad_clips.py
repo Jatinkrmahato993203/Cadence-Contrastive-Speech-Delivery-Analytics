@@ -7,15 +7,15 @@ All 7 flaw mechanisms are parameterized. The MODERATE tier is used for flaw
 types 1-5 (per §1.3 of the technical approach). Rows 6 and 7 use EGREGIOUS
 and NEAR-PERFECT respectively.
 
-DEPENDENCY: MFA must have been run on all 8 GOOD clips FIRST (via 02_run_mfa.sh).
-Pause (row 3) and Clarity (row 5) consume MFA word/phone timestamps directly.
+DEPENDENCY: TextGrids must exist for all 8 GOOD clips (via generate_dataset.py).
+Pause (row 3) and Clarity (row 5) consume word/phone interval boundaries directly.
 
 Usage:
     python scripts/03_generate_bad_clips.py [--text TEXT_ID] [--flaw FLAW_TYPE]
 
 All outputs committed at 16 kHz / 16-bit mono WAV. Flaw region boundaries
-are computed analytically from the known transform (no re-running MFA on
-degraded audio) and written to dataset/labels/{clip_id}.json.
+are computed analytically from the known transform and written to
+dataset/labels/{clip_id}.json.
 """
 
 from __future__ import annotations

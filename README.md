@@ -11,13 +11,14 @@ Cadence is an automated speech delivery analytics system that detects, temporall
 ## Key Features
 
 1. **64-Clip Contrastive Benchmark (30% Evaluation Weight):**
-   - 8 authentic speech passages (6 public-domain historical orations + 2 rehearsed team orations).
+   - 8 speech passages (6 historical public-domain orations + 2 team-authored original orations).
+   - 8 distinct Microsoft Edge TTS neural voices with rate calibration for clean, reproducible acoustic baselines without recording noise or room coloration.
    - 8-point severity gradient per text: 1 Clean Baseline, 1 Near-Perfect Variant, 5 Single-Flaw Moderate Perturbations, and 1 Egregious Combined Anchor.
    - Explicit partition: **Calibration Set** (6 texts / 48 clips) and **Held-Out Test Set** (2 texts / 16 clips: Text 6 Sojourner Truth & Text 8 Team Original).
-   - Verified public-domain dedication per recording.
+   - Full legal and provenance transparency (public-domain / CC0 texts, neural voice synthesis).
 
-2. **Dual Forced Alignment Toolchains (20% Evaluation Weight):**
-   - **Offline (Build-Time & CI):** Montreal Forced Aligner (MFA) with `english_us_arpa` acoustic models for exact phonetic TextGrid boundaries.
+2. **Dual Alignment Architecture (20% Evaluation Weight):**
+   - **Offline (Build-Time & CI):** Programmatic Praat TextGrid interval generation providing deterministic temporal anchors for DSP flaw injection, validated via automated CI sanity checks (`verify_mfa.py`).
    - **Online (Deployed Dashboard):** WhisperX wav2vec2-based forced aligner featuring confidence scoring, whole-clip medium model retries, and explicit uncertainty hatching.
 
 3. **Speaker-Agnostic Feature Normalization (20% Evaluation Weight):**
@@ -156,20 +157,20 @@ python scripts/05_evaluate_heldout.py
 
 ---
 
-## Licensing & Public Domain Citations
-
-All speech texts and recordings utilized in Cadence are strictly in the **Public Domain**:
-
-| Text ID | Title | Speaker / Reader | Source Catalog | Licensing Basis |
-|:---:|:---|:---|:---|:---|
-| 01 | Gettysburg Address (1863) | John Greenman | LibriVox | Dedicated to Public Domain |
-| 02 | Give Me Liberty (1775) | Bob Neufeld | LibriVox | Dedicated to Public Domain |
-| 03 | Fourth of July (1852) | James K. White | LibriVox | Dedicated to Public Domain |
-| 04 | Is It a Crime to Vote (1873) | Elizabeth Klett | LibriVox | Dedicated to Public Domain |
-| 05 | Farewell Address (1796) | Alan Drake | LibriVox | Dedicated to Public Domain |
-| 06 | Ain't I a Woman (1851) [Held-Out] | Andrea Fiore | LibriVox | Dedicated to Public Domain |
-| 07 | Team Oratory 1: Edge of Silence | Team Member 1 | Team Master | CC0 Public Domain Dedication |
-| 08 | Team Oratory 2: Arch of Horizon [Held-Out] | Team Member 2 | Team Master | CC0 Public Domain Dedication |
+## Speech Texts & Audio Synthesis Provenance
+ 
+ All underlying speech texts utilized in Cadence are in the **Public Domain** or dedicated under **CC0**:
+ 
+ | Text ID | Title | Voice Persona / Engine | Rate | Text Legal Basis | Audio Synthesis Note |
+ |:---:|:---|:---|:---:|:---|:---|
+ | 01 | Gettysburg Address (1863) | MS Edge: `en-US-GuyNeural` | `-4%` | Public Domain (1863) | Research/Benchmark Synthesis |
+ | 02 | Give Me Liberty (1775) | MS Edge: `en-US-ChristopherNeural` | `+2%` | Public Domain (1775) | Research/Benchmark Synthesis |
+ | 03 | Fourth of July (1852) | MS Edge: `en-US-EricNeural` | `-2%` | Public Domain (1852) | Research/Benchmark Synthesis |
+ | 04 | Is It a Crime to Vote (1873) | MS Edge: `en-US-AriaNeural` | `-3%` | Public Domain (1873) | Research/Benchmark Synthesis |
+ | 05 | Farewell Address (1796) | MS Edge: `en-US-RogerNeural` | `-5%` | Public Domain (1796) | Research/Benchmark Synthesis |
+ | 06 | Ain't I a Woman (1851) [Held-Out] | MS Edge: `en-US-JennyNeural` | `-2%` | Public Domain (1851 / Gage 1863) | Research/Benchmark Synthesis |
+ | 07 | Team Oratory 1: Edge of Silence | MS Edge: `en-US-SteffanNeural` | `-3%` | CC0 Public Domain Dedication | Research/Benchmark Synthesis |
+ | 08 | Team Oratory 2: Arch of Horizon [Held-Out] | MS Edge: `en-US-AnaNeural` | `-2%` | CC0 Public Domain Dedication | Research/Benchmark Synthesis |
 
 ---
 

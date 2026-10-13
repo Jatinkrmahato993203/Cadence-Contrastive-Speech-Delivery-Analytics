@@ -1,14 +1,14 @@
 """
 scripts/verify_mfa.py
 ---------------------
-Automated MFA alignment sanity checks (§2.1 reproducibility requirement).
+Automated TextGrid alignment sanity checks (§2.1 reproducibility requirement).
 
 Per clip checks:
   (a) Total aligned span within 2% of true audio duration
   (b) No negative-duration or overlapping word intervals
   (c) Aligned word count == transcript word count
 
-Run automatically from scripts/02_run_mfa.sh and in GitHub Actions CI.
+Used to validate baseline TextGrid intervals in CI and dataset generation.
 """
 
 import re
@@ -109,7 +109,7 @@ def check_clip(text_id_str: str) -> list[str]:
 
 
 def main():
-    print("Running MFA alignment sanity checks...")
+    print("Running TextGrid alignment sanity checks...")
     all_errors = []
     for i in range(1, 9):
         text_id_str = f"text_{i:02d}"
@@ -125,7 +125,7 @@ def main():
         print(f"\n{len(all_errors)} check(s) failed. Inspect the TextGrid viewer before proceeding.")
         sys.exit(1)
     else:
-        print("\nAll MFA sanity checks passed.")
+        print("\nAll TextGrid alignment sanity checks passed.")
 
 
 if __name__ == "__main__":

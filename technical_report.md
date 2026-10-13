@@ -15,51 +15,52 @@ Cadence is an end-to-end speech delivery analytics and temporal flaw grounding s
 The system addresses the core challenge of speech coaching: converting continuous, speaker-dependent acoustic signals (F0, energy, tempo, spectral clarity) into actionable, localized coaching interventions without penalizing natural biometric variance (e.g., biological pitch baseline, microphone distance, dialectal tempo).
 
 The Cadence architecture comprises four pillars:
-1. **A 64-Clip Contrastive Dataset ($30\%$ score weight):** Spanning 8 public-domain and rehearsed oratorical texts across an 8-point severity gradient (1 clean baseline, 1 near-perfect variant, 5 single-flaw moderate perturbations, and 1 egregious combined anchor per text), partitioned into an explicit **Calibration Set (6 texts, 48 clips)** and **Held-Out Test Set (2 texts, 16 clips)** with verified public-domain licensing.
-2. **Dual Forced Alignment Toolchains ($20\%$ score weight):** An offline, high-precision Montreal Forced Aligner (MFA) pipeline for dataset generation and CI reproducibility; and an online, streaming WhisperX wav2vec2-based aligner featuring whole-clip confidence-scored retries and uncertainty propagation.
+1. **A 64-Clip Contrastive Dataset ($30\%$ score weight):** Spanning 8 oratorical passages across an 8-point severity gradient (1 clean baseline, 1 near-perfect variant, 5 single-flaw moderate perturbations, and 1 egregious combined anchor per text), partitioned into an explicit **Calibration Set (6 texts, 48 clips)** and **Held-Out Test Set (2 texts, 16 clips)**. Speech texts are public domain or CC0; clean baselines are synthesized using 8 distinct Microsoft Edge TTS neural voices with calibrated speaking rates.
+2. **Dual Alignment Architecture ($20\%$ score weight):** An offline programmatic Praat TextGrid interval and sanity validation pipeline for deterministic dataset perturbation; and an online, streaming WhisperX wav2vec2-based aligner featuring whole-clip confidence-scored retries and uncertainty propagation.
 3. **Speaker-Agnostic Feature Normalization & Mode A/B Grounding ($25\%$ score weight):** Normalization maps raw Hertz, RMS, and words-per-second into semitone shifts relative to speaker median F0, relative dB vs. 95th-percentile energy, and rate $z$-scores. Detection operates in either **Mode A (Paired Comparison)** against an aligned clean baseline or **Mode B (General Normative Corridor)** for unseen arbitrary uploads.
 4. **NaN-Safe Deterministic Rubric & Streamlit Dashboard ($15\% + 10\%$ score weight):** A five-dimension 100-point rubric with an explicit base case preventing IEEE-754 `NaN` propagation on clean recordings, rendered in an interactive Streamlit dashboard featuring multi-trace Plotly contour overlays, word-level rulers, and a static held-out empirical IoU validation panel.
 
 ---
 
-### 1. Dataset Construction & Licensing Integrity
+### 1. Dataset Construction & Provenance Integrity
 
-#### 1.1 The Legal & Delivery Challenge
-Public speaking benchmarks frequently suffer from two fatal flaws:
-* **Licensing Short-Cuts:** Sourcing speeches from contemporary political figures or conferences (e.g., TED, YouTube broadcasts) violates non-commercial or no-derivatives clauses (CC BY-NC-ND) and conflates the copyright of the *spoken words* with the separate copyright of the *broadcast sound recording* (17 U.S.C. §105).
-* **Delivery-Style Mismatch:** Sourcing speech audio from standard volunteer audiobooks yields flat, neutral prose reading rather than persuasive rhetorical delivery (stress on pivotal clauses, oratorical pauses, dynamic pitch excursions).
+#### 1.1 Legal Context & Audio Synthesis Architecture
+Public speaking evaluation benchmarks face two critical design challenges:
+* **Audio Copyright Encumbrance:** Broadcast speeches by historical figures (e.g., radio or television recordings of political figures) are frequently owned by commercial broadcast archives rather than dedicated to the public domain, even when the underlying speech *text* is a federal work under 17 U.S.C. §105.
+* **Acoustic Variability vs. Algorithmic Control:** Field audio recordings introduce uncontrolled background noise, room reverberation, microphone clipping, and non-uniform codec artifacts. These acoustic anomalies confound controlled DSP flaw injection, making it impossible to know whether a flagged flaw reflects algorithmic degradation or pre-existing recording noise.
 
-#### 1.2 Curation and Per-Recording Verification
-Cadence eliminates legal ambiguity structurally: all six historical speeches utilize recordings from LibriVox where volunteer narrators have explicitly and permanently dedicated both the performance and the master recording to the **Public Domain** (verified against the catalog page of each specific audio asset). To capture authentic rhetorical delivery, narrations were systematically screened across available readers, prioritizing performances exhibiting rhetorical contrast, deliberate pauses, and expressive cadence.
-
-To ensure the calibration set incorporates uncompressed, modern human oratorical delivery by construction, two original passages were authored and performed by team members with rehearsed persuasive oratory (texts 7 and 8).
+#### 1.2 Benchmark Design & Baseline Speech Synthesis
+To resolve both issues transparently, Cadence establishes an authentic text corpus coupled with clean, highly reproducible neural speech synthesis:
+1. **Public-Domain & Author-Dedicated Texts:** Texts 1–6 are historical public-domain oratorical addresses (Lincoln, Henry, Douglass, Anthony, Washington, Truth). Texts 7 and 8 are original rhetorical passages authored and dedicated under CC0 by the Cadence development team.
+2. **Distinct Neural Voice Personas:** Each speech is synthesized into 16 kHz / 16-bit mono WAV using distinct Microsoft Edge TTS neural voices (`edge-tts`) with calibrated speech rate adjustments (ranging from $-5\%$ to $+2\%$). This provides eight distinct vocal timbres, pitch ranges, and pacing baselines, creating a robust test for speaker-agnostic normalization while guaranteeing zero recording noise or room coloration.
+3. **Analytic Ground Truth:** Clean baselines are mapped into Praat TextGrids to establish precise word and phonetic interval boundaries. All subsequent 56 degraded audio variants are derived via parameterized mathematical transforms, yielding exact analytic flaw intervals $[t_{\text{start}}, t_{\text{end}}]$.
 
 ```
 +----------------------------------------------------------------------------------------------------+
 |                                    CADENCE 64-CLIP DATASET STRUCTURE                               |
 +----------------------------------------------------------------------------------------------------+
 | Calibration Set (6 Texts / 48 Clips)                 | Held-Out Test Set (2 Texts / 16 Clips)      |
-|  - Text 1: Lincoln, Gettysburg Address (LibriVox)   |  - Text 6: Truth, Ain't I a Woman (LibriVox)|
-|  - Text 2: Henry, Give Me Liberty (LibriVox)        |  - Text 8: Team Original Oratory 2 (Team)   |
-|  - Text 3: Douglass, Fourth of July (LibriVox)      |                                             |
-|  - Text 4: Anthony, Is It a Crime (LibriVox)        | * Strict isolation: zero held-out statistics |
-|  - Text 5: Washington, Farewell Address (LibriVox)  |   ever leak into threshold calibration      |
-|  - Text 7: Team Original Oratory 1 (Team)           |                                             |
+|  - Text 1: Lincoln, Gettysburg Address (Guy)         |  - Text 6: Truth, Ain't I a Woman (Jenny)   |
+|  - Text 2: Henry, Give Me Liberty (Christopher)      |  - Text 8: Team Original Oratory 2 (Ana)    |
+|  - Text 3: Douglass, Fourth of July (Eric)           |                                             |
+|  - Text 4: Anthony, Is It a Crime (Aria)             | * Strict isolation: zero held-out statistics |
+|  - Text 5: Washington, Farewell Address (Roger)      |   ever leak into threshold calibration      |
+|  - Text 7: Team Original Oratory 1 (Steffan)         |                                             |
 +----------------------------------------------------------------------------------------------------+
 ```
 
-#### 1.3 Verbatim Licensing Citation Table
+#### 1.3 Speech Text & Neural Voice Configuration Table
 
-| Text ID | Title & Historical Context | Reader / Source | Catalog URL | Verbatim License Statement | Delivery Rationale |
-|:---:|:---|:---|:---|:---|:---|
-| **01** | Lincoln, *Gettysburg Address* (1863) | LibriVox (Reader: John Greenman) | `librivox.org/gettysburg-address` | *"All LibriVox recordings are in the Public Domain."* | Expressive solemn cadence; deliberate pauses separating introductory prepositional phrases. |
-| **02** | Patrick Henry, *Give Me Liberty* (1775) | LibriVox (Reader: Bob Neufeld) | `librivox.org/give-me-liberty` | *"All LibriVox recordings are in the Public Domain."* | Rising urgency and dramatic pitch excursions during rhetorical interrogatives. |
-| **03** | Douglass, *Fourth of July* (1852) | LibriVox (Reader: James K. White) | `librivox.org/what-to-the-slave` | *"All LibriVox recordings are in the Public Domain."* | Broad dynamic volume contrast and sharp plosive articulation on condemnatory clauses. |
-| **04** | Anthony, *Is It a Crime to Vote?* (1873) | LibriVox (Reader: Elizabeth Klett) | `librivox.org/is-it-a-crime` | *"All LibriVox recordings are in the Public Domain."* | Measured, legalistic cadence with heightened syllabic stress on constitutional terminology. |
-| **05** | Washington, *Farewell Address* (1796) | LibriVox (Reader: Alan Drake) | `librivox.org/farewell-address` | *"All LibriVox recordings are in the Public Domain."* | Formal gravity, regular breathing rhythms, and sustained resonant vocal quality. |
-| **06** | Truth, *Ain't I a Woman?* (1851) [Held-Out] | LibriVox (Reader: Andrea Fiore) | `librivox.org/aint-i-a-woman` | *"All LibriVox recordings are in the Public Domain."* | Emphatic refrain repetition with high emotional valence. Text follows Frances Gage 1863 transcription. |
-| **07** | Team Original Oratory 1: *Edge of Silence* | Team Self-Recording (Rehearsed) | Team Repository Master | *"Dedicated to Public Domain by Creators (CC0)."* | Modern oratorical prose rehearsed for antithesis, rhythmic triads, and clause-boundary pauses. |
-| **08** | Team Original Oratory 2: *Arch of Horizon* [Held-Out] | Team Self-Recording (Rehearsed) | Team Repository Master | *"Dedicated to Public Domain by Creators (CC0)."* | Rehearsed crescendo delivery with deliberate volume ramps and localized pitch modulations. |
+| Text ID | Title & Historical Context | Synthesis Engine & Voice | Rate | Text Legal Basis | Voice Persona & Delivery Style |
+|:---:|:---|:---|:---:|:---|:---|
+| **01** | Lincoln, *Gettysburg Address* (1863) | MS Edge TTS: `en-US-GuyNeural` | `-4%` | Public Domain (1863) | Solemn, measured oratorical cadence with deliberate pauses. |
+| **02** | Patrick Henry, *Give Me Liberty* (1775) | MS Edge TTS: `en-US-ChristopherNeural` | `+2%` | Public Domain (1775) | Urgent, dramatic pacing with heightened vocal emphasis. |
+| **03** | Douglass, *Fourth of July* (1852) | MS Edge TTS: `en-US-EricNeural` | `-2%` | Public Domain (1852) | Deep resonance, broad dynamic contrast on condemnatory clauses. |
+| **04** | Anthony, *Is It a Crime to Vote?* (1873) | MS Edge TTS: `en-US-AriaNeural` | `-3%` | Public Domain (1873) | Measured, legalistic delivery with rhythmic syllabic stress. |
+| **05** | Washington, *Farewell Address* (1796) | MS Edge TTS: `en-US-RogerNeural` | `-5%` | Public Domain (1796) | Formal gravity, steady deliberate breathing rhythms. |
+| **06** | Truth, *Ain't I a Woman?* (1851) [Held-Out] | MS Edge TTS: `en-US-JennyNeural` | `-2%` | Public Domain (1851 / Gage 1863) | Emphatic rhetorical refrain delivery. Held-out evaluation text. |
+| **07** | Team Original: *Edge of Silence* | MS Edge TTS: `en-US-SteffanNeural` | `-3%` | CC0 Public Domain Dedication | Rhetorical triads, modern cadence, structured clause boundaries. |
+| **08** | Team Original: *Arch of Horizon* [Held-Out] | MS Edge TTS: `en-US-AnaNeural` | `-2%` | CC0 Public Domain Dedication | Crescendo rhetorical delivery with dynamic pitch excursions. Held-out text. |
 
 #### 1.4 Programmatic Flaw Synthesis & Exact Ground Truth
 For each text, seven degraded audio recordings are programmatically generated from the clean baseline. Because each perturbation is applied mathematically using exact temporal or phonetic anchors from the baseline forced alignment, **ground-truth flaw intervals $[t_{\text{start}}, t_{\text{end}}]$ are known analytically with sub-millisecond precision**, eliminating subjective human annotation error.
@@ -88,16 +89,17 @@ For each text, seven degraded audio recordings are programmatically generated fr
 
 ---
 
-### 2. Dual Forced Alignment Architecture
+### 2. Dual Alignment & Grounding Architecture
 
-Cadence implements two distinct alignment pipelines tailored to development versus deployment environments:
+Cadence implements two complementary alignment approaches tailored to dataset generation versus runtime inference:
 
 ```mermaid
 flowchart TD
     subgraph Offline_Pipeline["Offline Pipeline (Dataset Generation & CI)"]
-        WAV_Raw[Clean Audio WAV] --> MFA_Align[Montreal Forced Aligner]
-        Dict_ARPA[english_us_arpa Acoustic Model] --> MFA_Align
-        MFA_Align --> TG[TextGrid Word/Phone Timestamps]
+        WAV_Raw[Clean Audio WAV] --> TG_Gen[scripts/generate_dataset.py]
+        Txt_Trans[Speech Transcript] --> TG_Gen
+        TG_Gen --> TG[Praat TextGrid Word/Phone Intervals]
+        TG --> CI_Check[verify_mfa.py Sanity Verification]
         TG --> Synth[scripts/03_generate_bad_clips.py]
         Synth --> Bad_WAVs[56 Degraded Audio Clips]
         Synth --> GT_Labels[Analytic Ground-Truth JSONs]
@@ -114,11 +116,11 @@ flowchart TD
     end
 ```
 
-#### 2.1 Offline Toolchain: Montreal Forced Aligner (MFA)
-* **Model:** Pretrained `english_us_arpa` acoustic model and pronunciation dictionary.
-* **Role:** Operates during dataset synthesis (Phase 0/1) to output phone- and word-level TextGrid intervals. Phone intervals drive the pause splicing and clarity crossfading engines.
-* **CI Validation:** Automated sanity checks enforce:
-  1. $\Delta t_{\text{span}} \le 2\%$ total duration variance.
+#### 2.1 Offline Build Pipeline: Programmatic TextGrid Anchors & CI Validation
+* **Deterministic Interval Anchoring:** Operates during dataset generation (`scripts/generate_dataset.py`) to output word- and phonetic-level Praat TextGrids. These intervals provide exact temporal anchors for pause splicing and clarity cross-fading.
+* **Architecture Distinction:** While initial hackathon planning scoped an offline Montreal Forced Aligner (MFA) step, deterministic programmatic TextGrid construction was chosen for dataset generation to eliminate fragile Conda/OpenFST dependencies and ensure bit-identical pipeline reproducibility across developer environments.
+* **CI Validation Suite (`verify_mfa.py`):** Automated sanity checks enforce strict geometric and phonetic consistency on all generated TextGrids:
+  1. $\Delta t_{\text{span}} \le 2\%$ total duration variance against physical audio length.
   2. Zero negative-duration or overlapping intervals.
   3. Aligned word count matches normalized transcript token count.
 
@@ -269,7 +271,7 @@ $$\text{Temporal IoU} = \frac{\sum \text{span}(R_{\text{detected}} \cap R_{\text
 #### 6.2 Key Empirical Findings
 1. **Continuous vs. Point Flaw Detection:** Pacing ($\text{IoU} = 0.299$) and Clarity ($\text{IoU} = 0.298$) achieve the highest continuous overlap against whole-passage degradations. Pause insertions reflect discrete point-event splices (0.4s silences), where conservative continuous clustering exhibits lower point-IoU overlap due to strict union penalties.
 2. **Clarity Boundary Dispersion:** Articulatory clarity reliably isolates the core degraded spans across phone transitions.
-3. **Cross-Speaker Normalization Invariance:** In `test_cross_speaker_clean_clips_not_flagged`, clean baseline clips across all eight distinct human speakers yielded zero false-positive flaw flags when evaluated against each other in normalized space.
+3. **Cross-Speaker Normalization Invariance:** In `test_cross_speaker_clean_clips_not_flagged`, clean baseline clips across all eight distinct speaker voice profiles yielded zero false-positive flaw flags when evaluated against each other in normalized space.
 
 ---
 
@@ -277,7 +279,7 @@ $$\text{Temporal IoU} = \frac{\sum \text{span}(R_{\text{detected}} \cap R_{\text
 
 | Risk Factor | Root Cause | Engineering Mitigation in Cadence |
 |:---|:---|:---|
-| **Licensing Invalidation** | Assuming 19th-century speeches have PD audio recordings. | Restricted all historical audio to LibriVox with explicit per-recording public domain dedication logging (§1.3). |
+| **Licensing / Provenance Ambiguity** | Assuming historical audio recordings are public domain. | Built benchmark upon verified public-domain or CC0 texts with neural speech synthesis under standard research usage (§1.1-1.3). |
 | **Silent NaN Scorecard** | `np.mean([])` on clean recordings evaluates to `NaN`. | Explicit base case in `score_dimension` returning 20.0 when flagged region count is zero. |
 | **Population Mismatch** | Evaluating against pooled mean with subgroup variance. | Strict enforcement of `sigma_pooled_all` for both reference and threshold in Mode B. |
 | **WhisperX Span Drift** | Attempting isolated span re-alignment on low-confidence words. | Full-clip re-alignment with WhisperX medium model, preserving surrounding acoustic context. |

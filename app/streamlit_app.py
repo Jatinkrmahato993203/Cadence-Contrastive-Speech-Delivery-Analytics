@@ -478,7 +478,7 @@ if result and not result.get("error"):
                 yaxis=dict(showticklabels=False, range=[-0.5, 1.5]),
                 showlegend=False,
             )
-            st.plotly_chart(ruler_fig, use_container_width=True, config={"displayModeBar": False})
+            st.plotly_chart(ruler_fig, use_container_width=True, config={"displayModeBar": False}, key="alignment_ruler_chart")
 
             if alignment.uncertain_spans:
                 st.markdown(
@@ -491,11 +491,11 @@ if result and not result.get("error"):
     st.markdown("## 📈 Acoustic Contours")
     tab_pitch, tab_energy, tab_rate = st.tabs(["🎵 Pitch", "🔊 Volume/Energy", "⚡ Speech Rate"])
     with tab_pitch:
-        st.plotly_chart(_build_overlay_chart(result, "pitch"), use_container_width=True)
+        st.plotly_chart(_build_overlay_chart(result, "pitch"), use_container_width=True, key="overlay_pitch_chart")
     with tab_energy:
-        st.plotly_chart(_build_overlay_chart(result, "energy"), use_container_width=True)
+        st.plotly_chart(_build_overlay_chart(result, "energy"), use_container_width=True, key="overlay_energy_chart")
     with tab_rate:
-        st.plotly_chart(_build_overlay_chart(result, "rate"), use_container_width=True)
+        st.plotly_chart(_build_overlay_chart(result, "rate"), use_container_width=True, key="overlay_rate_chart")
 
     # -- Flaw regions + causal explanations ------------------------------------
     st.markdown("## 🔍 Detected Flaw Regions")
@@ -539,7 +539,8 @@ if result and not result.get("error"):
                 unsafe_allow_html=True
             )
             st.plotly_chart(_score_bar(dim.score), use_container_width=True,
-                            config={"displayModeBar": False})
+                            config={"displayModeBar": False},
+                            key=f"score_bar_{dim.dimension.lower()}_{i}")
             if dim.region_count > 0:
                 st.markdown(
                     f"<span style='color:#888;font-size:0.75rem'>"
@@ -633,15 +634,15 @@ if show_heldout:
                 xaxis=dict(gridcolor="#2a2d3e"),
                 showlegend=False,
             )
-            st.plotly_chart(bar_fig, use_container_width=True)
+            st.plotly_chart(bar_fig, use_container_width=True, key="heldout_bar_chart")
 
 # --- Footer -------------------------------------------------------------------
 st.divider()
 st.markdown(
     "<div style='text-align:center;color:#555;font-size:0.78rem'>"
     "Cadence · Contrastive Speech Analytics · "
-    "Dataset: 64 clips, 8 PD texts, 7 flaw types · "
-    "Pipeline: MFA (offline) + WhisperX (online) · "
+    "Dataset: 64 clips, 8 speech texts, 7 flaw types · "
+    "Pipeline: Programmatic TextGrids (dataset) + WhisperX (online) · "
     "All thresholds from calibration-set GOOD clips only"
     "</div>",
     unsafe_allow_html=True

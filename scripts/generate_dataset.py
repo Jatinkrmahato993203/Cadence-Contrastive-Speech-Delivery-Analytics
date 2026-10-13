@@ -1,15 +1,15 @@
 """
 scripts/generate_dataset.py
 ---------------------------
-Automated generation of the 8 GOOD baseline speech clips and MFA TextGrids
-using edge-tts neural voices, followed by end-to-end flaw generation.
+Automated generation of the 8 GOOD baseline speech clips and Praat TextGrids
+using Microsoft Edge TTS neural voices, followed by end-to-end flaw generation.
 
 Pipeline:
-  1. Synthesize 8 distinct oratorical voices for the 8 transcripts.
+  1. Synthesize 8 distinct oratorical neural voices for the 8 speech transcripts.
   2. Downsample and convert to 16 kHz / 16-bit mono WAV.
-  3. Generate Praat TextGrid files (words and phones tiers) aligned with audio.
+  3. Generate Praat TextGrid files (words and phonetic sub-segments) aligned with audio.
   4. Write dataset/labels/speakers.json.
-  5. Validate via verify_mfa.py sanity checks.
+  5. Validate via verify_mfa.py sanity checks (duration, monotonicity, word count).
   6. Execute 03_generate_bad_clips.py to create all 56 BAD clips.
   7. Execute 04_extract_features.py --compute-thresholds.
   8. Execute 05_evaluate_heldout.py to compute held-out temporal IoUs.
@@ -36,6 +36,9 @@ LABELS_DIR = ROOT / "dataset" / "labels"
 TEXTGRID_DIR = ROOT / "dataset" / "textgrids"
 TRANSCRIPT_DIR = ROOT / "dataset" / "transcripts"
 
+# 8 distinct neural voices providing diverse pitch, timbre, and pacing baselines.
+# Note: "source: librivox" denotes historical public domain text group (Group 1),
+# while "source: team" denotes modern oratorical text group (Group 2), matching config.yaml groups.
 VOICES = {
     1: {"voice": "en-US-GuyNeural",         "speaker_id": "librivox_reader_01_guy",     "rate": "-4%"},
     2: {"voice": "en-US-ChristopherNeural", "speaker_id": "librivox_reader_02_chris",   "rate": "+2%"},
@@ -193,7 +196,7 @@ async def main():
         json.dump(speakers, f, indent=2)
     print(f"\nSaved speaker mapping -> {speakers_path}")
 
-    print("\n=== Step 2: Running MFA Verification on GOOD Clips ===")
+    print("\n=== Step 2: Running Alignment Sanity Verification on GOOD Clips ===")
     from scripts import verify_mfa
     all_ok = True
     for text_id in range(1, 9):
@@ -207,9 +210,9 @@ async def main():
             print(f"  text_{id_str}: Alignment sanity checks passed.")
 
     if not all_ok:
-        print("MFA verification found issues!")
+        print("Alignment sanity checks found issues!")
         sys.exit(1)
-    print("All 8 GOOD clips successfully verified against MFA criteria.")
+    print("All 8 GOOD clips successfully verified against alignment sanity criteria.")
 
 
 if __name__ == "__main__":
