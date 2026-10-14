@@ -309,8 +309,11 @@ Clarity measure `hf_ratio_db`; floors `{'pitch': 0.3648, 'energy': 4.7217, 'rate
   false-positive seconds on clarity and combined clips.
 * *Alignment* — Whisper `base.en` cross-attention has 20 ms resolution; low-confidence
   words are flagged, not corrected. A new upload takes ~30–60 s on CPU.
-* `nearperfect` clips duplicate `pacing_mild` (same generator parameters); they are
-  excluded from summary means.
+* `nearperfect` clips are a gentler pacing edit (1.07×, half the deviation of
+  `pacing_mild`'s 1.15×). They are reported per clip but excluded from summary means
+  so pacing is not counted twice. Against a same-speaker reference they are found with
+  IoU 0.34–1.00 (lowest on the LibriVox reader real02); against a different speaker or
+  in Mode B they are mostly missed.
 
 **Next steps (in order of impact)**
 1. Recordings of the *same* people delivering both well and badly (self-recorded),

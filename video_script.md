@@ -41,11 +41,15 @@ Every number spoken in this script is read from `dataset/labels/heldout_results.
 > "Free speech recognition drops and mis-hears words, so we force the known
 > transcript onto the audio: Whisper's cross-attention gives evidence in
 > overlapping 30-second windows, one dynamic-time-warping path assigns every
-> word a time, and word edges are snapped to silences. Splicing a pause into a
-> recording leaves every timing before it unchanged.
-> Per word we measure pitch and pitch movement, loudness, tempo with pauses
-> excluded, pause length, and harmonics-to-noise ratio for clarity — each relative
-> to the speaker's own voice, so a higher or louder voice is not a flaw."
+> word a time, and word edges are snapped to silences. Decoding is greedy, so the
+> same audio always gets the same timings.
+> Per word we measure pitch and pitch movement — with a pitch range fitted to each
+> speaker's voice — loudness in the vowel band, tempo with pauses excluded, and
+> pause length. For clarity we tested several measures on the calibration texts
+> and kept the one that best separates slurring from the other flaws: the share of
+> high-frequency energy in the spectral envelope, which ignores the voice's pitch.
+> Everything is relative to the speaker's own voice, so a higher or louder voice
+> is not a flaw."
 
 ### 4. Mode A demo — human reader (2:50–4:20)
 Select **Human reader — inserted pauses (text 1)**, reference **Same speaker's clean recording**, Analyze.
@@ -70,6 +74,8 @@ severity-gradient result exactly as displayed.
 > rises, and the cross-speaker line shows the honest limit."
 
 ### 7. Limits & next steps (6:30–7:00)
-> "The biggest gap is data: we need recordings of genuinely effective speakers,
-> and the same people reading badly, to calibrate cross-speaker comparison. That,
-> a stronger aligner, and listener ratings to validate the explanations are next."
+> "Against a different speaker, or with no reference at all, only large flaws are
+> found, and the edges of clarity problems can be off by several seconds. Next: the
+> same people recorded delivering well and badly, to calibrate cross-speaker
+> comparison; a phoneme-level aligner; filler-word detection; and listener
+> ratings to validate the explanations."

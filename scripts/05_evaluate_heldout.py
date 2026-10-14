@@ -69,8 +69,8 @@ def run(audio: Path, label: dict | None, transcript: str, cfg: dict, baseline: P
 
 
 def summarize(rows: list[dict]) -> dict:
-    # "nearperfect" clips are byte-identical to "pacing_mild" (same generator parameters):
-    # reported per clip, but excluded from the means so they are not counted twice.
+    # "nearperfect" clips are a second, gentler pacing edit (1.07x vs 1.15x for pacing_mild):
+    # reported per clip, but excluded from the means so pacing is not counted twice.
     rows = [r for r in rows if r["flaw_type"] != "nearperfect"]
     flawed = [r for r in rows if r["target_iou"] is not None]
     by_flaw: dict[str, dict] = {}
