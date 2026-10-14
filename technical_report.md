@@ -47,7 +47,8 @@ median F0 change.
 Ground truth comes from the transform itself, on the flawed clip's output timeline.
 Review found that multi-pause clips and the combined clip had labels on the wrong
 timeline (inserted silences were not offset by earlier insertions). The generator
-was fixed and `scripts/repair_splice_labels.py` rewrote the 16 affected labels.
+was fixed and the 16 affected labels were rewritten; `scripts/regenerate_flaws.py`
+now produces correct labels from scratch.
 A test asserts that every labelled pause window is digital silence in the audio.
 
 ---

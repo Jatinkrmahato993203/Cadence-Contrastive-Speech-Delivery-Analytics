@@ -62,7 +62,8 @@ time-bounded ground-truth regions on the clip's own timeline.
 * `flaw_regions` are on the **output** timeline of the flawed clip.
 * Labels written before the generator fix placed 2nd/3rd spliced pauses at their
   source position and did not shift the other regions of `combined_egregious` for the
-  inserted silences. `scripts/repair_splice_labels.py` rewrote the 16 affected labels;
+  inserted silences. The 16 affected labels were rewritten (`scripts/regenerate_flaws.py`
+  now produces them correctly from scratch);
   every pause window in every label is verified to be digital silence in the audio
   (`tests/test_detection.py::test_pause_labels_match_silence_in_audio`).
 * Every edit window is snapped to the nearest gap between words, and only the window is

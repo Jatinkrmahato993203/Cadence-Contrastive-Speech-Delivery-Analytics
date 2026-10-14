@@ -97,9 +97,6 @@ python scripts/render_results.py            # results tables in README + report
 python scripts/build_manifest.py            # dataset checksums (--check to verify)
 ```
 
-`scripts/01_prepare_good_clips.py`, `02_run_mfa.sh` and `realign_baselines.py`
-are legacy and not part of the pipeline above.
-
 ## Provenance
 
 * Texts 1–6: public-domain speeches. Texts 7–8: team-written (CC0).
