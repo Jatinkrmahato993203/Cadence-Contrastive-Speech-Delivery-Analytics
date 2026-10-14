@@ -69,6 +69,17 @@ def _clamp(val: float, lo: float, hi: float) -> float:
     return max(lo, min(hi, val))
 
 
+PAUSE_MIN_EFFECT_S = 5.0   # a long unplanned silence derails the whole phrase around it
+MAX_SEVERITY = 3.0
+
+
+def _region_weight(region) -> float:
+    sev = getattr(region, "severity", 0.0) or 0.0
+    if sev <= 0 and getattr(region, "threshold", 0.0) > 0:
+        sev = region.mean_delta / region.threshold
+    return 1.5 * min(max(sev, 0.0), MAX_SEVERITY) / MAX_SEVERITY
+
+
 def _score_dimension(
     flaw_type: str,
     dimension: str,
@@ -94,16 +105,17 @@ def _score_dimension(
             max_delta=0.0,
         )
 
-    # severity_weight: mean |delta| across all words in all flagged regions
-    all_deltas = [r.mean_delta for r in relevant]
-    severity_weight = float(np.mean(all_deltas))
-
-    # flawed_duration: sum of region durations
+    total = max(total_duration_s, 1e-6)
     flawed_duration_s = sum(r.end_s - r.start_s for r in relevant)
-
-    flawed_fraction = _clamp(flawed_duration_s / max(total_duration_s, 1e-6), 0.0, 1.0)
-    raw_score = 20.0 * (1.0 - flawed_fraction * severity_weight)
-    score = _clamp(raw_score, 0.0, 20.0)
+    penalty = 0.0
+    for r in relevant:
+        eff = r.end_s - r.start_s
+        if flaw_type == "pause":
+            eff = max(eff, PAUSE_MIN_EFFECT_S)
+        penalty += _clamp(eff / total, 0.0, 1.0) * _region_weight(r)
+    severity_weight = float(np.mean([_region_weight(r) for r in relevant]))
+    all_deltas = [r.mean_delta for r in relevant]
+    score = _clamp(20.0 * (1.0 - _clamp(penalty, 0.0, 1.0)), 0.0, 20.0)
 
     # Sanity check — must never be NaN
     if math.isnan(score):
@@ -162,4 +174,5 @@ def score(grounding_result, total_duration_s: float) -> RubricScore:
         mode=grounding_result.mode,
         matched_text_id=grounding_result.matched_text_id,
         matched_split=grounding_result.matched_split,
-    )
+    )
+

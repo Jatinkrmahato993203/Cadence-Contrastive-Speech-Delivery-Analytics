@@ -1,0 +1,19 @@
+{
+  "clip_id": "real02_clarity_mod",
+  "source_text_id": 2,
+  "speaker_id": "Mark F. Smith (LibriVox)",
+  "speaker_source": "librivox_human",
+  "flaw_type": "clarity",
+  "severity_tier": "moderate",
+  "split": "real_speaker",
+  "flaw_regions": [
+    {
+      "start_s": 22.872,
+      "end_s": 74.334,
+      "mechanism": "clarity_xfade46ms_smooth7bin_bounded_22.87to74.33s"
+    }
+  ],
+  "label_timeline": "output",
+  "transcript_path": "dataset/transcripts/text_02.txt",
+  "audio_path": "dataset/audio/real_speakers/real02_clarity_mod.wav"
+}

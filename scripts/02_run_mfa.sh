@@ -1,4 +1,7 @@
 #!/usr/bin/env bash
+# LEGACY — optional Montreal Forced Aligner path. NOT used by the as-built pipeline:
+# word timestamps come from pipeline/aligner.py (Whisper transcript-forced alignment),
+# see scripts/precompute_alignments.py.
 # scripts/02_run_mfa.sh
 # ---------------------
 # Phase 0: Run Montreal Forced Aligner on all 8 GOOD clips.
@@ -55,4 +58,5 @@ echo "Running sanity checks..."
 python scripts/verify_mfa.py
 echo ""
 echo "All checks passed. Ready for Phase 1 flaw generation."
-echo "Next step: python scripts/03_generate_bad_clips.py"
+echo "Next step: python scripts/03_generate_bad_clips.py"
+

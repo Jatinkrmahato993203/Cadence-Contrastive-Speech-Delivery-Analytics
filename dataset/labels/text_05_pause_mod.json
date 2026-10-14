@@ -8,9 +8,9 @@
   "split": "calibration",
   "flaw_regions": [
     {
-      "start_s": 35.686,
-      "end_s": 36.387,
-      "mechanism": "silence_splice_0.70s_at_35.686s"
+      "start_s": 50.2,
+      "end_s": 50.839,
+      "mechanism": "silence_splice_0.64s_at_50.200s"
     }
   ],
   "transcript_path": "dataset/transcripts/text_05.txt",

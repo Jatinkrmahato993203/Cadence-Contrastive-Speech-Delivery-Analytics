@@ -1,0 +1,18 @@
+{
+  "clip_id": "text_02_pause_mild",
+  "source_text_id": 2,
+  "speaker_id": "librivox_reader_02",
+  "speaker_source": "librivox",
+  "flaw_type": "pause",
+  "severity_tier": "near_perfect",
+  "split": "calibration",
+  "flaw_regions": [
+    {
+      "start_s": 56.74,
+      "end_s": 57.026,
+      "mechanism": "silence_splice_0.29s_at_56.740s"
+    }
+  ],
+  "transcript_path": "dataset/transcripts/text_02.txt",
+  "audio_path": "dataset/audio/text_02_pause_mild.wav"
+}

@@ -8,9 +8,9 @@
   "split": "heldout",
   "flaw_regions": [
     {
-      "start_s": 7.646,
-      "end_s": 22.939,
-      "mechanism": "gain_-10dB_over_20pct"
+      "start_s": 11.47,
+      "end_s": 26.762,
+      "mechanism": "gain_-10dB_bounded_11.47to26.76s"
     }
   ],
   "transcript_path": "dataset/transcripts/text_08.txt",

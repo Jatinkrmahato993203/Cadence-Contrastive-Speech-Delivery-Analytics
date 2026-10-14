@@ -1,0 +1,19 @@
+{
+  "clip_id": "text_08_pacing_mild",
+  "source_text_id": 8,
+  "speaker_id": "team_member_02",
+  "speaker_source": "team",
+  "flaw_type": "pacing",
+  "severity_tier": "near_perfect",
+  "split": "heldout",
+  "flaw_regions": [
+    {
+      "start_s": 19.116,
+      "end_s": 42.388,
+      "mechanism": "time_stretch_1.15x_bounded_19.12to42.39s"
+    }
+  ],
+  "label_timeline": "output",
+  "transcript_path": "dataset/transcripts/text_08.txt",
+  "audio_path": "dataset/audio/text_08_pacing_mild.wav"
+}

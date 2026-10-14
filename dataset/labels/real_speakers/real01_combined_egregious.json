@@ -1,0 +1,44 @@
+{
+  "clip_id": "real01_combined_egregious",
+  "source_text_id": 1,
+  "speaker_id": "Andrew Marty (LibriVox)",
+  "speaker_source": "librivox_human",
+  "flaw_type": "combined",
+  "severity_tier": "egregious",
+  "split": "real_speaker",
+  "flaw_regions": [
+    {
+      "start_s": 6.409,
+      "end_s": 16.023,
+      "mechanism": "gain_-18dB_bounded_6.41to16.02s"
+    },
+    {
+      "start_s": 16.023,
+      "end_s": 36.75,
+      "mechanism": "f0_variance_compress_0.10_bounded_16.02to35.25s"
+    },
+    {
+      "start_s": 28.075,
+      "end_s": 29.575,
+      "mechanism": "silence_splice_1.50s_at_src_28.075s"
+    },
+    {
+      "start_s": 36.75,
+      "end_s": 56.085,
+      "mechanism": "clarity_xfade81ms_smooth15bin_bounded_35.25to51.27s"
+    },
+    {
+      "start_s": 40.795,
+      "end_s": 42.499,
+      "mechanism": "silence_splice_1.70s_at_src_39.295s"
+    },
+    {
+      "start_s": 43.739,
+      "end_s": 45.348,
+      "mechanism": "silence_splice_1.61s_at_src_40.535s"
+    }
+  ],
+  "label_timeline": "output",
+  "transcript_path": "dataset/transcripts/text_01.txt",
+  "audio_path": "dataset/audio/real_speakers/real01_combined_egregious.wav"
+}

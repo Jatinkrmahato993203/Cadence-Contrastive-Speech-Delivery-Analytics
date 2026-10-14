@@ -1,0 +1,18 @@
+{
+  "clip_id": "text_05_clarity_egregious",
+  "source_text_id": 5,
+  "speaker_id": "librivox_reader_05",
+  "speaker_source": "librivox",
+  "flaw_type": "clarity",
+  "severity_tier": "egregious",
+  "split": "calibration",
+  "flaw_regions": [
+    {
+      "start_s": 10.76,
+      "end_s": 53.802,
+      "mechanism": "clarity_xfade85ms_smooth15bin_bounded_10.76to53.80s"
+    }
+  ],
+  "transcript_path": "dataset/transcripts/text_05.txt",
+  "audio_path": "dataset/audio/text_05_clarity_egregious.wav"
+}

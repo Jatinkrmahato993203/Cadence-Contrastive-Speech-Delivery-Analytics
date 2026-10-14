@@ -8,9 +8,9 @@
   "split": "calibration",
   "flaw_regions": [
     {
-      "start_s": 0.0,
-      "end_s": 61.608,
-      "mechanism": "clarity_xfade41ms_smooth7bin_transient-4dB"
+      "start_s": 12.322,
+      "end_s": 40.045,
+      "mechanism": "clarity_xfade42ms_smooth7bin_bounded_12.32to40.05s"
     }
   ],
   "transcript_path": "dataset/transcripts/text_07.txt",

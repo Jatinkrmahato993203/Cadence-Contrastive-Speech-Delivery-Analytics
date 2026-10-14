@@ -1,18 +1,24 @@
 """
 scripts/05_evaluate_heldout.py
 ------------------------------
-Phase 5: Evaluate temporal IoU on the 2 held-out texts (6 and 8),
-14 BAD clips total, against their known-injected flaw regions.
+Phase 5: evaluate flaw grounding on data never used for calibration.
 
-This produces heldout_results.json, which is displayed in the dashboard
-as the held-out evaluation panel — the concrete evidence for the
-"accuracy of flaw-region timestamps" criterion (25% of score).
+Sets
+  A. Held-out TTS texts 6 and 8 — every flaw clip (mild / moderate / egregious,
+     combined, near-perfect) paired with its GOOD baseline.
+  B. Real human recordings (LibriVox), same-speaker: realNN_<flaw> vs realNN_good.
+  C. Real human recordings, cross-speaker: realNN_good and realNN_<flaw> vs the
+     TTS GOOD baseline of the same text (the dashboard's real use case: a
+     different person reading a bundled speech).
+     NOTE: both clean pairs (realNN_good vs TTS) are used to choose k_noise
+     (scripts/04), so they are in-sample; the flawed human variants are unseen.
 
-Usage:
-    python scripts/05_evaluate_heldout.py
+Metrics per clip (pipeline/evaluation.py)
+  target IoU   — IoU of detections of the injected flaw's feature vs. ground truth
+  FP seconds   — flagged seconds (any feature) outside ground truth of that feature
+  score        — rubric score /100
 
-Output:
-    dataset/labels/heldout_results.json
+Output: dataset/labels/heldout_results.json
 """
 
 from __future__ import annotations
@@ -26,201 +32,140 @@ import numpy as np
 ROOT = Path(__file__).parent.parent
 sys.path.insert(0, str(ROOT))
 
-AUDIO_DIR = ROOT / "dataset" / "audio"
-LABELS_DIR = ROOT / "dataset" / "labels"
-CONFIG_PATH = ROOT / "config.yaml"
+from pipeline.analysis import analyze, load_bundled, load_config      # noqa: E402
+from pipeline.evaluation import clip_metrics                          # noqa: E402
 
+AUDIO = ROOT / "dataset" / "audio"
+LABELS = ROOT / "dataset" / "labels"
+REAL_AUDIO = AUDIO / "real_speakers"
+REAL_LABELS = LABELS / "real_speakers"
 HELDOUT_TEXTS = [6, 8]
-BAD_SUFFIXES = [
-    "pacing_mod", "pitch_mod", "pause_mod",
-    "volume_mod", "clarity_mod", "combined_egregious", "nearperfect"
-]
+TIER_ORDER = {"near_perfect": 0, "moderate": 1, "egregious": 2}
 
 
-def temporal_iou(
-    detected: list[dict],   # list of {start_s, end_s}
-    ground_truth: list[dict],
-    total_duration: float,
-) -> float:
-    """
-    Compute temporal IoU (intersection-over-union in seconds) between
-    detected flaw regions and known-injected ground truth regions.
-
-    Returns float in [0, 1]. 1.0 = perfect match, 0.0 = no overlap.
-    """
-    if not detected and not ground_truth:
-        return 1.0   # both empty = perfect
-    if not detected or not ground_truth:
-        return 0.0   # one empty = zero overlap
-
-    def to_mask(regions: list[dict], length: int) -> np.ndarray:
-        mask = np.zeros(length, dtype=bool)
-        for r in regions:
-            lo = int(r["start_s"] * 100)
-            hi = int(r["end_s"] * 100)
-            mask[max(0, lo) : min(length, hi)] = True
-        return mask
-
-    length = int(total_duration * 100) + 1
-    det_mask = to_mask(detected, length)
-    gt_mask = to_mask(ground_truth, length)
-
-    intersection = (det_mask & gt_mask).sum()
-    union = (det_mask | gt_mask).sum()
-    return float(intersection / union) if union > 0 else 0.0
+def run(audio: Path, label: dict | None, transcript: str, cfg: dict, baseline: Path | None = None) -> dict:
+    res = analyze(audio, transcript, cfg=cfg, baseline_override=baseline)
+    label = label or {"flaw_regions": [], "flaw_type": "none", "severity_tier": "clean"}
+    m = clip_metrics(res.grounding, label, res.duration_s)
+    return {
+        "clip_id": audio.stem,
+        "flaw_type": label.get("flaw_type"),
+        "severity_tier": label.get("severity_tier"),
+        "duration_s": round(res.duration_s, 3),
+        "score": round(res.rubric.overall, 2),
+        "target_iou": None if m["target_iou"] is None else round(m["target_iou"], 4),
+        "iou_by_feature": {k: round(v, 4) for k, v in m["iou_by_feature"].items()},
+        "fp_seconds": round(m["fp_seconds"], 2),
+        "flagged_seconds": round(sum(r.end_s - r.start_s for r in res.grounding.flaw_regions), 2),
+        "gt_regions": label.get("flaw_regions", []),
+        "detected_regions": [
+            {"flaw_type": r.flaw_type, "start_s": r.start_s, "end_s": r.end_s,
+             "direction": r.direction, "severity": round(r.severity, 2)}
+            for r in res.grounding.flaw_regions
+        ],
+    }
 
 
-def run_pipeline_on_clip(
-    text_id: int, suffix: str, cfg: dict
-) -> tuple[list[dict], float]:
-    """Run the full grounding pipeline on one clip. Returns (detected_regions, duration_s)."""
-    import yaml
-    from pipeline.aligner import align
-    from pipeline import features as feat_mod
-    from pipeline import normalizer as norm_mod
-    from pipeline.grounder import ground, detect_mode
-    import soundfile as sf
+def summarize(rows: list[dict]) -> dict:
+    # "nearperfect" clips are byte-identical to "pacing_mild" (same generator parameters):
+    # reported per clip, but excluded from the means so they are not counted twice.
+    rows = [r for r in rows if r["flaw_type"] != "nearperfect"]
+    flawed = [r for r in rows if r["target_iou"] is not None]
+    by_flaw: dict[str, dict] = {}
+    for r in flawed:
+        key = f"{r['flaw_type']}/{r['severity_tier']}"
+        by_flaw.setdefault(key, []).append(r)
+    return {
+        "n_clips": len(rows),
+        "mean_target_iou": round(float(np.mean([r["target_iou"] for r in flawed])), 4) if flawed else None,
+        "mean_fp_seconds": round(float(np.mean([r["fp_seconds"] for r in rows])), 2) if rows else None,
+        "by_flaw_tier": {
+            k: {"n": len(v),
+                "mean_iou": round(float(np.mean([x["target_iou"] for x in v])), 4),
+                "mean_fp_s": round(float(np.mean([x["fp_seconds"] for x in v])), 2),
+                "mean_score": round(float(np.mean([x["score"] for x in v])), 2)}
+            for k, v in sorted(by_flaw.items())
+        },
+    }
 
-    wav_path = AUDIO_DIR / f"text_{text_id:02d}_{suffix}.wav"
-    if not wav_path.exists():
-        return [], 0.0
 
-    # Load transcript
-    from pathlib import Path
-    transcript_path = ROOT / "dataset" / "transcripts" / f"text_{text_id:02d}.txt"
-    transcript = transcript_path.read_text().strip() if transcript_path.exists() else ""
-
-    info = sf.info(str(wav_path))
-    duration_s = info.duration
-
-    # Alignment (WhisperX or dummy fallback)
-    try:
-        alignment = align(str(wav_path), transcript=transcript, cfg=cfg)
-    except Exception:
-        from pipeline.aligner import AlignmentResult, WordAlignment
-        step = duration_s / 30
-        alignment = AlignmentResult(
-            words=[WordAlignment(f"w{i}", i*step, (i+0.8)*step, 0.9) for i in range(30)],
-            model_used="dummy", had_retry=False
-        )
-
-    clip_feat = feat_mod.extract(str(wav_path), alignment)
-    norm_clip, _ = norm_mod.normalize(clip_feat, f"heldout_text_{text_id}", cfg=cfg)
-
-    # Load bundled transcripts for mode detection
-    bundled = {}
-    bundled_splits = {}
-    for tid in range(1, 9):
-        tp = ROOT / "dataset" / "transcripts" / f"text_{tid:02d}.txt"
-        if tp.exists():
-            bundled[tid] = tp.read_text().strip()
-            bundled_splits[tid] = "calibration" if tid in {1,2,3,4,5,7} else "heldout"
-
-    mode, matched_id, matched_split = detect_mode(transcript, bundled, bundled_splits)
-
-    # Load baseline GOOD clip for Mode A
-    baseline_norm_clip = None
-    if mode == "A" and matched_id:
-        good_path = AUDIO_DIR / f"text_{matched_id:02d}_good.wav"
-        if good_path.exists():
-            try:
-                good_align = align(str(good_path), cfg=cfg)
-            except Exception:
-                good_align = alignment
-            good_feat = feat_mod.extract(str(good_path), good_align)
-            baseline_norm_clip, _ = norm_mod.normalize(good_feat, f"good_{matched_id}", cfg=cfg)
-
-    # Speaker source
-    speaker_source = "librivox" if text_id in {1,2,3,4,5,6} else "team"
-
-    result = ground(
-        norm_clip, mode=mode,
-        matched_text_id=matched_id,
-        matched_split=matched_split,
-        baseline_norm_clip=baseline_norm_clip,
-        speaker_source=speaker_source,
-        cfg=cfg,
-    )
-
-    detected = [{"start_s": r.start_s, "end_s": r.end_s} for r in result.flaw_regions]
-    return detected, duration_s
+def gradient_check(rows: list[dict], prefix: str) -> list[dict]:
+    """Score should fall monotonically mild -> moderate -> egregious for each flaw."""
+    out = []
+    for flaw in ("pacing", "pitch", "pause", "volume", "clarity"):
+        tiers = {r["severity_tier"]: r["score"] for r in rows
+                 if r["clip_id"].startswith(prefix) and r["flaw_type"] == flaw}
+        if len(tiers) == 3:
+            s = [tiers["near_perfect"], tiers["moderate"], tiers["egregious"]]
+            out.append({"set": prefix, "flaw": flaw, "scores_mild_mod_egr": s,
+                        "monotonic": s[0] >= s[1] >= s[2]})
+    return out
 
 
 def main():
-    import yaml
-    with open(CONFIG_PATH) as f:
-        cfg = yaml.safe_load(f)
+    cfg = load_config()
+    bundled, _ = load_bundled()
+    results: dict = {"held_out_texts": HELDOUT_TEXTS, "config": {
+        "floors": cfg["grounding"]["floors"], "k_noise": cfg["grounding"]["k_noise"],
+        "clarity_feature": cfg["normalization"]["clarity_feature"]}}
 
-    results = []
-    iou_by_flaw: dict[str, list[float]] = {}
-
-    for text_id in HELDOUT_TEXTS:
-        for suffix in BAD_SUFFIXES:
-            label_path = LABELS_DIR / f"text_{text_id:02d}_{suffix}.json"
-            if not label_path.exists():
-                print(f"  SKIP: No label for text_{text_id:02d}_{suffix}")
+    # A. Held-out TTS texts
+    rows_a = []
+    for tid in HELDOUT_TEXTS:
+        rows_a.append(run(AUDIO / f"text_{tid:02d}_good.wav", None, bundled[tid], cfg))
+        for lp in sorted(LABELS.glob(f"text_{tid:02d}_*.json")):
+            if lp.stem.endswith("_features"):
                 continue
+            rows_a.append(run(AUDIO / f"{lp.stem}.wav", json.loads(lp.read_text()), bundled[tid], cfg))
+            r = rows_a[-1]
+            print(f"A {r['clip_id']:30s} IoU={r['target_iou']}  FP={r['fp_seconds']:5.1f}s  score={r['score']:5.1f}", flush=True)
+    results["heldout_tts"] = {"summary": summarize(rows_a), "per_clip": rows_a}
+    grad = []
+    for tid in HELDOUT_TEXTS:
+        grad += gradient_check(rows_a, f"text_{tid:02d}")
 
-            with open(label_path) as f:
-                label = json.load(f)
-
-            gt_regions = label.get("flaw_regions", [])
-            flaw_type = label.get("flaw_type", suffix)
-
-            print(f"  Evaluating text_{text_id:02d}_{suffix}...")
-            detected, duration_s = run_pipeline_on_clip(text_id, suffix, cfg)
-            iou = temporal_iou(detected, gt_regions, duration_s)
-
-            print(f"    IoU = {iou:.3f}  (GT regions: {len(gt_regions)}, "
-                  f"Detected: {len(detected)})")
-
-            record = {
-                "clip_id": label["clip_id"],
-                "text_id": text_id,
-                "suffix": suffix,
-                "flaw_type": flaw_type,
-                "severity_tier": label.get("severity_tier", "unknown"),
-                "gt_regions": gt_regions,
-                "detected_regions": detected,
-                "temporal_iou": iou,
-                "duration_s": duration_s,
-            }
-            results.append(record)
-            iou_by_flaw.setdefault(flaw_type, []).append(iou)
-
-    # Summary statistics
-    summary = {}
-    for flaw, ious in iou_by_flaw.items():
-        summary[flaw] = {
-            "mean_iou": float(np.mean(ious)),
-            "min_iou": float(np.min(ious)),
-            "max_iou": float(np.max(ious)),
-            "n_clips": len(ious),
+    # B / C. Real human recordings
+    rows_b, rows_c = [], []
+    if REAL_LABELS.exists():
+        for good in sorted(REAL_AUDIO.glob("real*_good.wav")):
+            prefix = good.stem.replace("_good", "")
+            tid = int(prefix[4:])
+            own = ROOT / "dataset" / "transcripts" / f"{prefix}.txt"
+            tx = own.read_text(encoding="utf-8").strip() if own.exists() else bundled[tid]   # what the reader says
+            rows_c.append({**run(good, None, tx, cfg), "used_for_k_calibration": True})
+            for lp in sorted(REAL_LABELS.glob(f"{prefix}_*.json")):
+                label = json.loads(lp.read_text())
+                wav = REAL_AUDIO / f"{lp.stem}.wav"
+                rows_b.append(run(wav, label, tx, cfg, baseline=good))
+                rows_c.append(run(wav, label, tx, cfg))
+                b, c = rows_b[-1], rows_c[-1]
+                print(f"B {b['clip_id']:30s} same-speaker IoU={b['target_iou']} FP={b['fp_seconds']:5.1f}s | "
+                      f"C cross-speaker IoU={c['target_iou']} FP={c['fp_seconds']:5.1f}s", flush=True)
+            grad += gradient_check(rows_b, prefix)
+        results["real_same_speaker"] = {"summary": summarize(rows_b), "per_clip": rows_b}
+        clean_c = [r for r in rows_c if r["target_iou"] is None]
+        results["real_cross_speaker"] = {
+            "summary": summarize(rows_c),
+            "clean_pairs": [{k: r[k] for k in ("clip_id", "score", "flagged_seconds", "duration_s",
+                                                "used_for_k_calibration")} for r in clean_c],
+            "per_clip": rows_c,
         }
+    results["severity_gradient"] = grad
+    results["severity_gradient_monotonic"] = f"{sum(g['monotonic'] for g in grad)}/{len(grad)}"
 
-    all_ious = [r["temporal_iou"] for r in results]
-    summary["overall"] = {
-        "mean_iou": float(np.mean(all_ious)) if all_ious else 0.0,
-        "n_clips": len(all_ious),
-    }
-
-    out = {
-        "held_out_texts": HELDOUT_TEXTS,
-        "summary": summary,
-        "per_clip": results,
-    }
-
-    out_path = LABELS_DIR / "heldout_results.json"
-    with open(out_path, "w") as f:
-        json.dump(out, f, indent=2)
-
-    print(f"\nHeld-out evaluation complete.")
-    print(f"Results saved to {out_path}")
-    print(f"\nOverall mean temporal IoU: {summary['overall']['mean_iou']:.3f}")
-    for flaw, stats in summary.items():
-        if flaw != "overall":
-            print(f"  {flaw}: mean IoU = {stats['mean_iou']:.3f} ({stats['n_clips']} clips)")
+    (LABELS / "heldout_results.json").write_text(json.dumps(results, indent=2))
+    print("\n=== Summary ===")
+    for key in ("heldout_tts", "real_same_speaker", "real_cross_speaker"):
+        if key in results:
+            s = results[key]["summary"]
+            print(f"{key:20s} mean target IoU={s['mean_target_iou']}  mean FP={s['mean_fp_seconds']}s  (n={s['n_clips']})")
+    if "real_cross_speaker" in results:
+        for c in results["real_cross_speaker"]["clean_pairs"]:
+            print(f"  clean cross-speaker {c['clip_id']}: score {c['score']}, flagged {c['flagged_seconds']}s "
+                  f"of {c['duration_s']}s{' (used for k)' if c['used_for_k_calibration'] else ''}")
+    print("severity gradient monotonic:", results["severity_gradient_monotonic"])
+    print("Saved dataset/labels/heldout_results.json")
 
 
 if __name__ == "__main__":
-    main()
+    main()

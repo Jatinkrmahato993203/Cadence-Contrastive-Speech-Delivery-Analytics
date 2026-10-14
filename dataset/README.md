@@ -1,74 +1,81 @@
-# Cadence Dataset — Contrastive Speech Analytics
+# Cadence Dataset — Contrastive Speech Delivery Benchmark
 
-## Overview
-64 labeled audio clips (8 texts × 8 severity gradient points) for training and
-evaluating speech-delivery flaw detection. Each text produces:
-- **1 GOOD** recording (clean neural TTS oratorical baseline)
-- **7 BAD** recordings: near-perfect, 5 moderate single-flaw, 1 egregious-combined
+## What is in here
 
-All audio: 16 kHz / 16-bit mono WAV. Format follows `{text_id}_{flaw_type}.wav`.
-
-## Calibration / Held-Out Split
-| Set | Texts | Clips | Use |
+| Set | Baseline ("GOOD") recordings | Flawed variants | Purpose |
 |---|---|---|---|
-| Calibration | 1, 2, 3, 4, 5, 7 | 48 | Threshold + normalization statistics |
-| Held-out | 6, 8 | 16 | Temporal-IoU accuracy reporting only |
+| **TTS benchmark** — `audio/text_NN_*.wav` | 8 texts, synthesized with 8 Microsoft Edge neural voices | 17 per text → 136 | Calibration (texts 1–5, 7) and held-out evaluation (texts 6, 8) |
+| **Human recordings** — `audio/real_speakers/realNN_*.wav` | 2 genuine LibriVox readings (Gettysburg Address, Patrick Henry) trimmed to the transcript | 17 per recording → 34 | Evaluation only: same-speaker and cross-speaker (human vs TTS) |
 
-Thresholds and normalization statistics are **never** computed from held-out clips.
+All audio is 16 kHz / 16-bit mono WAV. Every flawed clip has a label JSON with
+time-bounded ground-truth regions on the clip's own timeline.
 
-## Speech Texts & Voice Configuration Table
-| text_id | Title | Voice / Engine | Rate | Text Legal Basis | Voice Persona & Delivery Style |
-|---|---|---|---|---|---|
-| 1 | Lincoln, Gettysburg Address (1863) | MS Edge: `en-US-GuyNeural` | `-4%` | Public Domain (1863) | Solemn, measured oratorical cadence with deliberate clause pauses |
-| 2 | Patrick Henry, Give Me Liberty (1775) | MS Edge: `en-US-ChristopherNeural` | `+2%` | Public Domain (1775) | Urgent, dramatic pacing with heightened vocal emphasis |
-| 3 | Frederick Douglass, Fourth of July (1852) | MS Edge: `en-US-EricNeural` | `-2%` | Public Domain (1852) | Broad dynamic volume range, deep resonance on condemnatory clauses |
-| 4 | Susan B. Anthony, Is It a Crime (1873) | MS Edge: `en-US-AriaNeural` | `-3%` | Public Domain (1873) | Measured, legalistic delivery with rhythmic syllabic stress |
-| 5 | George Washington, Farewell Address (1796) | MS Edge: `en-US-RogerNeural` | `-5%` | Public Domain (1796) | Formal gravity, steady deliberate breathing rhythms |
-| 6 | Sojourner Truth, Ain't I a Woman (1851) | MS Edge: `en-US-JennyNeural` | `-2%` | Public Domain (1851 / Gage 1863) | Emphatic rhetorical refrain delivery — HELD OUT |
-| 7 | Team original passage #1 | MS Edge: `en-US-SteffanNeural` | `-3%` | CC0 Public Domain Dedication | Modern oratorical prose, rhythmic triads, clause boundaries |
-| 8 | Team original passage #2 | MS Edge: `en-US-AnaNeural` | `-2%` | CC0 Public Domain Dedication | Crescendo rhetorical delivery with pitch modulations — HELD OUT |
+### Honest provenance
+* The 8 TTS baselines are **synthetic** (`scripts/generate_dataset.py`, `edge-tts`).
+  They are clean and fully controllable, but they are not "highly effective public
+  speakers". The `speaker_id` values such as `librivox_reader_01_guy` are legacy
+  names — they denote Edge TTS voices (`en-US-GuyNeural`, …), not LibriVox readers.
+* The 2 human recordings are LibriVox volunteer readings (public domain), source URLs
+  in `labels/real_speakers.json`. They are read speech by audiobook volunteers, not
+  the original orators or champion debaters.
+* Texts 1–6 are public-domain speeches; texts 7–8 are team-written passages (CC0).
 
-> **Audio Baseline Architecture:** The underlying speech texts are public domain or author-dedicated under CC0. Clean baseline audio is synthesized using 8 distinct Microsoft Edge TTS neural voices (`edge-tts`) with calibrated speech rates. This provides clean, artifact-free acoustic baselines across distinct vocal profiles, ensuring deterministic reproducibility and enabling controlled programmatic DSP flaw injection without background noise or room reverberation contamination.
+## Severity gradient (per baseline)
 
-> **Note (text 6):** The exact wording of "Ain't I a Woman?" follows the Frances Gage 1863 transcription.
-
-## Flaw Taxonomy and Parameters
-| # | Flaw | Severity Used | Tool | Parameters |
+| Flaw | mild (`*_mild`, tier `near_perfect`) | moderate (`*_mod`) | egregious (`*_egregious`) | Mechanism |
 |---|---|---|---|---|
-| 1 | Pacing | Moderate | librosa.effects.time_stretch | 0.75× or 1.30× |
-| 2 | Pitch / Monotone | Moderate | parselmouth pitch-tier | 40% variance compression |
-| 3 | Pauses | Moderate | pydub splice at MFA boundaries | 1 unplanned pause 0.4–0.8 s |
-| 4 | Volume | Moderate | pydub gain envelope | -10 dB over 20% of clip |
-| 5 | Clarity / Articulation | Moderate | phone crossfade + STFT smoothing + transient softening | 40–60 ms crossfade, 7-bin kernel, -4 dB transient |
-| 6 | Combined Egregious | Egregious | rows 1+2+3 chained | 0.65×/1.5× + 10% variance + 1.0–2.0 s pause |
-| 7 | Near-perfect | Near-perfect | single mildest perturbation | any one flaw at near-perfect tier |
+| Pacing | 1.15× faster | 0.75× (slower) | 0.65× | Praat PSOLA "Lengthen (overlap-add)" over a bounded window (25–60 / 20–65 / 15–75 % of the clip); replaced librosa's phase vocoder, whose "phasiness" also degraded clarity |
+| Pitch | keep 70 % of F0 variance | 35 % (TTS) / 40 % (human) | 10 % | Praat pitch-tier compression toward the mean, bounded window |
+| Pauses | 1 × 0.20–0.35 s | 1 × 0.4–0.8 s | 3 × 1.0–2.0 s | digital-silence splice at a word start |
+| Volume | −6 dB over 15 % | −10 dB over 20 % | −18 dB over 30 % | gain envelope with short fades |
+| Clarity | 15–25 ms x-fade, 3-bin | 40–60 ms, 7-bin | 70–90 ms, 15-bin | phone-boundary crossfade + STFT magnitude smoothing + plosive softening |
+| Combined | — | — | volume −18 dB + pitch 10 % + clarity (egregious) + 2 pauses | chained, distinct windows |
+| Near-perfect | 1.15× pacing over 25–60 % | | | **identical to `pacing_mild`** (same parameters); kept for compatibility, excluded from summary means |
 
-## Dataset JSON Schema (per clip)
+## Labels
+
 ```json
 {
-  "clip_id": "text_01_pacing_mod",
-  "source_text_id": 1,
-  "speaker_id": "librivox_reader_name",
+  "clip_id": "text_06_pause_egregious",
+  "source_text_id": 6,
+  "speaker_id": "librivox_reader_06",
   "speaker_source": "librivox",
-  "flaw_type": "pacing",
-  "severity_tier": "moderate",
-  "split": "calibration",
-  "flaw_regions": [{"start_s": 12.4, "end_s": 38.1, "mechanism": "time_stretch_0.75x"}],
-  "transcript_path": "dataset/transcripts/text_01.txt",
-  "audio_path": "dataset/audio/text_01_pacing_mod.wav"
+  "flaw_type": "pause",
+  "severity_tier": "egregious",
+  "split": "heldout",
+  "flaw_regions": [{"start_s": 32.76, "end_s": 34.075, "mechanism": "silence_splice_1.31s_at_src_32.760s"}],
+  "label_timeline": "output",
+  "transcript_path": "dataset/transcripts/text_06.txt",
+  "audio_path": "dataset/audio/text_06_pause_egregious.wav"
 }
 ```
 
-## File Naming Convention
-`text_{ID:02d}_{flaw}.wav`
+* `flaw_regions` are on the **output** timeline of the flawed clip.
+* Labels written before the generator fix placed 2nd/3rd spliced pauses at their
+  source position and did not shift the other regions of `combined_egregious` for the
+  inserted silences. `scripts/repair_splice_labels.py` rewrote the 16 affected labels;
+  every pause window in every label is verified to be digital silence in the audio
+  (`tests/test_detection.py::test_pause_labels_match_silence_in_audio`).
+* Generation is deterministic per clip (`random.seed(clip_id)`).
 
-| Flaw suffix | Meaning |
+## Splits
+
+| Split | Texts | Used for |
+|---|---|---|
+| Calibration | 1, 2, 3, 4, 5, 7 | choosing the clarity measure and per-feature thresholds (`scripts/04_extract_features.py --calibrate`) |
+| Held-out | 6, 8 | reporting only (`scripts/05_evaluate_heldout.py`) |
+| Human recordings | real01, real02 | reporting only; `real01_good` vs the TTS text-1 baseline was used to set the noise multiplier `k_noise` |
+
+## Other files
+
+| Path | Content |
 |---|---|
-| `good` | GOOD baseline |
-| `pacing_mod` | Pacing, moderate |
-| `pitch_mod` | Pitch/monotone, moderate |
-| `pause_mod` | Pauses, moderate |
-| `volume_mod` | Volume, moderate |
-| `clarity_mod` | Clarity, moderate |
-| `combined_egregious` | Combined/egregious anchor |
-| `nearperfect` | Near-perfect anchor |
+| `transcripts/text_NN.txt` | ground-truth transcripts |
+| `alignments/*.json` | cached transcript-forced word alignments (keyed by audio + transcript + aligner version) |
+| `textgrids/text_NN.TextGrid` | word anchors the TTS flaws were generated from (Whisper free-decoding timestamps; the phone tier is a letter-group approximation used only to place clarity edits) |
+| `textgrids/realNN.TextGrid` | forced-alignment word tier for the human recordings (same letter-group phone tier) |
+| `labels/*_features.json` | per-word normalized features for every TTS clip |
+| `labels/calibration_report.json` | chosen clarity measure, floors, k_noise |
+| `labels/heldout_results.json` | held-out and human-recording evaluation |
+
+Note (text 6): the wording of "Ain't I a Woman?" follows the Frances Gage 1863 transcription.

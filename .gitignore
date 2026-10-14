@@ -19,3 +19,6 @@ htmlcov/
 .idea/
 .DS_Store
 Thumbs.db
+
+# Runtime alignment cache for uploaded audio
+.cache/

@@ -1,0 +1,29 @@
+{
+  "clip_id": "text_08_pause_egregious",
+  "source_text_id": 8,
+  "speaker_id": "team_member_02",
+  "speaker_source": "team",
+  "flaw_type": "pause",
+  "severity_tier": "egregious",
+  "split": "heldout",
+  "flaw_regions": [
+    {
+      "start_s": 34.28,
+      "end_s": 35.602,
+      "mechanism": "silence_splice_1.32s_at_34.280s"
+    },
+    {
+      "start_s": 35.822,
+      "end_s": 36.923,
+      "mechanism": "silence_splice_1.10s_at_34.500s"
+    },
+    {
+      "start_s": 49.263,
+      "end_s": 50.996,
+      "mechanism": "silence_splice_1.73s_at_46.840s"
+    }
+  ],
+  "transcript_path": "dataset/transcripts/text_08.txt",
+  "audio_path": "dataset/audio/text_08_pause_egregious.wav",
+  "label_timeline": "output"
+}

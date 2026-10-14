@@ -1,0 +1,19 @@
+{
+  "clip_id": "real01_clarity_mod",
+  "source_text_id": 1,
+  "speaker_id": "Andrew Marty (LibriVox)",
+  "speaker_source": "librivox_human",
+  "flaw_type": "clarity",
+  "severity_tier": "moderate",
+  "split": "real_speaker",
+  "flaw_regions": [
+    {
+      "start_s": 12.818,
+      "end_s": 41.659,
+      "mechanism": "clarity_xfade56ms_smooth7bin_bounded_12.82to41.66s"
+    }
+  ],
+  "label_timeline": "output",
+  "transcript_path": "dataset/transcripts/text_01.txt",
+  "audio_path": "dataset/audio/real_speakers/real01_clarity_mod.wav"
+}

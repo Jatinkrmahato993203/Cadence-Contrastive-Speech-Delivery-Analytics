@@ -1,122 +1,70 @@
-# Cadence: Demo Video Script & Walkthrough Guide (3–10 Minutes)
+# Cadence — Demo Video Script (~7 minutes)
 
-**Target Track:** Track C — Speech Delivery Analytics, Alignment, and Temporal Grounding  
-**Target Video Duration:** 6–8 minutes  
-**Presenter:** Audio Engineering & ML Lead  
-**Required Screen Capture Assets:**
+Every number spoken in this script is read from `dataset/labels/heldout_results.json`
+(also shown in the dashboard's evaluation panel). Re-run
+`scripts/05_evaluate_heldout.py` and update the numbers here if anything changes.
 
-1. Terminal: Dataset verification & test suite execution.
-2. Code Editor: Licensing citation table (`dataset/README.md`) & `config.yaml`.
-3. Browser: Deployed Cadence Streamlit Dashboard (`http://localhost:8501`).
-
----
-
-## Video Outline & Time Codes
-
-| Segment | Topic                                  |   Time Window   | Key Visual / Action                                                                            |
-| :------ | :------------------------------------- | :-------------: | :--------------------------------------------------------------------------------------------- |
-| **01**  | Introduction & Problem Formulation     | `00:00 - 00:50` | Title slide, Track C overview, core challenges of automated speech coaching                    |
-| **02**  | Dataset Construction & Licensing Audit | `00:50 - 02:10` | Show `dataset/README.md` citation table, explain 8-point gradient & calibration/held-out split |
-| **03**  | Alignment Toolchains & Normalization   | `02:10 - 03:25` | Terminal run of `verify_mfa.py`, explain WhisperX retry & speaker-agnostic normalization       |
-| **04**  | Mode A Demo (Paired Comparison)        | `03:25 - 04:45` | Dashboard upload of `text_01_pacing_mod.wav`, dual-trace overlay, causal explanation card      |
-| **05**  | Mode B Demo (General Mode)             | `04:45 - 06:00` | Upload of arbitrary unseen speech, normative corridor, first-10-word speaker bootstrap         |
-| **06**  | Rubric Scorecard & Reproducibility     | `06:00 - 07:00` | 5-dimension scorecard, NaN-safe base case, determinism re-run verification                     |
-| **07**  | Held-Out Evaluation & Conclusion       | `07:00 - 07:45` | Static held-out temporal IoU panel, summary of engineering rigor                               |
+| # | Segment | Time | On screen |
+|---|---|---|---|
+| 1 | Problem | 0:00–0:40 | Title, one flawed clip playing |
+| 2 | Dataset, honestly | 0:40–1:40 | `dataset/README.md` tables |
+| 3 | Alignment & features | 1:40–2:50 | Dashboard ruler + aligner diagram |
+| 4 | Mode A demo — human reader | 2:50–4:20 | Preset "Human reader — inserted pauses (text 1)" |
+| 5 | Cross-speaker demo | 4:20–5:20 | Preset "Human reader — Gettysburg Address (vs TTS baseline)" |
+| 6 | Evaluation | 5:20–6:30 | Evaluation panel |
+| 7 | Limits & next steps | 6:30–7:00 | Report §7 |
 
 ---
 
-## Detailed Script & Step-by-Step Directions
+### 1. Problem (0:00–0:40)
+> "Speech coaching tools usually give one overall grade. Cadence instead answers
+> *where* the delivery went wrong, *what* changed, and *why* — for example: 'at
+> 24.1 to 25.5 seconds there is an unplanned 1.4-second silence between *long* and
+> *endure*'."
 
-### Segment 1: Introduction & Problem Formulation (`00:00 - 00:50`)
+### 2. Dataset, honestly (0:40–1:40)
+> "Our eight clean baselines are synthesized with Microsoft neural TTS voices.
+> That gives us exact control, but they are not real orators. So we also added two
+> genuine human readings from LibriVox — the Gettysburg Address and Patrick Henry —
+> trimmed to the transcript.
+> From every baseline we generate seventeen variants: mild, moderate and
+> egregious pacing, monotone pitch, pauses, volume and slurred clarity, plus a
+> combined clip. Each label gives the exact time span of the edit, and a test
+> checks that every labelled pause is actual silence in the audio."
 
-- **Speaker:**
-  > _"Hello, everyone. Welcome to the technical demonstration of **Cadence**, our automated speech delivery analytics and temporal flaw grounding system for Track C._
-  >
-  > _Automating speech evaluation is challenging because human speech exhibits enormous biological variance: two speakers delivering the exact same sentence will have completely different pitch ranges, baseline speaking rates, and volume levels. Furthermore, traditional systems evaluate audio holistically with black-box scores that fail to tell the speaker **where** in time a mistake occurred, or **why** it harmed their delivery._
-  >
-  > _Cadence solves this with three core engineering breakthroughs: first, a contrastive 64-clip public-domain dataset spanning an 8-point severity gradient; second, speaker-agnostic feature normalization with automatic new-speaker bootstrapping; and third, deterministic temporal flaw grounding that outputs causal phonetic explanations and a NaN-safe rubric score."_
+### 3. Alignment & features (1:40–2:50)
+> "Free speech recognition drops and mis-hears words, so we force the known
+> transcript onto the audio: Whisper's cross-attention gives evidence in
+> overlapping 30-second windows, one dynamic-time-warping path assigns every
+> word a time, and word edges are snapped to silences. Splicing a pause into a
+> recording leaves every timing before it unchanged.
+> Per word we measure pitch and pitch movement, loudness, tempo with pauses
+> excluded, pause length, and harmonics-to-noise ratio for clarity — each relative
+> to the speaker's own voice, so a higher or louder voice is not a flaw."
 
----
+### 4. Mode A demo — human reader (2:50–4:20)
+Select **Human reader — inserted pauses (text 1)**, reference **Same speaker's clean recording**, Analyze.
+> "The badge says Mode A, edited copy of the reference recording. Each tab overlays
+> the participant and the time-aligned baseline; below it, the per-word delta
+> against the threshold. Here are the three inserted pauses, each explained with
+> its measured length and the baseline's pause at the same place."
+Open one *Evidence* expander to show the raw numbers.
 
-### Segment 2: Dataset Construction & Licensing Audit (`00:50 - 02:10`)
+### 5. Cross-speaker demo (4:20–5:20)
+Select **Human reader — Gettysburg Address (vs TTS baseline)**, Analyze.
+> "Now a different person against the TTS baseline. Two readers never match
+> word for word, so Cadence measures how much the two readings differ naturally
+> and widens its thresholds accordingly. A clean human reading is not buried in
+> false alarms — but this also means only large flaws survive the comparison."
 
-- **Screen:** Open `dataset/README.md` and show the licensing citation table.
-- **Speaker:**
-  > _"Let's begin with our dataset construction ($30\%$ of the track evaluation). Rather than taking shortcuts with contemporary conference recordings that violate copyright or non-commercial licenses, Cadence strictly utilizes recordings dedicated permanently to the **Public Domain**._
-  >
-  > _As shown in our licensing citation table, texts 1 through 6 are sourced from LibriVox narrations where the reader explicitly dedicated the sound recording to the public domain. We screened multiple volunteer recordings per text, selecting the most rhetorical and expressive deliveries rather than flat audiobook narrations. Texts 7 and 8 are original oratorical passages written and performed by our team._
-  >
-  > _Our 64-clip corpus is structured into an explicit partition: a **Calibration Set of 48 clips (texts 1–5 and 7)** used to derive our statistical thresholds, and a **Held-Out Test Set of 16 clips (Text 6: Sojourner Truth, and Text 8: Team Oratory 2)**. Held-out clips are strictly isolated and never touch threshold calibration._
-  >
-  > _For each text, we generate an 8-point gradient: 1 clean baseline, 1 near-perfect variant, 5 single-flaw moderate perturbations (pacing, pitch, pauses, volume, and clarity), and 1 egregious combined anchor. Because each perturbation is applied analytically from forced alignment anchors, ground-truth flaw timestamps are known with millisecond precision without subjective annotation error."_
+### 6. Evaluation (5:20–6:30)
+Scroll to the evaluation panel and read out the three summary lines and the
+severity-gradient result exactly as displayed.
+> "These texts and recordings were never used to choose thresholds. Detection is
+> strong when the reference is the same recording, the score falls as severity
+> rises, and the cross-speaker line shows the honest limit."
 
----
-
-### Segment 3: Forced Alignment & Feature Extraction (`02:10 - 03:25`)
-
-- **Screen:** Switch to Terminal and run:
-  ```bash
-  python scripts/verify_mfa.py
-  ```
-- **Speaker:**
-  > _"Our forced alignment architecture operates across two toolchains. Offline, we utilize the Montreal Forced Aligner with ARPA acoustic models to generate phonetic TextGrids for dataset synthesis. As you can see on the terminal, all eight baseline clips pass automated CI sanity checks: aligned spans within 2% of true audio duration, zero overlapping intervals, and exact word counts._
-  >
-  > _Online, inside our deployed dashboard, we utilize WhisperX. WhisperX provides wav2vec2-based word alignments and confidence scores. If any word exhibits confidence below our empirical threshold ($\tau = 0.50$), Cadence triggers a whole-clip retry using WhisperX's medium model. We re-align the entire clip rather than an isolated segment because acoustic forced alignment requires surrounding phonetic context. Remaining uncertain words are visually flagged with grey hatching rather than silently dropped._
-  >
-  > _Across these alignments, we extract seven acoustic dimensions: pitch contour via Parselmouth, RMS and integrated LUFS loudness via pyloudnorm, tempo via word boundary deltas, pause structures, and timbral clarity via 13 MFCCs, HNR, and spectral centroids. All metrics are normalized into speaker-invariant units: semitones from median F0, relative dB from 95th-percentile RMS, and rate z-scores."_
-
----
-
-### Segment 4: Mode A Walkthrough — Paired Comparison (`03:25 - 04:45`)
-
-- **Screen:** Open Cadence Streamlit Dashboard in browser. Drag and drop `dataset/audio/text_01_pacing_mod.wav` and select `text_01.txt`.
-- **Speaker:**
-  > _"Now let's examine Cadence in action. We upload `text_01_pacing_mod.wav`—Abraham Lincoln's Gettysburg Address with moderate pacing degradation._
-  >
-  > _Notice that Cadence immediately triggers **Mode A (Paired Mode)** because the transcript matches bundled text #1 with $>90\%$ token similarity. In Mode A, Cadence executes a word-for-word index comparison against the clean baseline._
-  >
-  > _Look at the interactive Plotly time-series overlay: the solid blue line represents the uploaded clip, while the dashed orange line is the clean baseline. Notice how the uploaded rate contour diverges significantly across the entire passage._
-  >
-  > _Below the timeline, Cadence has flagged the flaw region with shaded red vertical bands. Clicking to expand the flaw card reveals our causal explanation engine:_
-  >
-  > _'Speech rate was 33% slower than baseline (2.0 words/s vs. 3.0 words/s) across 'conceived in Liberty and dedicated to the proposition', dragging stressed syllables and disrupting the oratorical cadence.'_
-  >
-  > _Every number in this explanation is derived directly from our feature extraction pipeline, not an ungrounded LLM hallucination."_
-
----
-
-### Segment 5: Mode B Walkthrough — General Analysis (`04:45 - 06:00`)
-
-- **Screen:** In the dashboard, upload a completely fresh, unseen speech excerpt (non-bundled text).
-- **Speaker:**
-  > _"Next, Requirement 4a requires the dashboard to handle arbitrary user uploads. Here, we upload a new speech that does not match any bundled text._
-  >
-  > _Cadence automatically switches to **Mode B (General Mode)**. Because there is no paired baseline to compare against word-for-word, the comparator changes:_
-  >
-  > _First, Cadence bootstraps the speaker's vocal baseline using our mode-agnostic algorithm: median pitch and 95th-percentile energy are estimated from the first 10 spoken words._
-  >
-  > _Second, Cadence renders the contour against a shaded **normative corridor** computed from our calibration-set pooled distribution ($\mu \pm 2.5\sigma$). Notice how words deviating outside the corridor are localized and flagged, maintaining strict statistical population consistency."_
-
----
-
-### Segment 6: Rubric Scorecard & Determinism Verification (`06:00 - 07:00`)
-
-- **Screen:** Scroll down to the Scorecard section. Click the 'Re-run Pipeline (Verify Determinism)' button.
-- **Speaker:**
-  > _"Here is our Rubric Scorecard, evaluating speech delivery across five 20-point dimensions: Pacing, Pitch, Pauses, Volume, and Clarity._
-  >
-  > _Crucially, our scoring formula includes an explicit base case preventing the IEEE-754 `NaN` bug. On clean recordings where zero regions are flagged, the severity weight evaluates to zero rather than an undefined empty mean, ensuring a perfect score of 20.0 instead of NaN._
-  >
-  > _Watch what happens when I click the 'Re-run' button: the pipeline re-computes all features, regions, and scores from scratch. As expected, the resulting JSON output and scores are 100% bit-identical. Our entire pipeline is a pure deterministic function."_
-
----
-
-### Segment 7: Held-Out Empirical Evaluation Panel & Wrap-Up (`07:00 - 07:45`)
-
-- **Screen:** Scroll to the bottom panel displaying the Held-Out Evaluation table and chart.
-- **Speaker:**
-  > _"Finally, we present our Held-Out Evaluation Panel. To address the 25%-weighted 'accuracy of flaw-region timestamps' criterion without circular reasoning, we evaluated the system against the 14 degraded clips in our held-out test set (texts 6 and 8)._
-  >
-  > _Comparing our detected flaw regions against known ground-truth transforms yields an aggregate **Temporal IoU of 0.867** at $\pm 25\text{ ms}$ resolution, with pause detection reaching $0.916$ IoU._
-  >
-  > _In summary, Cadence provides a legally uncompromised 64-clip contrastive dataset, dual forced alignment toolchains, speaker-agnostic normalization, and deterministic, temporally grounded causal feedback. Thank you for your time!"_
+### 7. Limits & next steps (6:30–7:00)
+> "The biggest gap is data: we need recordings of genuinely effective speakers,
+> and the same people reading badly, to calibrate cross-speaker comparison. That,
+> a stronger aligner, and listener ratings to validate the explanations are next."

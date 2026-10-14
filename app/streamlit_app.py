@@ -3,647 +3,429 @@ app/streamlit_app.py
 ---------------------
 Cadence — Speech Delivery Analytics Dashboard
 
-Full pipeline:
-  1. Upload audio + transcript
-  2. Mode detection (A = paired, B = general)
-  3. WhisperX alignment (with confidence retry)
-  4. Feature extraction + speaker-agnostic normalization
-  5. Flaw grounding (Mode A: word-index diff vs GOOD baseline;
-                     Mode B: vs pooled normative corridor)
-  6. Causal explanation generation
+Pipeline (pipeline/analysis.py, shared with the evaluation scripts):
+  1. Upload audio + transcript (or pick a preset)
+  2. Mode detection — A: transcript matches a bundled speech (paired GOOD baseline)
+                      B: anything else (deviations from the speaker's own norm)
+  3. Transcript-forced word alignment (Whisper cross-attention DTW + silence snapping)
+  4. Feature extraction (STFT, MFCC, F0, HNR, energy, tempo, pauses) + self-normalization
+  5. Flaw grounding: per-word deltas, thresholds tau = max(floor, k * noise)
+  6. Causal explanations (deterministic, from measured numbers)
   7. Rubric scoring (NaN-safe)
-  8. UI: waveform ruler, time-series overlay, flaw regions, scorecard,
-          held-out evaluation panel
 
-Deploy: streamlit run app/streamlit_app.py
-        or push to Streamlit Community Cloud (requirements.txt + packages.txt)
+Run: streamlit run app/streamlit_app.py
 """
 
 from __future__ import annotations
 
+import io
 import json
 import sys
 import tempfile
 from pathlib import Path
 
 import numpy as np
-import streamlit as st
 import plotly.graph_objects as go
-from plotly.subplots import make_subplots
+import streamlit as st
 
 ROOT = Path(__file__).parent.parent
 sys.path.insert(0, str(ROOT))
 
-# --- Page config --------------------------------------------------------------
-st.set_page_config(
-    page_title="Cadence — Speech Analytics",
-    page_icon="🎙️",
-    layout="wide",
-    initial_sidebar_state="expanded",
-)
+from pipeline.analysis import analyze, load_bundled, load_config  # noqa: E402
 
-# --- Global CSS ---------------------------------------------------------------
+st.set_page_config(page_title="Cadence — Speech Analytics", page_icon="🎙️", layout="wide",
+                   initial_sidebar_state="expanded")
+
 st.markdown("""
 <style>
-  .main { background: #0f1117; }
   .block-container { padding-top: 1.5rem; }
-  h1 { font-size: 2.1rem; font-weight: 700; letter-spacing: -0.5px; }
-  h2 { font-size: 1.3rem; font-weight: 600; color: #a0c4ff; margin-top: 1.5rem; }
-  h3 { font-size: 1.05rem; font-weight: 600; color: #cdd6f4; }
-  .stMetric { background: #1e2130; border-radius: 10px; padding: 0.5rem 1rem; }
-  .mode-badge {
-    display: inline-block; padding: 3px 12px; border-radius: 20px;
-    font-size: 0.82rem; font-weight: 600; letter-spacing: 0.5px;
-  }
-  .mode-a { background: #2d4a2d; color: #7ec87e; }
-  .mode-b { background: #2d3a4a; color: #7eb8e8; }
-  .heldout-badge { background: #4a2d2d; color: #e87e7e; }
-  .uncertain-note { font-size: 0.78rem; color: #888; font-style: italic; }
-  .flaw-card {
-    background: #1a1d2e; border-left: 3px solid #f38ba8;
-    border-radius: 6px; padding: 0.7rem 1rem; margin: 0.5rem 0;
-    font-size: 0.9rem;
-  }
-  .score-good { color: #a6e3a1; }
-  .score-mid  { color: #f9e2af; }
-  .score-bad  { color: #f38ba8; }
+  h2 { font-size: 1.3rem; font-weight: 600; margin-top: 1.4rem; }
+  .mode-badge { display:inline-block; padding:3px 12px; border-radius:20px; font-size:0.82rem; font-weight:600; }
+  .mode-a { background:#2d4a2d; color:#7ec87e; }
+  .mode-b { background:#2d3a4a; color:#7eb8e8; }
+  .heldout-badge { background:#4a2d2d; color:#e87e7e; padding:1px 8px; border-radius:10px; }
+  .flaw-card { background:#1a1d2e; border-left:4px solid #f38ba8; border-radius:6px;
+               padding:0.7rem 1rem; margin:0.5rem 0; font-size:0.9rem; color:#cdd6f4; }
+  .info-card { background:#1c1a24; border-left:4px solid #f9e2af; border-radius:8px;
+               padding:0.8rem 1.1rem; margin:0.8rem 0; font-size:0.88rem; color:#cdd6f4; }
+  .muted { color:#888; font-size:0.78rem; }
 </style>
 """, unsafe_allow_html=True)
 
-# --- Helpers ------------------------------------------------------------------
+FLAW_COLORS = {
+    "pitch": "rgba(243,139,168,0.30)", "energy": "rgba(249,226,175,0.30)",
+    "rate": "rgba(137,220,235,0.30)", "pause": "rgba(166,227,161,0.35)",
+    "clarity": "rgba(203,166,247,0.30)",
+}
+FLAW_NAMES = {"pitch": "Pitch / intonation", "energy": "Volume", "rate": "Pacing",
+              "pause": "Pauses", "clarity": "Clarity"}
+DARK = dict(paper_bgcolor="#0f1117", plot_bgcolor="#0f1117", font=dict(color="#cdd6f4", size=11))
+AUDIO = ROOT / "dataset" / "audio"
+REAL = AUDIO / "real_speakers"
 
-@st.cache_resource
-def load_config():
-    import yaml
-    with open(ROOT / "config.yaml") as f:
-        return yaml.safe_load(f)
 
+# --- Data helpers ---------------------------------------------------------------------
 
-@st.cache_resource
-def load_bundled_transcripts() -> tuple[dict, dict]:
-    """Load all 8 bundled transcripts and their split labels."""
-    transcripts, splits = {}, {}
-    split_map = {1:"calibration",2:"calibration",3:"calibration",4:"calibration",
-                 5:"calibration",6:"heldout",7:"calibration",8:"heldout"}
-    for i in range(1, 9):
-        p = ROOT / "dataset" / "transcripts" / f"text_{i:02d}.txt"
-        if p.exists():
-            transcripts[i] = p.read_text().strip()
-            splits[i] = split_map[i]
-    return transcripts, splits
+@st.cache_data
+def heldout_results() -> dict | None:
+    p = ROOT / "dataset" / "labels" / "heldout_results.json"
+    return json.loads(p.read_text()) if p.exists() else None
 
 
 @st.cache_data
-def load_heldout_results() -> dict | None:
-    p = ROOT / "dataset" / "labels" / "heldout_results.json"
-    if p.exists():
-        with open(p) as f:
-            return json.load(f)
-    return None
+def real_meta() -> dict:
+    p = ROOT / "dataset" / "labels" / "real_speakers.json"
+    return json.loads(p.read_text()) if p.exists() else {}
 
 
-def load_good_baseline_audio(text_id: int) -> Path | None:
-    p = ROOT / "dataset" / "audio" / f"text_{text_id:02d}_good.wav"
-    return p if p.exists() else None
-
-
-@st.cache_data(show_spinner=False)
-def run_full_pipeline(audio_bytes: bytes, transcript: str) -> dict:
-    """
-    Main pipeline: alignment → features → normalize → ground → explain → score.
-    Returns a dict of all results for the UI.
-    """
+def _to_wav(audio_bytes: bytes) -> str:
+    """Decode any supported upload to a 16 kHz mono WAV temp file."""
     import soundfile as sf
-    import yaml
-
-    cfg = load_config()
-    bundled, splits = load_bundled_transcripts()
-
-    # Write audio to temp file
-    with tempfile.NamedTemporaryFile(suffix=".wav", delete=False) as tmp:
-        tmp.write(audio_bytes)
-        tmp_path = tmp.name
-
     try:
-        # 1. Alignment
-        from pipeline.aligner import align
-        try:
-            alignment = align(tmp_path, transcript=transcript, cfg=cfg)
-        except Exception as e:
-            return {"error": f"Alignment failed: {e}"}
+        y, sr = sf.read(io.BytesIO(audio_bytes), dtype="float32", always_2d=False)
+    except Exception:
+        import librosa
+        with tempfile.NamedTemporaryFile(suffix=".bin", delete=False) as t:
+            t.write(audio_bytes)
+        y, sr = librosa.load(t.name, sr=None, mono=True)
+    if y.ndim > 1:
+        y = y.mean(axis=1)
+    if sr != 16000:
+        import librosa
+        y = librosa.resample(y, orig_sr=sr, target_sr=16000)
+    tmp = tempfile.NamedTemporaryFile(suffix=".wav", delete=False)
+    sf.write(tmp.name, y, 16000, subtype="PCM_16")
+    return tmp.name
 
-        info = sf.info(tmp_path)
-        duration_s = info.duration
 
-        # 2. Features
-        from pipeline import features as feat_mod
-        clip_feat = feat_mod.extract(tmp_path, alignment)
-
-        # 3. Mode detection
-        from pipeline.grounder import detect_mode
-        mode, matched_id, matched_split = detect_mode(transcript, bundled, splits)
-
-        # 4. Normalize uploaded clip
-        from pipeline import normalizer as norm_mod
-        norm_clip, profile = norm_mod.normalize(clip_feat, "uploaded_speaker", cfg=cfg)
-
-        # 5. Load + normalize baseline (Mode A)
-        baseline_norm = None
-        speaker_source = "librivox"
-        if mode == "A" and matched_id:
-            good_path = load_good_baseline_audio(matched_id)
-            if good_path:
-                try:
-                    good_align = align(str(good_path), cfg=cfg)
-                    good_feat = feat_mod.extract(str(good_path), good_align)
-                    baseline_norm, _ = norm_mod.normalize(
-                        good_feat, f"good_{matched_id}", cfg=cfg
-                    )
-                except Exception:
-                    mode = "B"  # fallback if baseline unavailable
-
-        # 6. Ground
-        from pipeline.grounder import ground
-        pooled_means = {"pitch":0.0,"energy":0.0,"rate":0.0,
-                        "clarity_mfcc":0.0,"clarity_hnr":0.0}
-        grounding = ground(
-            norm_clip, mode=mode,
-            matched_text_id=matched_id,
-            matched_split=matched_split,
-            baseline_norm_clip=baseline_norm,
-            speaker_source=speaker_source,
-            cfg=cfg,
-            pooled_means=pooled_means,
-        )
-
-        # 7. Explain
-        from pipeline.explainer import explain
-        explanations = explain(grounding, norm_clip.words, use_llm=True)
-
-        # 8. Score
-        from pipeline.scorer import score
-        rubric = score(grounding, total_duration_s=duration_s)
-
-        return {
-            "mode": mode,
-            "matched_id": matched_id,
-            "matched_split": matched_split,
-            "duration_s": duration_s,
-            "alignment": alignment,
-            "norm_clip": norm_clip,
-            "baseline_norm": baseline_norm,
-            "grounding": grounding,
-            "explanations": explanations,
-            "rubric": rubric,
-            "error": None,
-        }
-    except Exception as e:
-        return {"error": str(e)}
+@st.cache_data(show_spinner=False, max_entries=16)
+def run_pipeline(audio_bytes: bytes, transcript: str, baseline: str | None, force_b: bool):
+    path = _to_wav(audio_bytes)
+    try:
+        return analyze(path, transcript, cfg=load_config(), baseline_override=baseline,
+                       force_mode_b=force_b), None
+    except Exception as exc:  # surface errors in the UI
+        return None, f"{type(exc).__name__}: {exc}"
     finally:
-        Path(tmp_path).unlink(missing_ok=True)
+        Path(path).unlink(missing_ok=True)
 
 
-# --- Plot helpers --------------------------------------------------------------
+# --- Plot helpers ----------------------------------------------------------------------
 
-FLAW_COLORS = {
-    "pitch": "rgba(243,139,168,0.35)",
-    "energy": "rgba(249,226,175,0.35)",
-    "rate": "rgba(137,220,235,0.35)",
-    "pause": "rgba(166,227,161,0.35)",
-    "clarity": "rgba(203,166,247,0.35)",
-    "combined": "rgba(250,179,135,0.35)",
-}
-
-FEATURE_LABELS = {
-    "pitch": "Pitch (semitones from speaker median)",
-    "energy": "Energy (dB relative to 95th-pct RMS)",
-    "rate": "Speech Rate (z-score)",
-}
+def _warp_points(res):
+    """Paired word midpoints (baseline time, upload time) used to time-warp the baseline."""
+    if res.baseline is None:
+        return None
+    uw, bw = res.upload.norm.words, res.baseline.norm.words
+    pts = sorted({((bw[j].start + bw[j].end) / 2, (uw[i].start + uw[i].end) / 2)
+                  for i, j in enumerate(res.grounding.pairs) if j is not None})
+    if len(pts) < 2:
+        return None
+    bx, ux = np.array(pts).T
+    keep = np.r_[True, np.diff(bx) > 0]
+    return bx[keep], ux[keep]
 
 
-def _build_overlay_chart(result: dict, feature: str) -> go.Figure:
-    """Build a Plotly time-series overlay chart for one feature."""
-    norm_clip = result["norm_clip"]
-    grounding = result["grounding"]
-    mode = result["mode"]
+def _shade(fig, res, feature):
+    for r in res.grounding.flaw_regions:
+        if r.flaw_type == feature:
+            fig.add_vrect(x0=r.start_s, x1=r.end_s, fillcolor=FLAW_COLORS[feature], line_width=0)
+    for s, e in res.upload.alignment.uncertain_spans:
+        fig.add_vrect(x0=s, x1=e, fillcolor="rgba(150,150,150,0.12)", line_width=0)
 
-    # Build time axis (frame-level or word-level depending on feature)
-    if feature == "pitch":
-        y_up = norm_clip.f0_contour_st
-    elif feature == "energy":
-        y_up = norm_clip.rms_contour_db_rel
-    else:
-        y_up = norm_clip.rate_contour_zscore
 
-    x_up = np.linspace(0, result["duration_s"], len(y_up)).tolist()
+def _layout(fig, title, ytitle, dur):
+    fig.update_layout(height=250, margin=dict(l=0, r=0, t=30, b=0), title=dict(text=title, font=dict(size=13)),
+                      xaxis=dict(title="Time in uploaded clip (s)", range=[0, dur], gridcolor="#2a2d3e"),
+                      yaxis=dict(title=ytitle, gridcolor="#2a2d3e"),
+                      legend=dict(orientation="h", y=1.12, x=1, xanchor="right"), **DARK)
+    return fig
 
+
+def contour_chart(res, feature: str) -> go.Figure:
+    up, base, dur = res.upload, res.baseline, res.duration_s
+    warp = _warp_points(res)
     fig = go.Figure()
 
-    # Uploaded clip contour
-    fig.add_trace(go.Scatter(
-        x=x_up, y=y_up,
-        name="Uploaded", line=dict(color="#89dceb", width=1.5),
-    ))
-
-    # Baseline or normative corridor
-    if mode == "A" and result.get("baseline_norm"):
-        bn = result["baseline_norm"]
-        if feature == "pitch":
-            y_base = bn.f0_contour_st
-        elif feature == "energy":
-            y_base = bn.rms_contour_db_rel
-        else:
-            y_base = bn.rate_contour_zscore
-        x_base = np.linspace(0, result["duration_s"], len(y_base)).tolist()
-        fig.add_trace(go.Scatter(
-            x=x_base, y=y_base,
-            name="GOOD Baseline", line=dict(color="#a6e3a1", width=1.5, dash="dash"),
-        ))
-    else:
-        # Mode B: normative corridor (shaded band)
-        corridor = grounding.normative_corridor.get(feature)
-        if corridor:
-            mu, half = corridor
-            fig.add_hrect(
-                y0=mu - half, y1=mu + half,
-                fillcolor="rgba(166,227,161,0.12)",
-                line_width=0,
-                annotation_text="Expected range",
-                annotation_position="top left",
-                annotation=dict(font_size=10, font_color="#a6e3a1"),
-            )
-
-    # Flaw region shading
-    for region in grounding.flaw_regions:
-        if region.flaw_type in ("pitch", "energy", "rate", "clarity", "combined", "pause"):
-            fig.add_vrect(
-                x0=region.start_s, x1=region.end_s,
-                fillcolor=FLAW_COLORS.get(region.flaw_type, "rgba(200,200,200,0.2)"),
-                line_width=0,
-            )
-
-    # Uncertain spans (grey hatching)
-    for span_start, span_end in result["alignment"].uncertain_spans:
-        fig.add_vrect(
-            x0=span_start, x1=span_end,
-            fillcolor="rgba(150,150,150,0.15)",
-            line_width=0,
-            annotation_text="? uncertain alignment",
-            annotation=dict(font_size=9, font_color="#888"),
-        )
-
-    fig.update_layout(
-        height=220, margin=dict(l=0, r=0, t=25, b=0),
-        paper_bgcolor="#0f1117", plot_bgcolor="#0f1117",
-        font=dict(color="#cdd6f4", size=11),
-        xaxis=dict(title="Time (s)", gridcolor="#2a2d3e", showgrid=True),
-        yaxis=dict(title=FEATURE_LABELS.get(feature, feature), gridcolor="#2a2d3e"),
-        legend=dict(bgcolor="#1e2130", bordercolor="#2a2d3e", borderwidth=1),
-        title=dict(text=FEATURE_LABELS.get(feature, feature).split("(")[0].strip(),
-                   font=dict(size=13)),
-    )
+    if feature in ("pitch", "energy"):
+        hop = up.norm.frame_hop_s
+        yu = np.array(up.norm.f0_contour_st if feature == "pitch" else up.norm.rms_contour_db_rel, float)
+        if feature == "energy":
+            yu = np.convolve(yu, np.ones(5) / 5, mode="same")
+        fig.add_trace(go.Scatter(x=np.arange(len(yu)) * hop, y=yu, name="Participant",
+                                 line=dict(color="#89dceb", width=1.4), connectgaps=False))
+        if base is not None and warp is not None:
+            yb = np.array(base.norm.f0_contour_st if feature == "pitch" else base.norm.rms_contour_db_rel, float)
+            if feature == "energy":
+                yb = np.convolve(yb, np.ones(5) / 5, mode="same")
+            tb = np.interp(np.arange(len(yb)) * hop, *warp)
+            fig.add_trace(go.Scatter(x=tb, y=yb, name="GOOD baseline (time-aligned)",
+                                     line=dict(color="#a6e3a1", width=1.2, dash="dot"), connectgaps=False))
+        ytitle = "semitones re. own median F0" if feature == "pitch" else "dB re. own loud speech"
+    elif feature == "rate":
+        uw = up.norm.words
+        fig.add_trace(go.Scatter(x=[(w.start + w.end) / 2 for w in uw], y=[w.rate_wps for w in uw],
+                                 name="Participant", mode="lines+markers", marker=dict(size=3),
+                                 line=dict(color="#89dceb", width=1.4)))
+        if base is not None:
+            bw = base.norm.words
+            xs = [(uw[i].start + uw[i].end) / 2 for i, j in enumerate(res.grounding.pairs) if j is not None]
+            ys = [bw[j].rate_wps for j in res.grounding.pairs if j is not None]
+            fig.add_trace(go.Scatter(x=xs, y=ys, name="GOOD baseline (same words)",
+                                     line=dict(color="#a6e3a1", width=1.2, dash="dot")))
+        ytitle = "words per second of speech"
+    elif feature == "pause":
+        uw = up.norm.words
+        fig.add_trace(go.Bar(x=[w.start for w in uw], y=[w.pause_duration_s for w in uw], width=0.12,
+                             name="Participant pause before word", marker_color="#89dceb"))
+        if base is not None:
+            bw = base.norm.words
+            fig.add_trace(go.Scatter(
+                x=[uw[i].start for i, j in enumerate(res.grounding.pairs) if j is not None],
+                y=[bw[j].pause_duration_s for j in res.grounding.pairs if j is not None],
+                mode="markers", name="GOOD baseline pause", marker=dict(color="#a6e3a1", size=5, symbol="line-ew-open")))
+        ytitle = "silence before word (s)"
+    else:  # clarity
+        uw = up.norm.words
+        fig.add_trace(go.Scatter(x=[(w.start + w.end) / 2 for w in uw], y=[w.clarity for w in uw],
+                                 name="Participant", line=dict(color="#89dceb", width=1.2)))
+        if base is not None:
+            bw = base.norm.words
+            fig.add_trace(go.Scatter(
+                x=[(uw[i].start + uw[i].end) / 2 for i, j in enumerate(res.grounding.pairs) if j is not None],
+                y=[bw[j].clarity for j in res.grounding.pairs if j is not None],
+                name="GOOD baseline (same words)", line=dict(color="#a6e3a1", width=1.2, dash="dot")))
+        ytitle = f"{load_config()['normalization']['clarity_feature']} re. own median"
+    _shade(fig, res, feature)
+    fig = _layout(fig, FLAW_NAMES[feature], ytitle, dur)
+    if feature == "pitch":
+        fig.update_yaxes(range=[-12, 12])      # octave errors from the F0 tracker would squash the scale
+    elif feature == "energy":
+        fig.update_yaxes(range=[-50, 6])
     return fig
 
 
-def _score_color_class(score: float, max_score: float = 20.0) -> str:
-    pct = score / max_score
-    if pct >= 0.75:
-        return "score-good"
-    if pct >= 0.45:
-        return "score-mid"
-    return "score-bad"
-
-
-def _score_bar(score: float, max_score: float = 20.0) -> go.Figure:
-    pct = score / max_score
-    color = "#a6e3a1" if pct >= 0.75 else "#f9e2af" if pct >= 0.45 else "#f38ba8"
-    fig = go.Figure(go.Bar(
-        x=[score], y=[""], orientation="h",
-        marker=dict(color=color, line=dict(width=0)),
-        width=0.5,
-    ))
-    fig.update_layout(
-        height=40, margin=dict(l=0, r=0, t=0, b=0),
-        paper_bgcolor="#1e2130", plot_bgcolor="#1e2130",
-        xaxis=dict(range=[0, max_score], showgrid=False, showticklabels=False),
-        yaxis=dict(showgrid=False, showticklabels=False),
-        showlegend=False,
-    )
+def delta_chart(res, feature: str) -> go.Figure:
+    uw = res.upload.norm.words
+    d = res.grounding.word_deltas.get(feature, [])
+    tau = res.grounding.thresholds.get(feature, 0.0)
+    x = [(w.start + w.end) / 2 for w in uw]
+    flags = res.grounding.word_deviant.get(feature, [False] * len(d))
+    fig = go.Figure(go.Scatter(x=x, y=d, mode="lines+markers", name="per-word delta",
+                               line=dict(color="#cdd6f4", width=1),
+                               marker=dict(size=[7 if f else 3 for f in flags],
+                                           color=["#f38ba8" if f else "#89dceb" for f in flags])))
+    for s in (tau, -tau):
+        fig.add_hline(y=s, line=dict(color="#f9e2af", dash="dash", width=1))
+    _shade(fig, res, feature)
+    unit = {"pitch": "log2 ratio of pitch variability", "energy": "dB", "rate": "log2 tempo ratio",
+            "pause": "seconds", "clarity": "clarity units"}[feature]
+    fig = _layout(fig, f"{FLAW_NAMES[feature]} — delta vs threshold τ = ±{tau:.2f}", unit, res.duration_s)
+    fig.update_layout(height=200, showlegend=False)
     return fig
 
 
-# --- Sidebar ------------------------------------------------------------------
+def ruler_chart(res) -> go.Figure:
+    words = res.upload.alignment.words
+    fig = go.Figure(go.Scatter(
+        x=[(w.start + w.end) / 2 for w in words], y=[0.5] * len(words), mode="text+markers",
+        text=[w.word for w in words], textposition="top center",
+        marker=dict(color=["#888" if w.uncertain else "#a0c4ff" for w in words], size=6, symbol="line-ns"),
+        textfont=dict(size=9), hovertemplate="%{text}<br>%{x:.2f}s<extra></extra>"))
+    for r in res.grounding.flaw_regions:
+        fig.add_vrect(x0=r.start_s, x1=r.end_s, fillcolor=FLAW_COLORS[r.flaw_type], line_width=0)
+    for s, e in res.upload.alignment.uncertain_spans:
+        fig.add_vrect(x0=s, x1=e, fillcolor="rgba(150,150,150,0.15)", line_width=0)
+    fig.update_layout(height=120, margin=dict(l=0, r=0, t=10, b=0), showlegend=False,
+                      xaxis=dict(range=[0, res.duration_s], title="Time (s)", gridcolor="#2a2d3e"),
+                      yaxis=dict(showticklabels=False, range=[-0.5, 1.5]), **DARK)
+    return fig
+
+
+# --- Presets -------------------------------------------------------------------------------
+
+bundled, splits = load_bundled()
+meta = real_meta()
+
+
+def _presets() -> dict:
+    p = {"Custom upload": None}
+    for key, m in meta.items():
+        tid = int(m["text_id"])
+        good = REAL / f"real{tid:02d}_good.wav"
+        if good.exists():
+            p[f"🧑 Human reader — {m['title'].split('(')[0].strip()} (vs TTS baseline)"] = \
+                {"path": good, "text_id": tid, "real": key}
+            for suf, name in (("pause_egregious", "inserted pauses"), ("pitch_mod", "monotone stretch"),
+                              ("pacing_mod", "slowed passage")):
+                f = REAL / f"real{tid:02d}_{suf}.wav"
+                if f.exists():
+                    p[f"🧑 Human reader — {name} (text {tid})"] = {"path": f, "text_id": tid, "real": key,
+                                                                    "same_speaker": good}
+    for tid, suf, name in ((6, "pause_mod", "unplanned pause"), (6, "clarity_mod", "slurred passage"),
+                           (8, "pacing_mod", "slowed passage"), (8, "volume_mod", "volume drop"),
+                           (8, "combined_egregious", "combined flaws")):
+        f = AUDIO / f"text_{tid:02d}_{suf}.wav"
+        if f.exists():
+            p[f"🧪 Held-out text {tid} — {name}"] = {"path": f, "text_id": tid}
+    return p
+
+
+PRESETS = _presets()
 
 with st.sidebar:
     st.markdown("## 🎙️ Cadence")
-    st.markdown("**Speech Delivery Analytics**")
+    choice = st.selectbox("Preset or upload", list(PRESETS))
+    preset = PRESETS[choice]
+    audio_bytes, transcript_default = None, ""
+    if preset:
+        audio_bytes = preset["path"].read_bytes()
+        # Human recordings use what the reader actually says (may differ from the bundled excerpt)
+        reader_tx = meta.get(preset.get("real"), {}).get("transcript_path")
+        transcript_default = ((ROOT / reader_tx).read_text(encoding="utf-8").strip() if reader_tx
+                              else bundled.get(preset["text_id"], ""))
+        st.caption(f"Loaded `{preset['path'].name}`")
+    upload = st.file_uploader("Audio (WAV / FLAC / MP3)", type=["wav", "flac", "mp3", "ogg"])
+    if upload is not None:
+        audio_bytes, transcript_default = upload.read(), ""
+    transcript = st.text_area("Transcript (exact words spoken)", value=transcript_default, height=140,
+                              key=f"tx_{choice}")
+    reference = "Bundled GOOD baseline (TTS)"
+    if preset and preset.get("same_speaker"):
+        reference = st.radio("Reference recording",
+                             ["Same speaker's clean recording", "Bundled GOOD baseline (TTS)"])
+    force_b = st.checkbox("Force Mode B (ignore bundled baselines)")
+    run = st.button("🚀 Analyze", type="primary", use_container_width=True)
     st.divider()
-    st.markdown("**Upload**")
-    uploaded_audio = st.file_uploader(
-        "Audio file (WAV, MP3, FLAC)", type=["wav", "mp3", "flac"],
-        key="audio_upload"
-    )
-    uploaded_transcript = st.text_area(
-        "Transcript", height=160, placeholder="Paste the speech transcript here…",
-        key="transcript_input"
-    )
-    run_btn = st.button("🚀 Analyze", use_container_width=True, type="primary")
-    st.divider()
-    st.markdown("""
-**Modes**
-- 🎯 **Mode A** — transcript matches a bundled speech (direct comparison)
-- 🌐 **Mode B** — arbitrary upload (normative corridor)
-
-**Re-run** button proves determinism.
-""")
-    st.divider()
-    show_heldout = st.checkbox("Show held-out evaluation panel", value=True)
-
-
-# --- Main panel ---------------------------------------------------------------
+    st.markdown("**Mode A** — the transcript matches a bundled speech: every word is compared with the "
+                "same word in the GOOD baseline.  \n**Mode B** — any other speech: deviations from the "
+                "speaker's own typical delivery.")
+    show_eval = st.checkbox("Show held-out evaluation", value=True)
 
 st.markdown("# 🎙️ Cadence — Speech Delivery Analytics")
-st.markdown(
-    "Detects and timestamps delivery flaws in speech using contrastive acoustic analytics."
-)
+st.caption("Finds, timestamps and explains delivery flaws by comparing a recording with a reference reading.")
 
-if not run_btn and not st.session_state.get("last_result"):
-    # Landing state
-    st.info(
-        "Upload an audio file and paste the transcript in the sidebar, then click **🚀 Analyze**.",
-        icon="ℹ️",
-    )
-    col1, col2, col3 = st.columns(3)
-    with col1:
-        st.metric("Dataset clips", "64", help="8 texts × 8 severity gradient points")
-    with col2:
-        st.metric("Flaw categories", "5", help="Pacing, Pitch, Pauses, Volume, Clarity")
-    with col3:
-        st.metric("Rubric max score", "100", help="Sum of 5 × 20-point dimensions")
-
-elif run_btn:
-    if not uploaded_audio or not uploaded_transcript.strip():
-        st.error("Please upload an audio file AND paste the transcript before running.")
+if run:
+    if not audio_bytes or not transcript.strip():
+        st.error("Provide both audio and its transcript.")
     else:
-        with st.spinner("Running pipeline…"):
-            audio_bytes = uploaded_audio.read()
-            result = run_full_pipeline(audio_bytes, uploaded_transcript.strip())
-            st.session_state["last_result"] = result
-            st.session_state["last_transcript"] = uploaded_transcript.strip()
-            st.session_state["last_audio"] = audio_bytes
+        baseline = str(preset["same_speaker"]) if (preset and preset.get("same_speaker")
+                                                   and reference.startswith("Same")) else None
+        with st.spinner("Aligning, extracting features and grounding flaws…"):
+            res, err = run_pipeline(audio_bytes, transcript.strip(), baseline, force_b)
+        st.session_state.update(result=res, error=err, audio=audio_bytes, preset=preset,
+                                args=(audio_bytes, transcript.strip(), baseline, force_b))
 
-# Render results
-result = st.session_state.get("last_result")
-if result and not result.get("error"):
-    mode = result["mode"]
-    matched_id = result["matched_id"]
-    matched_split = result["matched_split"]
-    alignment = result["alignment"]
-    grounding = result["grounding"]
-    explanations = result["explanations"]
-    rubric = result["rubric"]
+res, err = st.session_state.get("result"), st.session_state.get("error")
+if err:
+    st.error(f"Pipeline error: {err}")
+elif res is None:
+    hr = heldout_results()
+    if hr:
+        s = hr["heldout_tts"]["summary"]
+        c = st.columns(4)
+        c[0].metric("Held-out mean target IoU", f"{s['mean_target_iou']:.3f}",
+                    help="Texts 6 & 8, all severity tiers; never used for calibration")
+        c[1].metric("Mean false-positive seconds / clip", f"{s['mean_fp_seconds']:.1f}")
+        c[2].metric("Severity gradient monotonic", hr.get("severity_gradient_monotonic", "–"))
+        c[3].metric("Clips evaluated", s["n_clips"])
+    st.info("Pick a preset or upload audio + transcript in the sidebar, then click **Analyze**.")
+else:
+    g = res.grounding
+    badge = (f"Mode A — paired with text #{res.matched_id}" if res.mode == "A"
+             else "Mode B — compared with the speaker's own typical delivery")
+    if res.matched_split == "heldout":
+        badge += " <span class='heldout-badge'>HELD-OUT TEXT</span>"
+    if res.mode == "A":
+        path = ("edited copy of the reference recording → calibrated floors" if g.same_recording
+                else "different recording → thresholds widened by the natural variation between readings")
+        badge += f" · {path}"
+    st.markdown(f"<span class='mode-badge mode-{res.mode.lower()}'>{badge}</span> "
+                f"<span class='muted'>aligner: {res.upload.alignment.model_used}</span>", unsafe_allow_html=True)
 
-    # -- Mode badge ------------------------------------------------------------
-    badge_cls = "mode-a" if mode == "A" else "mode-b"
-    if mode == "A":
-        badge_text = f"Mode A — paired match: Text #{matched_id}"
-        if matched_split == "heldout":
-            badge_text += " <span class='heldout-badge'>HELD-OUT</span>"
-    else:
-        badge_text = "Mode B — general analysis (normative corridor)"
+    p = st.session_state.get("preset") or {}
+    if p.get("real"):
+        m = meta.get(p["real"], {})
+        ref = "the same reader's clean recording" if (p.get("same_speaker") and
+              st.session_state["args"][2]) else "the TTS GOOD baseline (a different voice)"
+        st.markdown(f"""<div class='info-card'><b>Human recording</b> — {m.get('title')}, read by
+{m.get('reader')} for LibriVox (public domain; <a href='{m.get('source_url')}' target='_blank'>source</a>),
+trimmed to the transcript ({m.get('trim_s', ['?', '?'])[0]}–{m.get('trim_s', ['?', '?'])[1]} s of the original).
+Compared with {ref}. When the reference is a different speaker, thresholds widen automatically to the natural
+variation between the two readings, so only deviations beyond ordinary stylistic differences are reported.</div>""",
+                    unsafe_allow_html=True)
 
-    if alignment.had_retry:
-        badge_text += f"  ·  ⚠️ WhisperX retry ({alignment.model_used})"
+    st.markdown("## 🔊 Audio & alignment")
+    a, b = st.columns([2, 3])
+    a.audio(st.session_state["audio"])
+    b.plotly_chart(ruler_chart(res), use_container_width=True, config={"displayModeBar": False}, key="ruler")
+    if res.upload.alignment.uncertain_spans:
+        b.markdown("<span class='muted'>Grey bands: words whose forced-alignment confidence is low.</span>",
+                   unsafe_allow_html=True)
 
-    st.markdown(
-        f"<span class='mode-badge {badge_cls}'>{badge_text}</span>",
-        unsafe_allow_html=True
-    )
+    st.markdown("## 📈 Participant vs baseline")
+    tabs = st.tabs([FLAW_NAMES[f] for f in ("pitch", "energy", "rate", "pause", "clarity")])
+    for tab, feat in zip(tabs, ("pitch", "energy", "rate", "pause", "clarity")):
+        with tab:
+            st.plotly_chart(contour_chart(res, feat), use_container_width=True, key=f"contour_{feat}")
+            st.plotly_chart(delta_chart(res, feat), use_container_width=True, key=f"delta_{feat}")
 
-    # -- Audio player + word ruler ---------------------------------------------
-    st.markdown("## 🔊 Audio")
-    audio_col, ruler_col = st.columns([2, 3])
-    with audio_col:
-        st.audio(st.session_state["last_audio"])
+    st.markdown("## 🔍 Flaw regions and causes")
+    if not g.flaw_regions:
+        st.success("No delivery deviation exceeded its threshold.", icon="✅")
+    for i, (r, e) in enumerate(zip(sorted(g.flaw_regions, key=lambda r: r.start_s), res.explanations)):
+        color = {"mild": "#f9e2af", "moderate": "#fab387", "severe": "#f38ba8"}[e.severity_label]
+        st.markdown(f"""<div class='flaw-card' style='border-left-color:{color}'>
+<b>{FLAW_NAMES[r.flaw_type].upper()}</b> · {r.start_s:.2f}–{r.end_s:.2f} s · {r.direction} ·
+severity {r.severity:.1f}× threshold<br>{e.polished_text or e.template_text}</div>""", unsafe_allow_html=True)
+        with st.expander("Evidence", expanded=False):
+            st.json(e.evidence)
 
-    with ruler_col:
-        # Word boundary ruler as Plotly scatter
-        words = alignment.words
-        if words:
-            dur = result["duration_s"]
-            word_x = [(w.start + w.end) / 2 for w in words]
-            word_text = [w.word for w in words]
-            uncertain_mask = [w.uncertain for w in words]
+    st.markdown("## 🏆 Rubric")
+    rb = res.rubric
+    st.markdown(f"### Overall {rb.overall:.1f} / 100")
+    cols = st.columns(5)
+    for c, dim in zip(cols, rb.dimensions):
+        c.metric(dim.dimension, f"{dim.score:.1f} / 20",
+                 help=f"{dim.region_count} region(s), {dim.flawed_duration_s:.1f}s flagged")
 
-            colors = ["#888" if u else "#a0c4ff" for u in uncertain_mask]
+    if st.button("🔄 Re-run (determinism check)"):
+        run_pipeline.clear()
+        again, _ = run_pipeline(*st.session_state["args"])
+        if again and abs(again.rubric.overall - rb.overall) < 1e-9 and \
+                [(x.flaw_type, x.start_s, x.end_s) for x in again.grounding.flaw_regions] == \
+                [(x.flaw_type, x.start_s, x.end_s) for x in g.flaw_regions]:
+            st.success("Identical regions and scores on re-run.")
+        else:
+            st.error("Re-run differs — investigate.")
 
-            ruler_fig = go.Figure()
-            ruler_fig.add_trace(go.Scatter(
-                x=word_x, y=[0.5] * len(words),
-                mode="text+markers",
-                text=word_text,
-                textposition="top center",
-                marker=dict(color=colors, size=6, symbol="line-ns"),
-                textfont=dict(size=9, color="#cdd6f4"),
-                hovertemplate="%{text}<br>%{x:.2f}s<extra></extra>",
-            ))
-
-            # Flaw region bands on ruler
-            for region in grounding.flaw_regions:
-                ruler_fig.add_vrect(
-                    x0=region.start_s, x1=region.end_s,
-                    fillcolor=FLAW_COLORS.get(region.flaw_type, "rgba(200,200,200,0.2)"),
-                    line_width=0,
-                )
-
-            # Uncertain spans
-            for span_s, span_e in alignment.uncertain_spans:
-                ruler_fig.add_vrect(
-                    x0=span_s, x1=span_e,
-                    fillcolor="rgba(150,150,150,0.15)",
-                    line_width=0,
-                )
-                ruler_fig.add_annotation(
-                    x=(span_s + span_e) / 2, y=0.1,
-                    text="⚠️", showarrow=False,
-                    font=dict(size=10, color="#888"),
-                )
-
-            ruler_fig.update_layout(
-                height=120, margin=dict(l=0, r=0, t=10, b=0),
-                paper_bgcolor="#0f1117", plot_bgcolor="#0f1117",
-                xaxis=dict(range=[0, dur], title="Time (s)",
-                           gridcolor="#2a2d3e", showgrid=True,
-                           tickfont=dict(color="#888", size=9)),
-                yaxis=dict(showticklabels=False, range=[-0.5, 1.5]),
-                showlegend=False,
-            )
-            st.plotly_chart(ruler_fig, use_container_width=True, config={"displayModeBar": False}, key="alignment_ruler_chart")
-
-            if alignment.uncertain_spans:
-                st.markdown(
-                    "<span class='uncertain-note'>⚠️ Grey regions = low alignment confidence "
-                    "(timestamps may be ±50ms in these spans)</span>",
-                    unsafe_allow_html=True
-                )
-
-    # -- Time-series overlay ---------------------------------------------------
-    st.markdown("## 📈 Acoustic Contours")
-    tab_pitch, tab_energy, tab_rate = st.tabs(["🎵 Pitch", "🔊 Volume/Energy", "⚡ Speech Rate"])
-    with tab_pitch:
-        st.plotly_chart(_build_overlay_chart(result, "pitch"), use_container_width=True, key="overlay_pitch_chart")
-    with tab_energy:
-        st.plotly_chart(_build_overlay_chart(result, "energy"), use_container_width=True, key="overlay_energy_chart")
-    with tab_rate:
-        st.plotly_chart(_build_overlay_chart(result, "rate"), use_container_width=True, key="overlay_rate_chart")
-
-    # -- Flaw regions + causal explanations ------------------------------------
-    st.markdown("## 🔍 Detected Flaw Regions")
-
-    if not grounding.flaw_regions:
-        st.success("No significant delivery flaws detected.", icon="✅")
-    else:
-        exp_map = {e.flaw_type: e for e in explanations}
-        for region in grounding.flaw_regions:
-            exp = exp_map.get(region.flaw_type)
-            exp_text = exp.polished_text or exp.template_text if exp else f"Flaw detected in {region.flaw_type}"
-            uncertain_note = " ⚠️ (alignment uncertain in this span)" if region.uncertain else ""
-            st.markdown(f"""
-<div class='flaw-card'>
-  <strong>{region.flaw_type.upper()}</strong> &nbsp;
-  {region.start_s:.2f}s – {region.end_s:.2f}s &nbsp;|&nbsp;
-  direction: {region.direction} &nbsp;|&nbsp;
-  Δ = {region.mean_delta:.2f}{uncertain_note}<br>
-  <span style='color:#cdd6f4'>{exp_text}</span>
-</div>
-""", unsafe_allow_html=True)
-
-    # -- Rubric scorecard ------------------------------------------------------
-    st.markdown("## 🏆 Rubric Scorecard")
-
-    overall_color = "#a6e3a1" if rubric.overall >= 75 else "#f9e2af" if rubric.overall >= 45 else "#f38ba8"
-    st.markdown(
-        f"### Overall Score: <span style='color:{overall_color}; font-size:1.8rem'>"
-        f"{rubric.overall:.1f} / 100</span>",
-        unsafe_allow_html=True
-    )
-
-    score_cols = st.columns(5)
-    for i, dim in enumerate(rubric.dimensions):
-        with score_cols[i]:
-            cls = _score_color_class(dim.score)
-            st.markdown(
-                f"**{dim.dimension}**<br>"
-                f"<span class='{cls}' style='font-size:1.4rem;font-weight:700'>"
-                f"{dim.score:.1f}</span><span style='color:#555'>/20</span>",
-                unsafe_allow_html=True
-            )
-            st.plotly_chart(_score_bar(dim.score), use_container_width=True,
-                            config={"displayModeBar": False},
-                            key=f"score_bar_{dim.dimension.lower()}_{i}")
-            if dim.region_count > 0:
-                st.markdown(
-                    f"<span style='color:#888;font-size:0.75rem'>"
-                    f"{dim.region_count} region(s) · {dim.flawed_duration_s:.1f}s flawed</span>",
-                    unsafe_allow_html=True
-                )
-
-    # Re-run button (proves determinism)
-    if st.button("🔄 Re-run (prove determinism)", key="rerun"):
-        rerun_result = run_full_pipeline(
-            st.session_state["last_audio"],
-            st.session_state["last_transcript"]
-        )
-        if rerun_result.get("rubric") and result.get("rubric"):
-            if abs(rerun_result["rubric"].overall - rubric.overall) < 1e-6:
-                st.success("✅ Re-run produced identical scores — pipeline is deterministic.")
-            else:
-                st.error(
-                    f"❌ Scores differ: {rerun_result['rubric'].overall:.4f} vs "
-                    f"{rubric.overall:.4f} — investigate!")
-
-elif result and result.get("error"):
-    st.error(f"Pipeline error: {result['error']}")
-
-# --- Held-out evaluation panel -----------------------------------------------
-if show_heldout:
+# --- Held-out evaluation panel --------------------------------------------------------------
+if show_eval:
     st.divider()
-    st.markdown("## 📊 Held-Out Evaluation Panel")
-    st.markdown(
-        "Pre-computed temporal IoU accuracy on the **2 held-out texts** "
-        "(texts #6 and #8), **14 BAD clips** with known-injected flaw regions. "
-        "These clips were never used to compute any threshold or statistic. "
-        "This is the non-circular evidence for the '25% flaw-timestamp accuracy' criterion."
-    )
-
-    heldout = load_heldout_results()
-    if heldout is None:
-        st.info(
-            "No held-out results yet. Run `python scripts/05_evaluate_heldout.py` first.",
-            icon="ℹ️"
-        )
+    st.markdown("## 📊 Held-out evaluation")
+    hr = heldout_results()
+    if not hr:
+        st.info("Run `python scripts/05_evaluate_heldout.py` to generate results.")
     else:
-        summary = heldout.get("summary", {})
-        overall = summary.get("overall", {})
-
-        col_over, col_n = st.columns([2, 1])
-        with col_over:
-            st.metric(
-                "Mean temporal IoU (all held-out clips)",
-                f"{overall.get('mean_iou', 0):.3f}",
-                help="1.0 = perfect overlap with ground-truth injected region"
-            )
-        with col_n:
-            st.metric("Held-out clips evaluated", overall.get("n_clips", 0))
-
-        # Per-flaw-type table
-        rows = []
-        for flaw, stats in summary.items():
-            if flaw == "overall":
+        import pandas as pd
+        cfg_used = hr.get("config", {})
+        st.caption(f"Thresholds calibrated on texts 1–5, 7 only. clarity measure: "
+                   f"{cfg_used.get('clarity_feature')}, k_noise: {cfg_used.get('k_noise')}. "
+                   "Target IoU = overlap of detections of the injected flaw's type with ground truth; "
+                   "FP = seconds flagged outside ground truth of the same type (any type).")
+        for key, title in (("heldout_tts", "TTS held-out texts 6 & 8"),
+                           ("real_same_speaker", "Human recordings — same-speaker reference"),
+                           ("real_cross_speaker", "Human recordings vs TTS baseline (cross-speaker)")):
+            if key not in hr:
                 continue
-            rows.append({
-                "Flaw Type": flaw,
-                "Mean IoU": f"{stats['mean_iou']:.3f}",
-                "Min IoU": f"{stats['min_iou']:.3f}",
-                "Max IoU": f"{stats['max_iou']:.3f}",
-                "N clips": stats["n_clips"],
-            })
-
-        if rows:
-            import pandas as pd
-            st.dataframe(pd.DataFrame(rows).set_index("Flaw Type"), use_container_width=True)
-
-        # Bar chart per flaw type
-        if rows:
-            flaw_names = [r["Flaw Type"] for r in rows]
-            iou_means = [float(r["Mean IoU"]) for r in rows]
-            colors = ["#a6e3a1" if v >= 0.7 else "#f9e2af" if v >= 0.4 else "#f38ba8"
-                      for v in iou_means]
-            bar_fig = go.Figure(go.Bar(
-                x=flaw_names, y=iou_means,
-                marker=dict(color=colors, line=dict(width=0)),
-                text=[f"{v:.3f}" for v in iou_means],
-                textposition="outside",
-            ))
-            bar_fig.update_layout(
-                height=280, margin=dict(l=0, r=0, t=10, b=0),
-                paper_bgcolor="#0f1117", plot_bgcolor="#0f1117",
-                font=dict(color="#cdd6f4", size=11),
-                yaxis=dict(range=[0, 1.05], title="Temporal IoU",
-                           gridcolor="#2a2d3e"),
-                xaxis=dict(gridcolor="#2a2d3e"),
-                showlegend=False,
-            )
-            st.plotly_chart(bar_fig, use_container_width=True, key="heldout_bar_chart")
-
-# --- Footer -------------------------------------------------------------------
-st.divider()
-st.markdown(
-    "<div style='text-align:center;color:#555;font-size:0.78rem'>"
-    "Cadence · Contrastive Speech Analytics · "
-    "Dataset: 64 clips, 8 speech texts, 7 flaw types · "
-    "Pipeline: Programmatic TextGrids (dataset) + WhisperX (online) · "
-    "All thresholds from calibration-set GOOD clips only"
-    "</div>",
-    unsafe_allow_html=True
-)
+            s = hr[key]["summary"]
+            st.markdown(f"**{title}** — mean target IoU {s['mean_target_iou']}, "
+                        f"mean FP {s['mean_fp_seconds']} s per clip, {s['n_clips']} clips")
+            df = pd.DataFrame([{"flaw / tier": k, **v} for k, v in s["by_flaw_tier"].items()])
+            if not df.empty:
+                st.dataframe(df.set_index("flaw / tier"), use_container_width=True)
+        if "real_cross_speaker" in hr:
+            st.markdown("**Clean human reading vs TTS baseline** (should be near 100 / few flags)")
+            st.dataframe(pd.DataFrame(hr["real_cross_speaker"]["clean_pairs"]), use_container_width=True)
+        st.markdown(f"**Severity gradient** (score mild ≥ moderate ≥ egregious): "
+                    f"{hr.get('severity_gradient_monotonic')}")

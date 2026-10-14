@@ -1,0 +1,35 @@
+{
+  "text_01": {
+    "text_id": 1,
+    "title": "Gettysburg Address (Abraham Lincoln)",
+    "reader": "Andrew Marty (LibriVox)",
+    "source_url": "https://archive.org/download/gettysburgaddress_150anniv_1311_librivox/gettysburgaddress_lincoln_amb_128kb.mp3",
+    "license": "Public Domain",
+    "duration_s": 64.09,
+    "wav_file": "dataset/audio/real_speakers/real01_good.wav",
+    "source_wav": "dataset/audio/real_speakers/text_01_real_librivox_amb.wav",
+    "trim_s": [
+      7.46,
+      71.55
+    ],
+    "transcript_coverage": 0.915,
+    "transcript_path": "dataset/transcripts/text_01.txt"
+  },
+  "text_02": {
+    "text_id": 2,
+    "title": "Give Me Liberty or Give Me Death (Patrick Henry)",
+    "reader": "Mark F. Smith (LibriVox)",
+    "source_url": "https://archive.org/download/liberty_or_death_librivox/liberty_or_death_henry_64kb.mp3",
+    "license": "Public Domain",
+    "duration_s": 114.36,
+    "wav_file": "dataset/audio/real_speakers/real02_good.wav",
+    "source_wav": "dataset/audio/real_speakers/text_02_real_librivox.wav",
+    "trim_s": [
+      397.97,
+      512.33
+    ],
+    "transcript_coverage": 0.958,
+    "transcript_path": "dataset/transcripts/real02.txt",
+    "transcript_note": "The reader includes a passage the bundled excerpt omits ('Besides, sir, we have no election ... plains of Boston!'); this transcript is what the reader actually says."
+  }
+}

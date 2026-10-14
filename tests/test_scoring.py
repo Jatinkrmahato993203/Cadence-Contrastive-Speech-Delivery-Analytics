@@ -77,7 +77,7 @@ def test_score_full_flaw():
         FlawRegion(
             flaw_type="rate", start_s=0.0, end_s=60.0,
             word_indices=list(range(30)), mean_delta=1.0,
-            direction="fast",
+            direction="fast", threshold=0.2, severity=3.0,
         )
     ]
     grounding = _make_grounding_with_regions(regions)
@@ -97,7 +97,7 @@ def test_score_partial_flaw():
         FlawRegion(
             flaw_type="pitch", start_s=15.0, end_s=45.0,
             word_indices=list(range(10, 25)), mean_delta=0.5,
-            direction="low",
+            direction="flat", threshold=0.45, severity=0.5 / 0.45,
         )
     ]
     grounding = _make_grounding_with_regions(regions)
@@ -162,3 +162,26 @@ def test_five_dimensions_always_present():
     assert len(result.dimensions) == 5
     names = {d.dimension for d in result.dimensions}
     assert names == {"Pacing", "Pitch", "Pauses", "Volume", "Clarity"}
+
+
+def test_score_decreases_with_severity_and_coverage():
+    """More severe or longer flaws must never score higher."""
+    from pipeline.grounder import FlawRegion
+
+    def pacing(sev, end):
+        g = _make_grounding_with_regions([FlawRegion("rate", 10.0, end, [1, 2, 3], sev * 0.2, "slow",
+                                                     threshold=0.2, severity=sev)])
+        return next(d for d in score(g, 60.0).dimensions if d.dimension == "Pacing").score
+
+    assert pacing(1.2, 30.0) > pacing(2.0, 30.0) > pacing(3.0, 30.0)
+    assert pacing(2.0, 20.0) > pacing(2.0, 40.0)
+
+
+def test_pause_counts_as_event():
+    """A 0.6 s pause must cost points even though it is ~1% of the clip duration."""
+    from pipeline.grounder import FlawRegion
+
+    g = _make_grounding_with_regions([FlawRegion("pause", 20.0, 20.6, [5], 0.6, "present",
+                                                 threshold=0.25, severity=2.4)])
+    pauses = next(d for d in score(g, 60.0).dimensions if d.dimension == "Pauses").score
+    assert pauses < 19.5

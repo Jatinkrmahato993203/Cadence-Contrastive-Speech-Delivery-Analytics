@@ -66,7 +66,7 @@ def test_unseen_speeches_trigger_mode_b(bundled):
 def test_mode_b_end_to_end_synthetic_audio(cfg, bundled):
     """
     Synthesize mock audio for an unseen speech, align it, extract features,
-    normalize via first-10-words bootstrap, ground vs normative corridor,
+    self-normalize, ground in Mode B,
     generate causal explanations, and assert rubric scores are valid and non-NaN.
     """
     import soundfile as sf
@@ -84,8 +84,9 @@ def test_mode_b_end_to_end_synthetic_audio(cfg, bundled):
 
     try:
         transcript = UNSEEN_SPEECHES[0]["transcript"]
-        alignment = align(tmp_path, transcript=transcript, cfg=cfg)
-        assert len(alignment.words) > 0
+        alignment = align(tmp_path, transcript=transcript, cfg=cfg, use_cache=False)
+        from pipeline.aligner import transcript_words
+        assert [w.word for w in alignment.words] == transcript_words(transcript)
 
         # Feature extraction
         clip_feat = feat_mod.extract(tmp_path, alignment)
@@ -95,22 +96,16 @@ def test_mode_b_end_to_end_synthetic_audio(cfg, bundled):
         mode, matched_id, matched_split = detect_mode(transcript, transcripts, splits)
         assert mode == "B"
 
-        # Speaker normalization with running bootstrap
+        # Self-normalization over the whole clip
         norm_clip, profile = normalize(clip_feat, "unseen_speaker_1", cfg=cfg)
         assert profile.f0_median > 0
-        assert profile.rms_95pct > -100
+        assert profile.rms_ref > -100
+        assert len(norm_clip.words) == len(alignment.words)
 
-        # Grounding against pooled normative corridor
-        pooled_means = {"pitch": 0.0, "energy": 0.0, "rate": 0.0, "clarity_mfcc": 0.0, "clarity_hnr": 0.0}
-        grounding = ground(
-            norm_clip,
-            mode="B",
-            matched_text_id=None,
-            matched_split=None,
-            cfg=cfg,
-            pooled_means=pooled_means,
-        )
+        # Mode B: deviations from the speaker's own typical delivery
+        grounding = ground(norm_clip, mode="B", matched_text_id=None, matched_split=None, cfg=cfg)
         assert grounding.mode == "B"
+        assert set(grounding.thresholds) == {"pitch", "energy", "rate", "pause", "clarity"}
 
         # Causal explanations
         explanations = explain(grounding, norm_clip.words, use_llm=False)

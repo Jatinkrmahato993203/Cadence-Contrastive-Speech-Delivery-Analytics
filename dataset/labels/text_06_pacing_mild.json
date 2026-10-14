@@ -1,0 +1,19 @@
+{
+  "clip_id": "text_06_pacing_mild",
+  "source_text_id": 6,
+  "speaker_id": "librivox_reader_06",
+  "speaker_source": "librivox",
+  "flaw_type": "pacing",
+  "severity_tier": "near_perfect",
+  "split": "heldout",
+  "flaw_regions": [
+    {
+      "start_s": 15.336,
+      "end_s": 34.006,
+      "mechanism": "time_stretch_1.15x_bounded_15.34to34.01s"
+    }
+  ],
+  "label_timeline": "output",
+  "transcript_path": "dataset/transcripts/text_06.txt",
+  "audio_path": "dataset/audio/text_06_pacing_mild.wav"
+}

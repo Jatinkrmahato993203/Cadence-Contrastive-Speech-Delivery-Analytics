@@ -1,0 +1,19 @@
+{
+  "clip_id": "text_03_pacing_egregious",
+  "source_text_id": 3,
+  "speaker_id": "librivox_reader_03",
+  "speaker_source": "librivox",
+  "flaw_type": "pacing",
+  "severity_tier": "egregious",
+  "split": "calibration",
+  "flaw_regions": [
+    {
+      "start_s": 10.343,
+      "end_s": 73.991,
+      "mechanism": "time_stretch_0.65x_bounded_10.34to73.99s"
+    }
+  ],
+  "label_timeline": "output",
+  "transcript_path": "dataset/transcripts/text_03.txt",
+  "audio_path": "dataset/audio/text_03_pacing_egregious.wav"
+}

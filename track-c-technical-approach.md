@@ -1,7 +1,7 @@
 # Technical Approach: Contrastive Speech Analytics & Temporal Flaw Grounding
 
 > **Implementation Note & Provenance Disclosure:**  
-> This planning document represents the initial Hour-0 architectural specification. In the final as-built implementation (`scripts/generate_dataset.py`), the dataset pipeline was implemented using **8 distinct Microsoft Edge TTS neural voices with rate calibration** across the 8 speech passages (6 public domain historical orations + 2 team-authored original orations), coupled with deterministic programmatic Praat TextGrid interval generation. This eliminated external recording noise, room reverberation, and platform-specific conda/MFA build dependencies, establishing a clean, bit-identical baseline for DSP flaw injection and exact analytic ground truth. For the final as-built specification and empirical held-out IoU evaluations (Mean IoU 0.218), refer to [`technical_report.md`](file:///d:/Cadence/technical_report.md) and [`README.md`](file:///d:/Cadence/README.md).
+> This planning document is the initial Hour-0 specification, kept for history. The as-built system differs: the 8 benchmark baselines are Microsoft Edge TTS voices (plus two LibriVox human readings evaluated separately), alignment is transcript-forced Whisper alignment rather than MFA/WhisperX, and thresholds are calibrated as described in [`technical_report.md`](technical_report.md). Current results: [`README.md`](README.md#results).
 
 **Audience:** the 3-4 person team building this. This is the document you open on hour 0 and build from.
 

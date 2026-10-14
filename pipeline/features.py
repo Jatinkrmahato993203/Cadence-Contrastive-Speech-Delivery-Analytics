@@ -1,32 +1,40 @@
 """
 pipeline/features.py
 --------------------
-Feature extraction from aligned audio clips (§2.2).
+Acoustic feature extraction over force-aligned words (§2.2).
 
-Per-word segments (using aligner timestamps) + continuous contours:
-  - MFCCs (13 coefficients + delta + delta-delta)
-  - STFT / spectral centroid / spectral flatness
-  - F0 contour (via parselmouth / Praat)
-  - Jitter, shimmer, HNR
-  - RMS energy + LUFS loudness (ITU-R BS.1770, EBU R128)
-  - Speech rate (words/sec over a 3-word sliding window)
-  - Pause intervals (gaps > pause_gap_threshold)
+Every spectral representation is computed ONCE for the whole clip at a 10 ms
+hop and then pooled over each word's aligned interval:
+
+  - FFT / STFT magnitude  -> spectral centroid, flatness, contrast, flux,
+                             high-frequency energy ratio
+  - MFCCs (13)            -> per-word mean vector
+  - F0 contour            -> Praat autocorrelation pitch (parselmouth)
+  - HNR contour           -> Praat cross-correlation harmonicity
+  - RMS energy            -> per-word level in dB
+  - Timing                -> word duration, silence before the word
+  - Clip-level voice quality: jitter (local), shimmer (local)
+
+Speech rate and pitch variability need a neighbourhood of words, so they are
+derived in normalizer.py from these per-word records.
 """
 
 from __future__ import annotations
 
 import logging
 from dataclasses import dataclass, field
-from pathlib import Path
-from typing import Optional
 
 import numpy as np
 import soundfile as sf
 
 logger = logging.getLogger(__name__)
 
+HOP_S = 0.01
+N_FFT = 512          # 32 ms window at 16 kHz
+HF_SPLIT_HZ = 3000.0
 
-# -- Per-word feature record ----------------------------------------------------
+
+# -- Records ------------------------------------------------------------------------
 
 @dataclass
 class WordFeatures:
@@ -34,19 +42,19 @@ class WordFeatures:
     word: str
     start: float
     end: float
-    # Raw features (before normalization)
-    f0_hz: float           # median fundamental freq over the word segment (Hz)
-    f0_values: list[float] = field(default_factory=list)  # frame-level F0
-    rms_db: float = 0.0    # RMS energy in dB
-    lufs: float = 0.0      # integrated loudness (LUFS)
-    mfcc_mean: list[float] = field(default_factory=list)   # 13-dim
-    spectral_centroid: float = 0.0
-    spectral_flatness: float = 0.0
-    hnr_db: float = 0.0    # harmonics-to-noise ratio
-    jitter: float = 0.0    # local jitter
-    shimmer: float = 0.0   # local shimmer
-    rate_wps: float = 0.0  # local speech rate (words/sec, 3-word window)
-    pause_before_s: float = 0.0   # silence gap before this word
+    f0_hz: float = 0.0                                     # median voiced F0 over the word
+    f0_values: list[float] = field(default_factory=list)   # frame-level F0 (0 = unvoiced)
+    rms_db: float = -100.0                                 # word RMS level
+    duration_s: float = 0.0
+    pause_before_s: float = 0.0                            # silence between previous word and this one
+    mfcc_mean: list[float] = field(default_factory=list)
+    spectral_centroid: float = 0.0                         # Hz
+    spectral_flatness: float = 0.0                         # 0-1
+    spectral_contrast: float = 0.0                         # dB, mean over bands
+    spectral_flux: float = 0.0                             # mean frame-to-frame log-spectral change
+    hf_ratio_db: float = 0.0                               # energy above 3 kHz relative to below
+    hnr_db: float = 0.0                                    # mean harmonics-to-noise ratio over voiced frames
+    uncertain: bool = False                                # alignment confidence flag (from aligner)
 
 
 @dataclass
@@ -54,211 +62,153 @@ class ClipFeatures:
     clip_path: str
     duration_s: float
     words: list[WordFeatures]
-    f0_contour: list[float]         # frame-level (all frames), Hz (0 = unvoiced)
-    rms_contour: list[float]        # frame-level RMS
-    rate_contour: list[float]       # word-level speech rate
-    pause_positions: list[float]    # start times of detected pauses (s)
+    f0_contour: list[float]          # Hz per 10 ms frame (0 = unvoiced)
+    rms_contour: list[float]         # dB per 10 ms frame
+    jitter: float = 0.0              # clip-level
+    shimmer: float = 0.0             # clip-level
 
 
-# -- Helpers --------------------------------------------------------------------
+# -- Clip-level analyses ----------------------------------------------------------
 
-def _load_audio(path: str) -> tuple[np.ndarray, int]:
-    y, sr = sf.read(path, dtype="float32", always_2d=False)
-    return y, sr
-
-
-def _extract_f0(y: np.ndarray, sr: int, time_step: float = 0.01) -> list[float]:
-    """Return frame-level F0 (Hz) using parselmouth. 0 = unvoiced frame."""
-    try:
-        import parselmouth
-    except ImportError:
-        logger.warning("parselmouth not installed — F0 will be zeros")
-        frames = int(len(y) / sr / time_step)
-        return [0.0] * frames
-
-    snd = parselmouth.Sound(values=y.astype(np.float64), sampling_frequency=float(sr))
-    pitch = snd.to_pitch(time_step=time_step)
-    f0_vals = []
-    for t in np.arange(0, snd.duration, time_step):
-        val = pitch.get_value_at_time(t)
-        f0_vals.append(float(val) if (val is not None and not np.isnan(val)) else 0.0)
-    return f0_vals
-
-
-def _extract_voice_quality(y: np.ndarray, sr: int) -> dict:
-    """Compute jitter, shimmer, HNR via parselmouth voice report."""
+def _praat_contours(y: np.ndarray, sr: int, n_frames: int) -> tuple[np.ndarray, np.ndarray, float, float]:
+    """F0 (Hz) and HNR (dB) per 10 ms frame, plus clip jitter/shimmer."""
+    f0 = np.zeros(n_frames)
+    hnr = np.full(n_frames, np.nan)
+    jitter = shimmer = 0.0
     try:
         import parselmouth
         from parselmouth.praat import call
     except ImportError:
-        return {"jitter": 0.0, "shimmer": 0.0, "hnr_db": 0.0}
+        logger.warning("parselmouth not installed — F0/HNR unavailable")
+        return f0, hnr, jitter, shimmer
 
     snd = parselmouth.Sound(values=y.astype(np.float64), sampling_frequency=float(sr))
-    try:
-        harmonicity = call(snd, "To Harmonicity (cc)", 0.01, 75, 0.1, 1.0)
-        hnr = float(call(harmonicity, "Get mean", 0.0, 0.0))
-        if np.isnan(hnr):
-            hnr = 0.0
-    except Exception:
-        hnr = 0.0
+    times = np.arange(n_frames) * HOP_S
+
+    # Praat's default silence thresholds are relative to the clip PEAK, so a passage
+    # spoken (or recorded) 15-20 dB quieter would lose its pitch and HNR entirely.
+    # 0.01 of peak (-40 dB) keeps quiet speech; the voicing threshold still rejects noise.
+    pitch = call(snd, "To Pitch (ac)", HOP_S, 60.0, 15, "no", 0.01, 0.45, 0.01, 0.35, 0.14, 500.0)
+    pt, pv = pitch.xs(), pitch.selected_array["frequency"]
+    if len(pt):
+        idx = np.clip(np.round((times - pt[0]) / HOP_S).astype(int), 0, len(pv) - 1)
+        inside = (times >= pt[0] - HOP_S) & (times <= pt[-1] + HOP_S)
+        f0 = np.where(inside, pv[idx], 0.0)
 
     try:
-        point_process = call(snd, "To PointProcess (periodic, cc)", 75, 500)
-        jitter = float(call(point_process, "Get jitter (local)", 0.0, 0.0, 0.0001, 0.02, 1.3))
-        if np.isnan(jitter):
-            jitter = 0.0
+        harm = call(snd, "To Harmonicity (cc)", HOP_S, 75, 0.01, 1.0)
+        hv = harm.values[0]
+        ht = np.array([harm.get_time_from_frame_number(i + 1) for i in range(len(hv))])
+        if len(ht):
+            idx = np.clip(np.round((times - ht[0]) / HOP_S).astype(int), 0, len(hv) - 1)
+            vals = hv[idx]
+            hnr = np.where(vals > -150, vals, np.nan)      # Praat marks unvoiced as -200
     except Exception:
-        jitter = 0.0
+        pass
 
     try:
-        shimmer = float(call([snd, point_process], "Get shimmer (local)", 0.0, 0.0, 0.0001, 0.02, 1.3, 1.6))
-        if np.isnan(shimmer):
-            shimmer = 0.0
+        pp = call(snd, "To PointProcess (periodic, cc)", 75, 500)
+        jitter = float(call(pp, "Get jitter (local)", 0.0, 0.0, 0.0001, 0.02, 1.3))
+        shimmer = float(call([snd, pp], "Get shimmer (local)", 0.0, 0.0, 0.0001, 0.02, 1.3, 1.6))
+        jitter = 0.0 if np.isnan(jitter) else jitter
+        shimmer = 0.0 if np.isnan(shimmer) else shimmer
     except Exception:
-        shimmer = 0.0
+        pass
+    return f0, hnr, jitter, shimmer
+
+
+def _spectral_frames(y: np.ndarray, sr: int) -> dict[str, np.ndarray]:
+    """Frame-level spectral descriptors at a 10 ms hop (one STFT for the whole clip)."""
+    import librosa
+
+    hop = int(sr * HOP_S)
+    S = np.abs(librosa.stft(y, n_fft=N_FFT, hop_length=hop, center=True)) + 1e-10
+    P = S ** 2
+    freqs = librosa.fft_frequencies(sr=sr, n_fft=N_FFT)
+    logS = np.log(S)
+
+    hf = P[freqs >= HF_SPLIT_HZ].sum(axis=0)
+    lf = P[(freqs >= 80) & (freqs < HF_SPLIT_HZ)].sum(axis=0)
+    flux = np.r_[0.0, np.sqrt(np.mean(np.diff(logS, axis=1) ** 2, axis=0))]
 
     return {
-        "hnr_db": hnr,
-        "jitter": jitter,
-        "shimmer": shimmer,
+        "rms_db": 20 * np.log10(np.sqrt(P.sum(axis=0) / N_FFT) + 1e-10),
+        "centroid": librosa.feature.spectral_centroid(S=S, sr=sr)[0],
+        "flatness": librosa.feature.spectral_flatness(S=S)[0],
+        "contrast": librosa.feature.spectral_contrast(S=S, sr=sr, fmin=150.0, n_bands=5).mean(axis=0),
+        "flux": flux,
+        "hf_ratio_db": 10 * np.log10(hf / (lf + 1e-10) + 1e-10),
+        "mfcc": librosa.feature.mfcc(S=librosa.power_to_db(
+            librosa.feature.melspectrogram(S=P, sr=sr, n_mels=40)), n_mfcc=13),
     }
 
 
-def _rms_db(segment: np.ndarray) -> float:
-    rms = np.sqrt(np.mean(segment ** 2))
-    if rms < 1e-10:
-        return -100.0
-    return float(20 * np.log10(rms))
+def _frame_range(start: float, end: float, n: int) -> slice:
+    i0 = min(max(int(round(start / HOP_S)), 0), n - 1)
+    i1 = min(max(int(round(end / HOP_S)), i0 + 1), n)
+    return slice(i0, i1)
 
 
-def _lufs(segment: np.ndarray, sr: int) -> float:
-    try:
-        import pyloudnorm as pyln
-        meter = pyln.Meter(sr)
-        l = meter.integrated_loudness(segment.astype(np.float64))
-        return float(l) if not np.isinf(l) else -70.0
-    except Exception:
-        return _rms_db(segment)   # fallback
-
-
-def _mfcc_mean(y: np.ndarray, sr: int, n_mfcc: int = 13) -> list[float]:
-    try:
-        import librosa
-        mfcc = librosa.feature.mfcc(y=y, sr=sr, n_mfcc=n_mfcc)
-        return mfcc.mean(axis=1).tolist()
-    except Exception:
-        return [0.0] * n_mfcc
-
-
-def _spectral_features(y: np.ndarray, sr: int) -> dict:
-    try:
-        import librosa
-        S = np.abs(librosa.stft(y))
-        centroid = librosa.feature.spectral_centroid(S=S, sr=sr).mean()
-        flatness = librosa.feature.spectral_flatness(S=S).mean()
-        return {"spectral_centroid": float(centroid), "spectral_flatness": float(flatness)}
-    except Exception:
-        return {"spectral_centroid": 0.0, "spectral_flatness": 0.0}
+def _mean(x: np.ndarray, default: float = 0.0) -> float:
+    x = x[np.isfinite(x)]
+    return float(np.mean(x)) if len(x) else default
 
 
 # -- Public API -----------------------------------------------------------------
 
-def extract(
-    audio_path: str,
-    alignment,             # AlignmentResult from aligner.py
-    pause_gap_s: float = 0.15,
-) -> ClipFeatures:
+def extract(audio_path: str, alignment, pause_gap_s: float = 0.15) -> ClipFeatures:
     """
-    Extract all acoustic features from *audio_path* aligned with *alignment*.
-
-    Parameters
-    ----------
-    audio_path : str
-        Path to 16 kHz / 16-bit mono WAV.
-    alignment : AlignmentResult
-        Output of pipeline.aligner.align().
-    pause_gap_s : float
-        Gaps between word segments longer than this are counted as pauses.
+    Extract per-word acoustic features for *audio_path* using *alignment*
+    (pipeline.aligner.AlignmentResult). *pause_gap_s* is kept for API
+    compatibility; pause durations are always reported in seconds.
     """
-    y, sr = _load_audio(audio_path)
+    y, sr = sf.read(audio_path, dtype="float32", always_2d=False)
+    if y.ndim > 1:
+        y = y.mean(axis=1)
     duration_s = len(y) / sr
 
-    # Clip-level features
-    f0_contour = _extract_f0(y, sr)
-    voice_q = _extract_voice_quality(y, sr)
+    spec = _spectral_frames(y, sr)
+    n = spec["rms_db"].shape[0]
+    f0, hnr, jitter, shimmer = _praat_contours(y, sr, n)
 
-    try:
-        import librosa
-        rms_frames = librosa.feature.rms(y=y)[0].tolist()
-    except Exception:
-        rms_frames = [0.0]
-
-    # Word-level features
     words_out: list[WordFeatures] = []
-    pause_positions: list[float] = []
-    rate_contour: list[float] = []
-    prev_end = 0.0
-
+    prev_end = None
     for idx, wa in enumerate(alignment.words):
-        start_s = max(0.0, wa.start)
-        end_s = min(duration_s, wa.end)
-        if end_s <= start_s:
-            end_s = start_s + 0.05
+        start = max(0.0, min(wa.start, duration_s))
+        end = max(start + 0.02, min(wa.end, duration_s))
+        sl = _frame_range(start, end, n)
 
-        i_start = int(start_s * sr)
-        i_end = int(end_s * sr)
-        seg = y[i_start:i_end] if i_end > i_start else np.zeros(sr // 100)
-
-        # Pause before this word
-        gap = start_s - prev_end
-        if gap > pause_gap_s and idx > 0:
-            pause_positions.append(prev_end)
-        prev_end = end_s
-
-        # F0 for this word segment (median over voiced frames)
-        f0_time = np.arange(0, duration_s, 0.01)
-        word_f0_indices = np.where((f0_time >= start_s) & (f0_time < end_s))[0]
-        word_f0_vals = [f0_contour[i] for i in word_f0_indices if i < len(f0_contour)]
-        voiced = [v for v in word_f0_vals if v > 0]
-        f0_hz = float(np.median(voiced)) if voiced else 0.0
-
-        # Local speech rate (3-word window around current word)
-        left = max(0, idx - 1)
-        right = min(len(alignment.words) - 1, idx + 1)
-        window_words = alignment.words[left : right + 1]
-        window_dur = (window_words[-1].end - window_words[0].start)
-        rate_wps = len(window_words) / window_dur if window_dur > 0 else 0.0
-        rate_contour.append(rate_wps)
-
-        spec = _spectral_features(seg, sr)
-        mfcc = _mfcc_mean(seg, sr)
-        word_voice_q = _extract_voice_quality(seg, sr)
+        f0_w = f0[sl]
+        voiced = f0_w[f0_w > 0]
+        energy = 10 ** (spec["rms_db"][sl] / 10)
 
         words_out.append(WordFeatures(
             word_idx=idx,
             word=wa.word,
-            start=start_s,
-            end=end_s,
-            f0_hz=f0_hz,
-            f0_values=word_f0_vals,
-            rms_db=_rms_db(seg),
-            lufs=_lufs(seg, sr),
-            mfcc_mean=mfcc,
-            spectral_centroid=spec["spectral_centroid"],
-            spectral_flatness=spec["spectral_flatness"],
-            hnr_db=word_voice_q["hnr_db"],
-            jitter=word_voice_q["jitter"],
-            shimmer=word_voice_q["shimmer"],
-            rate_wps=rate_wps,
-            pause_before_s=max(0.0, gap),
+            start=round(start, 3),
+            end=round(end, 3),
+            f0_hz=float(np.median(voiced)) if len(voiced) else 0.0,
+            f0_values=[float(v) for v in f0_w],
+            rms_db=float(10 * np.log10(np.mean(energy) + 1e-12)),
+            duration_s=round(end - start, 3),
+            pause_before_s=round(max(0.0, start - prev_end), 3) if prev_end is not None else 0.0,
+            mfcc_mean=spec["mfcc"][:, sl].mean(axis=1).tolist(),
+            spectral_centroid=_mean(spec["centroid"][sl]),
+            spectral_flatness=_mean(spec["flatness"][sl]),
+            spectral_contrast=_mean(spec["contrast"][sl]),
+            spectral_flux=_mean(spec["flux"][sl]),
+            hf_ratio_db=_mean(spec["hf_ratio_db"][sl]),
+            hnr_db=_mean(hnr[sl]),
+            uncertain=bool(getattr(wa, "uncertain", False)),
         ))
+        prev_end = end
 
     return ClipFeatures(
         clip_path=audio_path,
         duration_s=duration_s,
         words=words_out,
-        f0_contour=f0_contour,
-        rms_contour=rms_frames,
-        rate_contour=rate_contour,
-        pause_positions=pause_positions,
-    )
+        f0_contour=f0.tolist(),
+        rms_contour=spec["rms_db"].tolist(),
+        jitter=jitter,
+        shimmer=shimmer,
+    )

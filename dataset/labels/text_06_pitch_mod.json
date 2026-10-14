@@ -8,9 +8,9 @@
   "split": "heldout",
   "flaw_regions": [
     {
-      "start_s": 0.0,
-      "end_s": 61.344,
-      "mechanism": "f0_variance_compress_0.4"
+      "start_s": 12.269,
+      "end_s": 39.874,
+      "mechanism": "f0_variance_compress_0.35_bounded"
     }
   ],
   "transcript_path": "dataset/transcripts/text_06.txt",

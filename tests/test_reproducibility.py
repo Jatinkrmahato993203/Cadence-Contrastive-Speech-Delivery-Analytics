@@ -1,130 +1,60 @@
 """
 tests/test_reproducibility.py
--------------------------------
-Reproducibility test (§4, §6 Phase 7).
-
-Verifies that running the full grounding + scoring pipeline twice on the same
-input produces bit-identical JSON output (region boundaries + rubric scores).
-
-This is the "make reproducibility-test" equivalent.
+-----------------------------
+Determinism and configuration sanity (§4, §6 Phase 7).
 """
 
 import json
 import sys
-import tempfile
 from pathlib import Path
-import pytest
+
+import numpy as np
+import yaml
 
 ROOT = Path(__file__).parent.parent
 sys.path.insert(0, str(ROOT))
 
-import yaml
-from pipeline.grounder import GroundingResult, FlawRegion, ground, detect_mode
-from pipeline.scorer import score
+from pipeline.grounder import FLAW_TYPES, ground  # noqa: E402
+from pipeline.normalizer import CLARITY_FEATURES, NormalizedClip, NormalizedWord, SpeakerProfile  # noqa: E402
+from pipeline.scorer import score  # noqa: E402
+
+CFG = yaml.safe_load((ROOT / "config.yaml").read_text())
 
 
-def _run_pipeline(cfg: dict) -> dict:
-    """
-    Minimal reproducibility pipeline: builds a deterministic NormalizedClip
-    from fixed synthetic data and runs grounding + scoring.
-    Returns a JSON-serializable dict of region boundaries and scores.
-    """
-    from dataclasses import dataclass, field
-    from typing import List
+def _clip(seed: int) -> NormalizedClip:
+    rng = np.random.default_rng(seed)
+    words, t = [], 0.0
+    for i in range(60):
+        dur = 0.25 + 0.1 * rng.random()
+        words.append(NormalizedWord(i, f"w{i}", t, t + dur, pitch_var_st=2 + rng.random(),
+                                    energy_db_rel=-8 + 4 * rng.random(), rate_wps=1 / dur,
+                                    pause_duration_s=0.05 + 0.3 * rng.random() * (i % 7 == 0),
+                                    clarity=rng.normal(), duration_s=dur))
+        t += dur + 0.05
+    return NormalizedClip("x.wav", SpeakerProfile("s"), words, [], [], [], duration_s=t)
 
-    @dataclass
-    class FakeNormWord:
-        word_idx: int
-        word: str
-        start: float
-        end: float
-        pitch_st: float
-        energy_db_rel: float
-        rate_zscore: float
-        pause_flag: bool
-        pause_duration_s: float
-        clarity_mfcc: float
-        clarity_hnr: float
-        mfcc_mean: List[float] = field(default_factory=lambda: [0.0]*13)
-        hnr_db: float = 15.0
 
-    @dataclass
-    class FakeNormClip:
-        clip_path: str
-        speaker_profile: object
-        words: List
-        f0_contour_st: List[float] = field(default_factory=list)
-        rms_contour_db_rel: List[float] = field(default_factory=list)
-        rate_contour_zscore: List[float] = field(default_factory=list)
-
-    # Fixed synthetic words: some with high rate z-score to trigger flaw
-    words = []
-    for i in range(20):
-        rate_z = 4.0 if 8 <= i <= 12 else 0.1   # strong rate flaw in middle
-        words.append(FakeNormWord(
-            word_idx=i, word=f"word{i}",
-            start=i * 0.5, end=(i + 0.8) * 0.5,
-            pitch_st=0.2, energy_db_rel=-0.5,
-            rate_zscore=rate_z, pause_flag=False,
-            pause_duration_s=0.0, clarity_mfcc=0.02,
-            clarity_hnr=15.0
-        ))
-
-    clip = FakeNormClip("synthetic.wav", None, words)
-
-    result = ground(
-        clip, mode="B",
-        matched_text_id=None, matched_split=None,
-        cfg=cfg,
-        pooled_means={"pitch": 0.0, "energy": 0.0, "rate": 0.0,
-                      "clarity_mfcc": 0.0, "clarity_hnr": 0.0},
-    )
-
-    rubric = score(result, total_duration_s=10.0)
-
-    return {
-        "regions": [
-            {"flaw_type": r.flaw_type, "start_s": r.start_s, "end_s": r.end_s,
-             "mean_delta": round(r.mean_delta, 6)}
-            for r in result.flaw_regions
-        ],
-        "scores": {
-            d.dimension: round(d.score, 6)
-            for d in rubric.dimensions
-        },
-        "overall": round(rubric.overall, 6),
-    }
+def _run() -> dict:
+    base, up = _clip(0), _clip(1)
+    res = ground(up, "A", 1, "calibration", baseline_norm_clip=base, cfg=CFG)
+    rub = score(res, up.duration_s)
+    return {"regions": [(r.flaw_type, r.start_s, r.end_s, round(r.mean_delta, 9)) for r in res.flaw_regions],
+            "overall": round(rub.overall, 9)}
 
 
 def test_pipeline_is_deterministic():
-    """
-    Running the pipeline twice with identical input must produce identical output.
-    """
-    with open(ROOT / "config.yaml") as f:
-        cfg = yaml.safe_load(f)
-
-    output_1 = _run_pipeline(cfg)
-    output_2 = _run_pipeline(cfg)
-
-    assert output_1 == output_2, (
-        "Pipeline is NOT deterministic!\n"
-        f"Run 1: {json.dumps(output_1, indent=2)}\n"
-        f"Run 2: {json.dumps(output_2, indent=2)}"
-    )
+    assert json.dumps(_run()) == json.dumps(_run())
 
 
-def test_config_all_thresholds_numeric():
-    """
-    config.yaml must contain numeric (non-placeholder) sigma values.
-    Flags if thresholds were never updated from placeholder strings.
-    """
-    with open(ROOT / "config.yaml") as f:
-        cfg = yaml.safe_load(f)
-
-    for group in ["sigma_group_librivox", "sigma_group_team", "sigma_pooled_all"]:
-        data = cfg.get(group, {})
-        for feat, val in data.items():
-            assert isinstance(val, (int, float)), \
-                f"{group}.{feat} is not numeric: {val!r}"
-            assert val > 0, \
-                f"{group}.{feat} = {val} — sigma must be positive"
+def test_config_thresholds_valid():
+    g = CFG["grounding"]
+    for key in ("floors", "floors_mode_b"):
+        assert set(g[key]) == set(FLAW_TYPES), f"{key} must define every flaw type"
+        assert all(isinstance(v, (int, float)) and v > 0 for v in g[key].values()), key
+    k = g["k_noise"]
+    ks = k.values() if isinstance(k, dict) else [k]
+    assert all(isinstance(v, (int, float)) and v > 0 for v in ks)
+    if isinstance(k, dict):
+        assert set(k) == set(FLAW_TYPES)
+    assert CFG["normalization"]["clarity_feature"] in CLARITY_FEATURES
+    assert CFG["normalization"].get("clarity_sign", 1.0) in (1.0, -1.0)

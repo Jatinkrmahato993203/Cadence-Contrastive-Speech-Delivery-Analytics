@@ -1,0 +1,19 @@
+{
+  "clip_id": "real01_volume_mod",
+  "source_text_id": 1,
+  "speaker_id": "Andrew Marty (LibriVox)",
+  "speaker_source": "librivox_human",
+  "flaw_type": "volume",
+  "severity_tier": "moderate",
+  "split": "real_speaker",
+  "flaw_regions": [
+    {
+      "start_s": 9.614,
+      "end_s": 22.431,
+      "mechanism": "gain_-10dB_bounded_9.61to22.43s"
+    }
+  ],
+  "label_timeline": "output",
+  "transcript_path": "dataset/transcripts/text_01.txt",
+  "audio_path": "dataset/audio/real_speakers/real01_volume_mod.wav"
+}

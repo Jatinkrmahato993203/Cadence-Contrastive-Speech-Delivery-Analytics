@@ -8,31 +8,37 @@
   "split": "heldout",
   "flaw_regions": [
     {
-      "start_s": 0.0,
-      "end_s": 94.375,
-      "mechanism": "time_stretch_0.65x"
+      "start_s": 6.134,
+      "end_s": 15.336,
+      "mechanism": "gain_-18dB_bounded_6.13to15.34s"
     },
     {
-      "start_s": 0.0,
-      "end_s": 94.375,
-      "mechanism": "f0_variance_compress_0.1"
+      "start_s": 15.336,
+      "end_s": 37.285,
+      "mechanism": "f0_variance_compress_0.10_bounded_15.34to33.74s"
     },
     {
-      "start_s": 38.652,
-      "end_s": 40.622,
-      "mechanism": "silence_splice_1.97s_at_38.652s"
+      "start_s": 28.3,
+      "end_s": 29.964,
+      "mechanism": "silence_splice_1.66s_at_28.300s"
     },
     {
-      "start_s": 43.039,
-      "end_s": 44.76,
-      "mechanism": "silence_splice_1.72s_at_43.039s"
+      "start_s": 34.424,
+      "end_s": 36.306,
+      "mechanism": "silence_splice_1.88s_at_32.760s"
     },
     {
-      "start_s": 72.078,
-      "end_s": 74.029,
-      "mechanism": "silence_splice_1.95s_at_72.078s"
+      "start_s": 37.285,
+      "end_s": 54.262,
+      "mechanism": "clarity_xfade73ms_smooth15bin_bounded_33.74to49.08s"
+    },
+    {
+      "start_s": 43.486,
+      "end_s": 45.127,
+      "mechanism": "silence_splice_1.64s_at_39.940s"
     }
   ],
   "transcript_path": "dataset/transcripts/text_06.txt",
-  "audio_path": "dataset/audio/text_06_combined_egregious.wav"
+  "audio_path": "dataset/audio/text_06_combined_egregious.wav",
+  "label_timeline": "output"
 }

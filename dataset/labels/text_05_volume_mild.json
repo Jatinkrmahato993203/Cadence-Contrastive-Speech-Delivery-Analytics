@@ -1,0 +1,18 @@
+{
+  "clip_id": "text_05_volume_mild",
+  "source_text_id": 5,
+  "speaker_id": "librivox_reader_05",
+  "speaker_source": "librivox",
+  "flaw_type": "volume",
+  "severity_tier": "near_perfect",
+  "split": "calibration",
+  "flaw_regions": [
+    {
+      "start_s": 14.347,
+      "end_s": 21.521,
+      "mechanism": "gain_-6dB_bounded_14.35to21.52s"
+    }
+  ],
+  "transcript_path": "dataset/transcripts/text_05.txt",
+  "audio_path": "dataset/audio/text_05_volume_mild.wav"
+}

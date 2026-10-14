@@ -1,0 +1,29 @@
+{
+  "clip_id": "real02_pause_egregious",
+  "source_text_id": 2,
+  "speaker_id": "Mark F. Smith (LibriVox)",
+  "speaker_source": "librivox_human",
+  "flaw_type": "pause",
+  "severity_tier": "egregious",
+  "split": "real_speaker",
+  "flaw_regions": [
+    {
+      "start_s": 15.645,
+      "end_s": 16.919,
+      "mechanism": "silence_splice_1.27s_at_src_15.645s"
+    },
+    {
+      "start_s": 32.709,
+      "end_s": 33.771,
+      "mechanism": "silence_splice_1.06s_at_src_31.435s"
+    },
+    {
+      "start_s": 64.651,
+      "end_s": 66.486,
+      "mechanism": "silence_splice_1.83s_at_src_62.315s"
+    }
+  ],
+  "label_timeline": "output",
+  "transcript_path": "dataset/transcripts/text_02.txt",
+  "audio_path": "dataset/audio/real_speakers/real02_pause_egregious.wav"
+}

@@ -1,15 +1,18 @@
-# Online / Streamlit Community Cloud runtime dependencies
-whisperx==3.1.5
-streamlit==1.35.0
-plotly==5.22.0
-librosa==0.10.2
-praat-parselmouth==0.4.3
+# Runtime + test dependencies (versions verified in the project .venv, Python 3.10)
+# CPU-only torch keeps the Streamlit deployment small:
+#   pip install -r requirements.txt --extra-index-url https://download.pytorch.org/whl/cpu
+openai-whisper==20250625
+torch==2.14.1
+numpy==2.2.6
+scipy==1.15.3
+librosa==0.11.0
+soundfile==0.14.0
+praat-parselmouth==0.4.7
 pydub==0.25.1
-scipy==1.13.0
-numpy==1.26.4
-soundfile==0.12.1
-pyloudnorm==0.1.1
-jinja2==3.1.4
-tqdm==4.66.4
-pytest==8.2.2
-openai==1.30.1
+PyYAML==6.0.3
+pandas==2.3.3
+streamlit==1.65.0
+plotly==7.1.0
+pytest==9.1.1
+# Optional: LLM prose polish of explanations (only used when OPENAI_API_KEY is set)
+openai>=1.30

@@ -1,0 +1,19 @@
+{
+  "clip_id": "real01_pause_mild",
+  "source_text_id": 1,
+  "speaker_id": "Andrew Marty (LibriVox)",
+  "speaker_source": "librivox_human",
+  "flaw_type": "pause",
+  "severity_tier": "near_perfect",
+  "split": "real_speaker",
+  "flaw_regions": [
+    {
+      "start_s": 46.095,
+      "end_s": 46.309,
+      "mechanism": "silence_splice_0.21s_at_src_46.095s"
+    }
+  ],
+  "label_timeline": "output",
+  "transcript_path": "dataset/transcripts/text_01.txt",
+  "audio_path": "dataset/audio/real_speakers/real01_pause_mild.wav"
+}

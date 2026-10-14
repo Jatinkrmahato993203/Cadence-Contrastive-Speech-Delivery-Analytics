@@ -3,16 +3,17 @@
   "source_text_id": 3,
   "speaker_id": "librivox_reader_03",
   "speaker_source": "librivox",
-  "flaw_type": "pacing",
+  "flaw_type": "nearperfect",
   "severity_tier": "near_perfect",
   "split": "calibration",
   "flaw_regions": [
     {
-      "start_s": 0.0,
-      "end_s": 59.958,
-      "mechanism": "time_stretch_1.15x"
+      "start_s": 17.238,
+      "end_s": 38.223,
+      "mechanism": "time_stretch_1.15x_bounded_17.24to38.22s"
     }
   ],
+  "label_timeline": "output",
   "transcript_path": "dataset/transcripts/text_03.txt",
   "audio_path": "dataset/audio/text_03_nearperfect.wav"
 }

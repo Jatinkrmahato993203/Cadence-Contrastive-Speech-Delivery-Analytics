@@ -1,0 +1,18 @@
+{
+  "clip_id": "text_07_clarity_egregious",
+  "source_text_id": 7,
+  "speaker_id": "team_member_01",
+  "speaker_source": "team",
+  "flaw_type": "clarity",
+  "severity_tier": "egregious",
+  "split": "calibration",
+  "flaw_regions": [
+    {
+      "start_s": 9.241,
+      "end_s": 46.206,
+      "mechanism": "clarity_xfade90ms_smooth15bin_bounded_9.24to46.21s"
+    }
+  ],
+  "transcript_path": "dataset/transcripts/text_07.txt",
+  "audio_path": "dataset/audio/text_07_clarity_egregious.wav"
+}

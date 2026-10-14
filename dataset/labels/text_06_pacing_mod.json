@@ -8,11 +8,12 @@
   "split": "heldout",
   "flaw_regions": [
     {
-      "start_s": 0.0,
-      "end_s": 81.792,
-      "mechanism": "time_stretch_0.75x"
+      "start_s": 12.269,
+      "end_s": 49.075,
+      "mechanism": "time_stretch_0.75x_bounded_12.27to49.08s"
     }
   ],
+  "label_timeline": "output",
   "transcript_path": "dataset/transcripts/text_06.txt",
   "audio_path": "dataset/audio/text_06_pacing_mod.wav"
 }

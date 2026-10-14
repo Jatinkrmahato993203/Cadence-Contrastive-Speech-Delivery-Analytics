@@ -1,4 +1,10 @@
 """
+LEGACY — not part of the as-built pipeline. The bundled GOOD baselines were
+synthesized by scripts/generate_dataset.py (Edge TTS); the human LibriVox
+recordings are prepared by scripts/prepare_real_speakers.py. Kept for anyone
+who wants to rebuild the benchmark from their own recordings.
+"""
+"""
 scripts/01_prepare_good_clips.py
 --------------------------------
 Phase 0/1: Download LibriVox recordings, trim to the ~90s excerpt,

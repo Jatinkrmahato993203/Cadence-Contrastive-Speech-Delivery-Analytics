@@ -1,19 +1,27 @@
 """
 scripts/04_extract_features.py
--------------------------------
-Phase 2: Extract features from all 64 clips and (optionally) compute
-calibration-set statistics to populate config.yaml.
+------------------------------
+Phase 2: extract per-word features for every clip and (optionally) calibrate
+the grounding thresholds on the CALIBRATION texts only (1-5, 7).
 
 Usage:
-    # Extract features for all clips:
-    python scripts/04_extract_features.py
+    python scripts/04_extract_features.py                 # features JSON per clip
+    python scripts/04_extract_features.py --calibrate     # + write thresholds to config.yaml
 
-    # Also recompute and update config.yaml thresholds:
-    python scripts/04_extract_features.py --compute-thresholds
-
-Outputs:
-    dataset/labels/{clip_id}_features.json  (per clip)
-    config.yaml updated sigma_ values (if --compute-thresholds)
+Calibration (nothing from held-out texts 6 and 8 is ever used):
+  1. Clarity measure — for each candidate (HNR, spectral contrast, flux,
+     >3 kHz energy ratio, flatness) compute the paired per-word delta on the
+     clarity_* clips and the AUC separating words inside the injected region
+     from unflawed words. The best measure (and its sign) is kept.
+  2. Floors — per feature, choose the floor maximising
+        mean target IoU (clips containing that flaw, all severity tiers)
+        - LAMBDA_FP * mean false-positive fraction of that feature (all flawed clips).
+  3. k_noise — the floors only matter when two readings are acoustically
+     near-identical (same speaker). For a different speaker the adaptive term
+     k * noise dominates. Per feature, k is the smallest value that keeps BOTH
+     clean human-vs-TTS pairs (the two LibriVox readings vs. the TTS baselines of
+     texts 1 and 2 — calibration texts) below 2% of their duration flagged.
+  Floors and k interact, so steps 2 and 3 alternate until k is stable.
 """
 
 from __future__ import annotations
@@ -23,184 +31,261 @@ import json
 import sys
 from pathlib import Path
 
-import yaml
 import numpy as np
+import yaml
 
 ROOT = Path(__file__).parent.parent
 sys.path.insert(0, str(ROOT))
+
+from pipeline import grounder as G                                   # noqa: E402
+from pipeline.analysis import load_bundled, prepare, SPLITS          # noqa: E402
+from pipeline.evaluation import clip_metrics, gt_by_feature          # noqa: E402
+from pipeline.normalizer import CLARITY_FEATURES                     # noqa: E402
 
 AUDIO_DIR = ROOT / "dataset" / "audio"
 LABELS_DIR = ROOT / "dataset" / "labels"
 CONFIG_PATH = ROOT / "config.yaml"
 
-CLIP_SUFFIXES = [
-    "good", "pacing_mod", "pitch_mod", "pause_mod",
-    "volume_mod", "clarity_mod", "combined_egregious", "nearperfect"
-]
-
-CALIBRATION_TEXTS = {1, 2, 3, 4, 5, 7}
-LIBRIVOX_TEXTS = {1, 2, 3, 4, 5, 6}
-TEAM_TEXTS = {7, 8}
+CALIBRATION_TEXTS = [t for t, s in SPLITS.items() if s == "calibration"]
+LAMBDA_FP = 2.0
+MAX_CLEAN_FLAGGED_PER_FEATURE = 0.02
+K_GRID = [1.5, 2.0, 2.5, 3.0, 3.5, 4.0, 5.0, 6.0, 8.0, 10.0]
 
 
-def _make_dummy_alignment(num_words: int = 30, duration_s: float = 60.0):
-    """Create a dummy alignment for clips where WhisperX is not available."""
-    from pipeline.aligner import AlignmentResult, WordAlignment
-
-    step = duration_s / max(num_words, 1)
-    words = []
-    for i in range(num_words):
-        words.append(WordAlignment(
-            word=f"word{i}", start=i * step, end=(i + 0.8) * step, score=0.9
-        ))
-    return AlignmentResult(words=words, model_used="dummy", had_retry=False)
+def flawed_clips(text_ids) -> list[tuple[int, str, dict]]:
+    out = []
+    for tid in text_ids:
+        for lp in sorted(LABELS_DIR.glob(f"text_{tid:02d}_*.json")):
+            if lp.stem.endswith("_features"):
+                continue
+            out.append((tid, lp.stem, json.loads(lp.read_text())))
+    return out
 
 
-def process_clip(
-    text_id: int, suffix: str, cfg: dict
-) -> dict | None:
-    """Extract features for one clip. Returns feature dict or None if clip missing."""
-    from pipeline import features as feat_mod
-    from pipeline import normalizer as norm_mod
-    from pipeline.normalizer import SpeakerProfile
+def save_features(clip_id: str, prep) -> None:
+    words = [
+        {k: (round(v, 4) if isinstance(v, float) else v) for k, v in w.__dict__.items() if k != "mfcc_mean"}
+        for w in prep.norm.words
+    ]
+    (LABELS_DIR / f"{clip_id}_features.json").write_text(json.dumps({
+        "clip_id": clip_id,
+        "aligner": prep.alignment.model_used,
+        "duration_s": round(prep.features.duration_s, 3),
+        "jitter": round(prep.features.jitter, 5),
+        "shimmer": round(prep.features.shimmer, 5),
+        "words": words,
+    }, indent=1))
 
-    wav_path = AUDIO_DIR / f"text_{text_id:02d}_{suffix}.wav"
-    if not wav_path.exists():
+
+# -- 1. Clarity feature selection ----------------------------------------------------
+
+def _auc(neg: np.ndarray, pos: np.ndarray) -> float:
+    """P(pos < neg): probability a flawed word scores lower than an unflawed one."""
+    if len(neg) == 0 or len(pos) == 0:
+        return 0.5
+    allv = np.concatenate([pos, neg])
+    ranks = allv.argsort().argsort() + 1
+    r_pos = ranks[: len(pos)].sum()
+    u = r_pos - len(pos) * (len(pos) + 1) / 2
+    return float(1 - u / (len(pos) * len(neg)))
+
+
+def select_clarity(cfg: dict, bundled: dict) -> tuple[str, float, dict]:
+    results = {}
+    for feat in CLARITY_FEATURES:
+        c = json.loads(json.dumps(cfg))
+        c.setdefault("normalization", {}).update({"clarity_feature": feat, "clarity_sign": 1.0})
+        inside, outside = [], []
+        for tid in CALIBRATION_TEXTS:
+            base = prepare(AUDIO_DIR / f"text_{tid:02d}_good.wav", bundled[tid], c)
+            for suf in ("clarity_mild", "clarity_mod", "clarity_egregious"):
+                label = json.loads((LABELS_DIR / f"text_{tid:02d}_{suf}.json").read_text())
+                up = prepare(AUDIO_DIR / f"text_{tid:02d}_{suf}.wav", bundled[tid], c)
+                pairs = G.pair_words(up.norm.words, base.norm.words)
+                d = G._rolling_median(G._deltas_mode_a(up.norm.words, base.norm.words, pairs)["clarity"], 3)
+                regs = gt_by_feature(label).get("clarity", [])
+                for w, x in zip(up.norm.words, d):
+                    if np.isfinite(x):
+                        mid = (w.start + w.end) / 2
+                        (inside if any(r["start_s"] <= mid <= r["end_s"] for r in regs) else outside).append(x)
+        auc = _auc(np.array(outside), np.array(inside))
+        results[feat] = round(auc, 4)
+        print(f"  clarity candidate {feat:18s} AUC(flawed lower) = {auc:.3f}")
+    best = max(results, key=lambda f: abs(results[f] - 0.5))
+    sign = 1.0 if results[best] >= 0.5 else -1.0
+    return best, sign, results
+
+
+# -- 2. Floors --------------------------------------------------------------------------
+
+def collect_deltas(cfg: dict, bundled: dict, text_ids) -> list[dict]:
+    g = cfg["grounding"]
+    sm, rate_half = int(g.get("smoothing_words", 3)), int(g.get("rate_window_words", 5)) // 2
+    items = []
+    for tid, clip_id, label in flawed_clips(text_ids):
+        base = prepare(AUDIO_DIR / f"text_{tid:02d}_good.wav", bundled[tid], cfg)
+        up = prepare(AUDIO_DIR / f"{clip_id}.wav", bundled[tid], cfg)
+        pairs = G.pair_words(up.norm.words, base.norm.words)
+        raw = G._deltas_mode_a(up.norm.words, base.norm.words, pairs, rate_half, g.get("floors"))
+        prep = {f: G.prepared_delta(raw[f], f, sm) for f in G.FLAW_TYPES}
+        same = G.recording_match(up.norm.words, base.norm.words, pairs) < float(g.get("same_recording_max_dist", 20.0))
+        items.append({"clip": clip_id, "label": label, "up": up, "base": base, "pairs": pairs, "same": same,
+                      "d": {f: v[0] for f, v in prep.items()}, "noise": {f: v[1] for f, v in prep.items()},
+                      "dur": up.features.duration_s})
+    return items
+
+
+def feature_objective(items, feat: str, floor: float, k: float, g: dict) -> tuple[float, float, float]:
+    """k is the multiplier for THIS feature."""
+    ious, fps = [], []
+    for it in items:
+        tau = max(floor, (float(g.get("k_same_recording", 3.0)) if it["same"] else k) * it["noise"][feat])
+        rate_ctx = None
+        if feat == "pause":
+            k_rate = float(g.get("k_same_recording", 3.0)) if it["same"] else G.k_for(g, "rate")
+            rate_tau = max(g["floors"]["rate"], k_rate * it["noise"]["rate"])
+            rate_ctx = (it["d"]["rate"], rate_tau)
+        regs, _ = G._build_regions(feat, it["d"][feat], tau, it["up"].norm.words, it["base"].norm.words,
+                                   it["pairs"], {**{"pitch": 2, "energy": 2, "rate": 6, "pause": 1, "clarity": 2},
+                                                 **g.get("min_run_words", {})},
+                                   float(g.get("merge_gap_ms", 300)) / 1000, float(g.get("pause_ratio", 2.0)),
+                                   rate_context=rate_ctx)
+        gt = gt_by_feature(it["label"])
+        from pipeline.evaluation import temporal_iou, false_positive_seconds
+        if feat in gt:
+            ious.append(temporal_iou(regs, gt[feat], it["dur"]))
+        fps.append(false_positive_seconds(regs, gt, it["dur"]) / it["dur"])
+    mi, mf = float(np.mean(ious)) if ious else 0.0, float(np.mean(fps))
+    return mi - LAMBDA_FP * mf, mi, mf
+
+
+def calibrate_floors(items, g: dict) -> dict:
+    floors = {}
+    for feat in G.FLAW_TYPES:
+        clean = np.concatenate([
+            np.abs(it["d"][feat][np.isfinite(it["d"][feat])]) for it in items
+            if feat not in gt_by_feature(it["label"])
+        ])
+        grid = np.unique(np.round(np.quantile(clean, np.linspace(0.80, 0.9995, 45)), 4))
+        grid = grid[grid > 0]
+        scored = [(feature_objective(items, feat, fl, G.k_for(g, feat), g), fl) for fl in grid]
+        (obj, iou, fp), best = max(scored, key=lambda s: s[0][0])
+        floors[feat] = float(best)
+        print(f"  floor {feat:8s} = {best:.4f}  (target IoU {iou:.3f}, FP fraction {fp:.3f})")
+    return floors
+
+
+# -- 0. Same-recording gate -----------------------------------------------------------
+
+def calibrate_recording_gate(cfg: dict, bundled: dict) -> float:
+    """Geometric midpoint between edited copies (calibration texts) and a different recording (real01)."""
+    edited = []
+    for tid, clip_id, _ in flawed_clips(CALIBRATION_TEXTS):
+        base = prepare(AUDIO_DIR / f"text_{tid:02d}_good.wav", bundled[tid], cfg)
+        up = prepare(AUDIO_DIR / f"{clip_id}.wav", bundled[tid], cfg)
+        edited.append(G.recording_match(up.norm.words, base.norm.words, G.pair_words(up.norm.words, base.norm.words)))
+    base = prepare(AUDIO_DIR / "text_01_good.wav", bundled[1], cfg)
+    up = prepare(ROOT / "dataset" / "audio" / "real_speakers" / "real01_good.wav", bundled[1], cfg)
+    other = G.recording_match(up.norm.words, base.norm.words, G.pair_words(up.norm.words, base.norm.words))
+    hi = max(edited)
+    gate = float(np.sqrt(max(hi, 1e-3) * other))
+    print(f"  edited copies: max timbre distance {hi:.2f}; different recording: {other:.2f} -> gate {gate:.2f}")
+    if other <= hi:
+        print("  WARNING: no separation between edited copies and a different recording")
+    return round(gate, 2)
+
+
+# -- 3. k_noise from a clean cross-speaker pair --------------------------------------
+
+REAL_TRANSCRIPT = lambda tid: (ROOT / "dataset" / "transcripts" / f"real{tid:02d}.txt")
+
+
+def calibrate_k(cfg: dict, bundled: dict) -> dict | None:
+    """
+    Per feature: smallest k keeping EVERY clean human-vs-TTS pair (both LibriVox
+    readings) under MAX_CLEAN_FLAGGED_PER_FEATURE of its duration. With only two
+    human recordings, fitting one of them under-estimated the variation of the other
+    (a noisier 64 kbps recording), so both are used.
+    """
+    pairs = []
+    for tid in (1, 2):
+        real = ROOT / "dataset" / "audio" / "real_speakers" / f"real{tid:02d}_good.wav"
+        if not real.exists():
+            continue
+        tx = REAL_TRANSCRIPT(tid).read_text(encoding="utf-8") if REAL_TRANSCRIPT(tid).exists() else bundled[tid]
+        pairs.append((tid, prepare(AUDIO_DIR / f"text_{tid:02d}_good.wav", bundled[tid], cfg), prepare(real, tx, cfg)))
+    if not pairs:
+        print("  human recordings missing — run scripts/prepare_real_speakers.py; keeping k_noise")
         return None
-
-    print(f"  Extracting: {wav_path.name}")
-
-    # Try WhisperX alignment; fall back to dummy for offline CI
-    try:
-        from pipeline.aligner import align
-        alignment = align(str(wav_path), cfg=cfg)
-    except Exception as exc:
-        print(f"    WhisperX unavailable ({exc}) — using dummy alignment")
-        alignment = _make_dummy_alignment()
-
-    clip_feat = feat_mod.extract(str(wav_path), alignment)
-
-    # Speaker profile: bootstrap from first 10 words (always new speaker per clip in batch)
-    speaker_id = f"text_{text_id:02d}_speaker"
-    norm_clip, profile = norm_mod.normalize(clip_feat, speaker_id, cfg=cfg)
-
-    # Serialize per-word features
-    word_dicts = [
-        {
-            "word_idx": w.word_idx,
-            "word": w.word,
-            "start": w.start,
-            "end": w.end,
-            "pitch_st": w.pitch_st,
-            "energy_db_rel": w.energy_db_rel,
-            "rate_zscore": w.rate_zscore,
-            "pause_flag": w.pause_flag,
-            "pause_duration_s": w.pause_duration_s,
-            "clarity_mfcc": w.clarity_mfcc,
-            "clarity_hnr": w.clarity_hnr,
-        }
-        for w in norm_clip.words
-    ]
-
-    return {
-        "clip_id": f"text_{text_id:02d}_{suffix}",
-        "text_id": text_id,
-        "suffix": suffix,
-        "words": word_dicts,
-        "speaker_f0_median": profile.f0_median,
-        "speaker_rms_95pct": profile.rms_95pct,
-        "speaker_rate_mean": profile.rate_mean,
-    }
-
-
-def compute_thresholds(all_features: list[dict], cfg: dict) -> dict:
-    """
-    Compute sigma_group_librivox, sigma_group_team, sigma_pooled_all
-    from calibration-set GOOD clips only.
-    """
-    librivox_good = [
-        f for f in all_features
-        if f["text_id"] in CALIBRATION_TEXTS & LIBRIVOX_TEXTS
-        and f["suffix"] == "good"
-    ]
-    team_good = [
-        f for f in all_features
-        if f["text_id"] in CALIBRATION_TEXTS & TEAM_TEXTS
-        and f["suffix"] == "good"
-    ]
-    all_good = librivox_good + team_good
-
-    def _pool_feature(clips: list[dict], key: str) -> float:
-        vals = []
-        for c in clips:
-            vals.extend(w[key] for w in c["words"])
-        return float(np.std(vals)) if vals else 1.0
-
-    features_keys = {
-        "pitch": "pitch_st",
-        "energy": "energy_db_rel",
-        "rate": "rate_zscore",
-        "clarity_mfcc": "clarity_mfcc",
-        "clarity_hnr": "clarity_hnr",
-    }
-
-    def _compute_group(clips):
-        return {k: _pool_feature(clips, v) for k, v in features_keys.items()}
-
-    return {
-        "sigma_group_librivox": _compute_group(librivox_good),
-        "sigma_group_team": _compute_group(team_good),
-        "sigma_pooled_all": _compute_group(all_good),
-    }
-
-
-def update_config(new_sigmas: dict, cfg: dict) -> dict:
-    cfg.update(new_sigmas)
-    return cfg
+    chosen = {}
+    for feat in G.FLAW_TYPES:
+        for k in K_GRID:
+            c = json.loads(json.dumps(cfg))
+            c["grounding"]["k_noise"] = {**{f: K_GRID[-1] for f in G.FLAW_TYPES}, feat: k}
+            fracs = []
+            for tid, base, up in pairs:
+                res = G.ground(up.norm, "A", tid, "calibration", baseline_norm_clip=base.norm, cfg=c)
+                fracs.append(sum(r.end_s - r.start_s for r in res.flaw_regions if r.flaw_type == feat)
+                             / up.features.duration_s)
+            if max(fracs) <= MAX_CLEAN_FLAGGED_PER_FEATURE:
+                break
+        chosen[feat] = k
+        print(f"  k[{feat:7s}] = {k:.1f}  (clean human-vs-TTS pairs flagged: "
+              f"{', '.join(f'{x:.1%}' for x in fracs)})")
+    return chosen
 
 
 def main():
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--compute-thresholds", action="store_true",
-                        help="Recompute sigma_ values and update config.yaml")
-    parser.add_argument("--text", type=int, help="Only process this text_id")
-    args = parser.parse_args()
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--calibrate", action="store_true")
+    ap.add_argument("--no-save", action="store_true", help="skip writing *_features.json")
+    args = ap.parse_args()
 
-    with open(CONFIG_PATH) as f:
-        cfg = yaml.safe_load(f)
+    cfg = yaml.safe_load(CONFIG_PATH.read_text())
+    bundled, _ = load_bundled()
 
-    all_features = []
-    text_ids = [args.text] if args.text else list(range(1, 9))
+    if args.calibrate:
+        print("1. Clarity measure (calibration texts)")
+        feat, sign, aucs = select_clarity(cfg, bundled)
+        cfg["normalization"].update({"clarity_feature": feat, "clarity_sign": sign})
+        print(f"  -> {feat} (sign {sign:+.0f})")
 
-    for text_id in text_ids:
-        for suffix in CLIP_SUFFIXES:
-            result = process_clip(text_id, suffix, cfg)
-            if result:
-                all_features.append(result)
-                out = LABELS_DIR / f"text_{text_id:02d}_{suffix}_features.json"
-                out.parent.mkdir(parents=True, exist_ok=True)
-                with open(out, "w") as f:
-                    json.dump(result, f, indent=2)
+        print("0. Same-recording gate")
+        cfg["grounding"]["same_recording_max_dist"] = calibrate_recording_gate(cfg, bundled)
 
-    print(f"\nExtracted features for {len(all_features)} clips.")
+        # Floors and k interact (tau = max(floor, k * noise)): alternate until k is stable.
+        items = collect_deltas(cfg, bundled, CALIBRATION_TEXTS)
+        g = cfg["grounding"]
+        for rnd in range(1, 4):
+            print(f"2.{rnd} Floors (calibration texts, all tiers) with k_noise={g.get('k_noise', 3.0)}")
+            g["floors"] = {f: round(v, 4) for f, v in calibrate_floors(items, g).items()}
+            print(f"3.{rnd} k_noise (clean cross-speaker pair, text 1)")
+            k = calibrate_k(cfg, bundled)
+            if k is None or k == g.get("k_noise"):
+                break
+            g["k_noise"] = k
 
-    if args.compute_thresholds:
-        print("\nComputing calibration-set thresholds...")
-        new_sigmas = compute_thresholds(all_features, cfg)
+        header = ("# Thresholds under grounding.floors / k_noise / normalization.clarity_feature are\n"
+                  "# written by: python scripts/04_extract_features.py --calibrate  (calibration texts only)\n")
+        CONFIG_PATH.write_text(header + yaml.safe_dump(cfg, sort_keys=False))
+        (LABELS_DIR / "calibration_report.json").write_text(json.dumps({
+            "calibration_texts": CALIBRATION_TEXTS, "clarity_auc": aucs,
+            "clarity_feature": feat, "clarity_sign": sign,
+            "floors": g["floors"], "k_noise": g["k_noise"], "lambda_fp": LAMBDA_FP,
+            "same_recording_max_dist": g.get("same_recording_max_dist"),
+            "k_same_recording": g.get("k_same_recording", 3.0),
+            "max_clean_flagged_per_feature": MAX_CLEAN_FLAGGED_PER_FEATURE,
+        }, indent=2))
+        print("config.yaml updated; report -> dataset/labels/calibration_report.json")
 
-        print("\nComputed sigma values:")
-        for group, vals in new_sigmas.items():
-            print(f"  {group}:")
-            for k, v in vals.items():
-                print(f"    {k}: {v:.4f}")
-
-        updated_cfg = update_config(new_sigmas, cfg)
-        with open(CONFIG_PATH, "w") as f:
-            yaml.dump(updated_cfg, f, default_flow_style=False, sort_keys=False)
-        print(f"\nconfig.yaml updated with real calibration thresholds.")
-
-    print("\nNext: python scripts/05_evaluate_heldout.py")
+    if not args.no_save:
+        n = 0
+        for tid in sorted(bundled):
+            for wav in sorted(AUDIO_DIR.glob(f"text_{tid:02d}_*.wav")):
+                save_features(wav.stem, prepare(wav, bundled[tid], cfg))
+                n += 1
+        print(f"Saved features for {n} clips.")
 
 
 if __name__ == "__main__":
-    main()
+    main()

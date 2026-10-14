@@ -1,0 +1,29 @@
+{
+  "clip_id": "text_01_pause_egregious",
+  "source_text_id": 1,
+  "speaker_id": "librivox_reader_01",
+  "speaker_source": "librivox",
+  "flaw_type": "pause",
+  "severity_tier": "egregious",
+  "split": "calibration",
+  "flaw_regions": [
+    {
+      "start_s": 29.58,
+      "end_s": 30.885,
+      "mechanism": "silence_splice_1.30s_at_29.580s"
+    },
+    {
+      "start_s": 35.345,
+      "end_s": 36.753,
+      "mechanism": "silence_splice_1.41s_at_34.040s"
+    },
+    {
+      "start_s": 45.253,
+      "end_s": 47.149,
+      "mechanism": "silence_splice_1.90s_at_42.540s"
+    }
+  ],
+  "transcript_path": "dataset/transcripts/text_01.txt",
+  "audio_path": "dataset/audio/text_01_pause_egregious.wav",
+  "label_timeline": "output"
+}

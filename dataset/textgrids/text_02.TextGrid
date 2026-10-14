@@ -11,2834 +11,2438 @@ item []:
         name = "words"
         xmin = 0
         xmax = 71.5920
-        intervals: size = 213
+        intervals: size = 181
         intervals [1]:
-            xmin = 0.0000
-            xmax = 0.3025
-            text = "they"
-        intervals [2]:
-            xmin = 0.3361
-            xmax = 0.6386
-            text = "tell"
-        intervals [3]:
-            xmin = 0.6722
-            xmax = 0.9747
-            text = "us"
-        intervals [4]:
-            xmin = 1.0083
-            xmax = 1.3108
-            text = "sir"
-        intervals [5]:
-            xmin = 1.3445
-            xmax = 1.6470
-            text = "that"
-        intervals [6]:
-            xmin = 1.6806
-            xmax = 1.9831
-            text = "we"
-        intervals [7]:
-            xmin = 2.0167
-            xmax = 2.3192
-            text = "are"
-        intervals [8]:
-            xmin = 2.3528
-            xmax = 2.6553
-            text = "weak"
-        intervals [9]:
-            xmin = 2.6889
-            xmax = 2.9914
-            text = "unable"
-        intervals [10]:
-            xmin = 3.0250
-            xmax = 3.3275
-            text = "to"
-        intervals [11]:
-            xmin = 3.3611
-            xmax = 3.6636
-            text = "cope"
-        intervals [12]:
-            xmin = 3.6972
-            xmax = 3.9997
-            text = "with"
-        intervals [13]:
-            xmin = 4.0334
-            xmax = 4.3359
-            text = "so"
-        intervals [14]:
-            xmin = 4.3695
-            xmax = 4.6720
-            text = "formidable"
-        intervals [15]:
-            xmin = 4.7056
-            xmax = 5.0081
-            text = "an"
-        intervals [16]:
-            xmin = 5.0417
-            xmax = 5.3442
-            text = "adversary"
-        intervals [17]:
-            xmin = 5.3778
-            xmax = 5.6803
-            text = "but"
-        intervals [18]:
-            xmin = 5.7139
-            xmax = 6.0164
-            text = "when"
-        intervals [19]:
-            xmin = 6.0500
-            xmax = 6.3525
-            text = "shall"
-        intervals [20]:
-            xmin = 6.3861
-            xmax = 6.6886
-            text = "we"
-        intervals [21]:
-            xmin = 6.7223
-            xmax = 7.0248
-            text = "be"
-        intervals [22]:
-            xmin = 7.0584
-            xmax = 7.3609
-            text = "stronger"
-        intervals [23]:
-            xmin = 7.3945
-            xmax = 7.6970
-            text = "will"
-        intervals [24]:
-            xmin = 7.7306
-            xmax = 8.0331
-            text = "it"
-        intervals [25]:
-            xmin = 8.0667
-            xmax = 8.3692
-            text = "be"
-        intervals [26]:
-            xmin = 8.4028
-            xmax = 8.7053
-            text = "the"
-        intervals [27]:
-            xmin = 8.7389
-            xmax = 9.0414
-            text = "next"
-        intervals [28]:
-            xmin = 9.0750
-            xmax = 9.3775
-            text = "week"
-        intervals [29]:
-            xmin = 9.4112
-            xmax = 9.7137
-            text = "or"
-        intervals [30]:
-            xmin = 9.7473
-            xmax = 10.0498
-            text = "the"
-        intervals [31]:
-            xmin = 10.0834
-            xmax = 10.3859
-            text = "next"
-        intervals [32]:
-            xmin = 10.4195
-            xmax = 10.7220
-            text = "year"
-        intervals [33]:
-            xmin = 10.7556
-            xmax = 11.0581
-            text = "will"
-        intervals [34]:
-            xmin = 11.0917
-            xmax = 11.3942
-            text = "it"
-        intervals [35]:
-            xmin = 11.4278
-            xmax = 11.7303
-            text = "be"
-        intervals [36]:
-            xmin = 11.7639
-            xmax = 12.0664
-            text = "when"
-        intervals [37]:
-            xmin = 12.1001
-            xmax = 12.4026
-            text = "we"
-        intervals [38]:
-            xmin = 12.4362
-            xmax = 12.7387
-            text = "are"
-        intervals [39]:
-            xmin = 12.7723
-            xmax = 13.0748
-            text = "totally"
-        intervals [40]:
-            xmin = 13.1084
-            xmax = 13.4109
-            text = "disarmed"
-        intervals [41]:
-            xmin = 13.4445
-            xmax = 13.7470
+            xmin = 10.9600
+            xmax = 11.4800
             text = "and"
-        intervals [42]:
-            xmin = 13.7806
-            xmax = 14.0831
+        intervals [2]:
+            xmin = 11.4800
+            xmax = 11.4800
             text = "when"
-        intervals [43]:
-            xmin = 14.1167
-            xmax = 14.4192
+        intervals [3]:
+            xmin = 11.4800
+            xmax = 12.1400
             text = "a"
-        intervals [44]:
-            xmin = 14.4528
-            xmax = 14.7553
-            text = "british"
-        intervals [45]:
-            xmin = 14.7890
-            xmax = 15.0915
+        intervals [4]:
+            xmin = 12.1400
+            xmax = 14.0400
+            text = "British"
+        intervals [5]:
+            xmin = 14.0400
+            xmax = 14.3400
             text = "guard"
+        intervals [6]:
+            xmin = 14.3400
+            xmax = 14.6200
+            text = "shall"
+        intervals [7]:
+            xmin = 14.6200
+            xmax = 14.7600
+            text = "be"
+        intervals [8]:
+            xmin = 14.7600
+            xmax = 14.9800
+            text = "stationed"
+        intervals [9]:
+            xmin = 14.9800
+            xmax = 15.3400
+            text = "in"
+        intervals [10]:
+            xmin = 15.3400
+            xmax = 15.5400
+            text = "every"
+        intervals [11]:
+            xmin = 15.5400
+            xmax = 15.8800
+            text = "house?"
+        intervals [12]:
+            xmin = 17.0000
+            xmax = 17.2000
+            text = "Shall"
+        intervals [13]:
+            xmin = 17.2000
+            xmax = 17.3400
+            text = "we"
+        intervals [14]:
+            xmin = 17.3400
+            xmax = 17.5200
+            text = "gather"
+        intervals [15]:
+            xmin = 17.5200
+            xmax = 17.9200
+            text = "strength"
+        intervals [16]:
+            xmin = 17.9200
+            xmax = 18.2800
+            text = "by"
+        intervals [17]:
+            xmin = 18.2800
+            xmax = 18.4400
+            text = "your"
+        intervals [18]:
+            xmin = 18.4400
+            xmax = 18.7600
+            text = "resolution"
+        intervals [19]:
+            xmin = 18.7600
+            xmax = 19.1600
+            text = "and"
+        intervals [20]:
+            xmin = 19.1600
+            xmax = 19.4200
+            text = "inaction?"
+        intervals [21]:
+            xmin = 20.5000
+            xmax = 20.9000
+            text = "Shall"
+        intervals [22]:
+            xmin = 20.9000
+            xmax = 21.0600
+            text = "we"
+        intervals [23]:
+            xmin = 21.0600
+            xmax = 21.2800
+            text = "acquire"
+        intervals [24]:
+            xmin = 21.2800
+            xmax = 21.6200
+            text = "the"
+        intervals [25]:
+            xmin = 21.6200
+            xmax = 21.8000
+            text = "means"
+        intervals [26]:
+            xmin = 21.8000
+            xmax = 22.0600
+            text = "of"
+        intervals [27]:
+            xmin = 22.0600
+            xmax = 22.1200
+            text = "a"
+        intervals [28]:
+            xmin = 22.1200
+            xmax = 22.4400
+            text = "factual"
+        intervals [29]:
+            xmin = 22.4400
+            xmax = 22.8600
+            text = "resistance,"
+        intervals [30]:
+            xmin = 23.5000
+            xmax = 23.6600
+            text = "by"
+        intervals [31]:
+            xmin = 23.6600
+            xmax = 23.9200
+            text = "lying"
+        intervals [32]:
+            xmin = 23.9200
+            xmax = 24.6200
+            text = "supinely"
+        intervals [33]:
+            xmin = 24.6200
+            xmax = 24.8000
+            text = "on"
+        intervals [34]:
+            xmin = 24.8000
+            xmax = 24.9200
+            text = "our"
+        intervals [35]:
+            xmin = 24.9200
+            xmax = 25.1200
+            text = "backs,"
+        intervals [36]:
+            xmin = 25.5400
+            xmax = 25.7600
+            text = "and"
+        intervals [37]:
+            xmin = 25.7600
+            xmax = 25.9600
+            text = "hugging"
+        intervals [38]:
+            xmin = 25.9600
+            xmax = 26.2000
+            text = "the"
+        intervals [39]:
+            xmin = 26.2000
+            xmax = 26.5400
+            text = "delusive"
+        intervals [40]:
+            xmin = 26.5400
+            xmax = 26.8600
+            text = "phantom"
+        intervals [41]:
+            xmin = 26.8600
+            xmax = 27.1600
+            text = "of"
+        intervals [42]:
+            xmin = 27.1600
+            xmax = 27.3600
+            text = "hope,"
+        intervals [43]:
+            xmin = 27.7200
+            xmax = 27.9800
+            text = "until"
+        intervals [44]:
+            xmin = 27.9800
+            xmax = 28.1800
+            text = "our"
+        intervals [45]:
+            xmin = 28.1800
+            xmax = 28.4200
+            text = "enemies"
         intervals [46]:
-            xmin = 15.1251
-            xmax = 15.4276
+            xmin = 28.4200
+            xmax = 28.7400
             text = "shall"
         intervals [47]:
-            xmin = 15.4612
-            xmax = 15.7637
-            text = "be"
-        intervals [48]:
-            xmin = 15.7973
-            xmax = 16.0998
-            text = "stationed"
-        intervals [49]:
-            xmin = 16.1334
-            xmax = 16.4359
-            text = "in"
-        intervals [50]:
-            xmin = 16.4695
-            xmax = 16.7720
-            text = "every"
-        intervals [51]:
-            xmin = 16.8056
-            xmax = 17.1081
-            text = "house"
-        intervals [52]:
-            xmin = 17.1417
-            xmax = 17.4442
-            text = "shall"
-        intervals [53]:
-            xmin = 17.4779
-            xmax = 17.7804
-            text = "we"
-        intervals [54]:
-            xmin = 17.8140
-            xmax = 18.1165
-            text = "gather"
-        intervals [55]:
-            xmin = 18.1501
-            xmax = 18.4526
-            text = "strength"
-        intervals [56]:
-            xmin = 18.4862
-            xmax = 18.7887
-            text = "by"
-        intervals [57]:
-            xmin = 18.8223
-            xmax = 19.1248
-            text = "irresolution"
-        intervals [58]:
-            xmin = 19.1584
-            xmax = 19.4609
-            text = "and"
-        intervals [59]:
-            xmin = 19.4945
-            xmax = 19.7970
-            text = "inaction"
-        intervals [60]:
-            xmin = 19.8306
-            xmax = 20.1331
-            text = "shall"
-        intervals [61]:
-            xmin = 20.1668
-            xmax = 20.4693
-            text = "we"
-        intervals [62]:
-            xmin = 20.5029
-            xmax = 20.8054
-            text = "acquire"
-        intervals [63]:
-            xmin = 20.8390
-            xmax = 21.1415
-            text = "the"
-        intervals [64]:
-            xmin = 21.1751
-            xmax = 21.4776
-            text = "means"
-        intervals [65]:
-            xmin = 21.5112
-            xmax = 21.8137
-            text = "of"
-        intervals [66]:
-            xmin = 21.8473
-            xmax = 22.1498
-            text = "effectual"
-        intervals [67]:
-            xmin = 22.1834
-            xmax = 22.4859
-            text = "resistance"
-        intervals [68]:
-            xmin = 22.5195
-            xmax = 22.8221
-            text = "by"
-        intervals [69]:
-            xmin = 22.8557
-            xmax = 23.1582
-            text = "lying"
-        intervals [70]:
-            xmin = 23.1918
-            xmax = 23.4943
-            text = "supinely"
-        intervals [71]:
-            xmin = 23.5279
-            xmax = 23.8304
-            text = "on"
-        intervals [72]:
-            xmin = 23.8640
-            xmax = 24.1665
-            text = "our"
-        intervals [73]:
-            xmin = 24.2001
-            xmax = 24.5026
-            text = "backs"
-        intervals [74]:
-            xmin = 24.5362
-            xmax = 24.8387
-            text = "and"
-        intervals [75]:
-            xmin = 24.8723
-            xmax = 25.1748
-            text = "hugging"
-        intervals [76]:
-            xmin = 25.2085
-            xmax = 25.5110
-            text = "the"
-        intervals [77]:
-            xmin = 25.5446
-            xmax = 25.8471
-            text = "delusive"
-        intervals [78]:
-            xmin = 25.8807
-            xmax = 26.1832
-            text = "phantom"
-        intervals [79]:
-            xmin = 26.2168
-            xmax = 26.5193
-            text = "of"
-        intervals [80]:
-            xmin = 26.5529
-            xmax = 26.8554
-            text = "hope"
-        intervals [81]:
-            xmin = 26.8890
-            xmax = 27.1915
-            text = "until"
-        intervals [82]:
-            xmin = 27.2251
-            xmax = 27.5276
-            text = "our"
-        intervals [83]:
-            xmin = 27.5612
-            xmax = 27.8637
-            text = "enemies"
-        intervals [84]:
-            xmin = 27.8974
-            xmax = 28.1999
-            text = "shall"
-        intervals [85]:
-            xmin = 28.2335
-            xmax = 28.5360
+            xmin = 28.7400
+            xmax = 28.8800
             text = "have"
-        intervals [86]:
-            xmin = 28.5696
-            xmax = 28.8721
+        intervals [48]:
+            xmin = 28.8800
+            xmax = 29.0800
             text = "bound"
-        intervals [87]:
-            xmin = 28.9057
-            xmax = 29.2082
+        intervals [49]:
+            xmin = 29.0800
+            xmax = 29.2800
             text = "us"
-        intervals [88]:
-            xmin = 29.2418
-            xmax = 29.5443
+        intervals [50]:
+            xmin = 29.2800
+            xmax = 29.5000
             text = "hand"
-        intervals [89]:
-            xmin = 29.5779
-            xmax = 29.8804
+        intervals [51]:
+            xmin = 29.5000
+            xmax = 29.7000
             text = "and"
-        intervals [90]:
-            xmin = 29.9140
-            xmax = 30.2165
-            text = "foot"
-        intervals [91]:
-            xmin = 30.2501
-            xmax = 30.5526
-            text = "sir"
-        intervals [92]:
-            xmin = 30.5863
-            xmax = 30.8888
-            text = "we"
-        intervals [93]:
-            xmin = 30.9224
-            xmax = 31.2249
-            text = "are"
-        intervals [94]:
-            xmin = 31.2585
-            xmax = 31.5610
-            text = "not"
-        intervals [95]:
-            xmin = 31.5946
-            xmax = 31.8971
-            text = "weak"
-        intervals [96]:
-            xmin = 31.9307
-            xmax = 32.2332
-            text = "if"
-        intervals [97]:
-            xmin = 32.2668
-            xmax = 32.5693
-            text = "we"
-        intervals [98]:
-            xmin = 32.6029
-            xmax = 32.9054
-            text = "make"
-        intervals [99]:
-            xmin = 32.9390
-            xmax = 33.2415
-            text = "a"
-        intervals [100]:
-            xmin = 33.2752
-            xmax = 33.5777
-            text = "proper"
-        intervals [101]:
-            xmin = 33.6113
-            xmax = 33.9138
-            text = "use"
-        intervals [102]:
-            xmin = 33.9474
-            xmax = 34.2499
-            text = "of"
-        intervals [103]:
-            xmin = 34.2835
-            xmax = 34.5860
-            text = "the"
-        intervals [104]:
-            xmin = 34.6196
-            xmax = 34.9221
-            text = "means"
-        intervals [105]:
-            xmin = 34.9557
-            xmax = 35.2582
-            text = "which"
-        intervals [106]:
-            xmin = 35.2918
-            xmax = 35.5943
-            text = "the"
-        intervals [107]:
-            xmin = 35.6279
-            xmax = 35.9304
-            text = "god"
-        intervals [108]:
-            xmin = 35.9641
-            xmax = 36.2666
-            text = "of"
-        intervals [109]:
-            xmin = 36.3002
-            xmax = 36.6027
-            text = "nature"
-        intervals [110]:
-            xmin = 36.6363
-            xmax = 36.9388
-            text = "hath"
-        intervals [111]:
-            xmin = 36.9724
-            xmax = 37.2749
-            text = "placed"
-        intervals [112]:
-            xmin = 37.3085
-            xmax = 37.6110
-            text = "in"
-        intervals [113]:
-            xmin = 37.6446
-            xmax = 37.9471
-            text = "our"
-        intervals [114]:
-            xmin = 37.9807
-            xmax = 38.2832
-            text = "power"
-        intervals [115]:
-            xmin = 38.3168
-            xmax = 38.6193
-            text = "three"
-        intervals [116]:
-            xmin = 38.6530
-            xmax = 38.9555
-            text = "millions"
-        intervals [117]:
-            xmin = 38.9891
-            xmax = 39.2916
-            text = "of"
-        intervals [118]:
-            xmin = 39.3252
-            xmax = 39.6277
-            text = "people"
-        intervals [119]:
-            xmin = 39.6613
-            xmax = 39.9638
-            text = "armed"
-        intervals [120]:
-            xmin = 39.9974
-            xmax = 40.2999
-            text = "in"
-        intervals [121]:
-            xmin = 40.3335
-            xmax = 40.6360
-            text = "the"
-        intervals [122]:
-            xmin = 40.6696
-            xmax = 40.9721
-            text = "holy"
-        intervals [123]:
-            xmin = 41.0057
-            xmax = 41.3082
-            text = "cause"
-        intervals [124]:
-            xmin = 41.3419
-            xmax = 41.6444
-            text = "of"
-        intervals [125]:
-            xmin = 41.6780
-            xmax = 41.9805
-            text = "liberty"
-        intervals [126]:
-            xmin = 42.0141
-            xmax = 42.3166
+        intervals [52]:
+            xmin = 29.7000
+            xmax = 29.9000
+            text = "foot,"
+        intervals [53]:
+            xmin = 29.9800
+            xmax = 29.9800
             text = "and"
-        intervals [127]:
-            xmin = 42.3502
-            xmax = 42.6527
-            text = "in"
-        intervals [128]:
-            xmin = 42.6863
-            xmax = 42.9888
-            text = "such"
-        intervals [129]:
-            xmin = 43.0224
-            xmax = 43.3249
-            text = "a"
-        intervals [130]:
-            xmin = 43.3585
-            xmax = 43.6610
-            text = "country"
-        intervals [131]:
-            xmin = 43.6946
-            xmax = 43.9971
-            text = "as"
-        intervals [132]:
-            xmin = 44.0308
-            xmax = 44.3333
-            text = "that"
-        intervals [133]:
-            xmin = 44.3669
-            xmax = 44.6694
-            text = "which"
-        intervals [134]:
-            xmin = 44.7030
-            xmax = 45.0055
+        intervals [54]:
+            xmin = 29.9800
+            xmax = 29.9800
             text = "we"
-        intervals [135]:
-            xmin = 45.0391
-            xmax = 45.3416
-            text = "possess"
-        intervals [136]:
-            xmin = 45.3752
-            xmax = 45.6777
-            text = "are"
-        intervals [137]:
-            xmin = 45.7113
-            xmax = 46.0138
-            text = "invincible"
-        intervals [138]:
-            xmin = 46.0474
-            xmax = 46.3499
-            text = "by"
-        intervals [139]:
-            xmin = 46.3835
-            xmax = 46.6861
-            text = "any"
-        intervals [140]:
-            xmin = 46.7197
-            xmax = 47.0222
-            text = "force"
-        intervals [141]:
-            xmin = 47.0558
-            xmax = 47.3583
-            text = "which"
-        intervals [142]:
-            xmin = 47.3919
-            xmax = 47.6944
-            text = "our"
-        intervals [143]:
-            xmin = 47.7280
-            xmax = 48.0305
-            text = "enemy"
-        intervals [144]:
-            xmin = 48.0641
-            xmax = 48.3666
-            text = "can"
-        intervals [145]:
-            xmin = 48.4002
-            xmax = 48.7027
-            text = "send"
-        intervals [146]:
-            xmin = 48.7363
-            xmax = 49.0388
-            text = "against"
-        intervals [147]:
-            xmin = 49.0725
-            xmax = 49.3750
-            text = "us"
-        intervals [148]:
-            xmin = 49.4086
-            xmax = 49.7111
-            text = "besides"
-        intervals [149]:
-            xmin = 49.7447
-            xmax = 50.0472
-            text = "sir"
-        intervals [150]:
-            xmin = 50.0808
-            xmax = 50.3833
-            text = "we"
-        intervals [151]:
-            xmin = 50.4169
-            xmax = 50.7194
+        intervals [55]:
+            xmin = 29.9800
+            xmax = 29.9800
             text = "shall"
-        intervals [152]:
-            xmin = 50.7530
-            xmax = 51.0555
-            text = "not"
-        intervals [153]:
-            xmin = 51.0891
-            xmax = 51.3916
-            text = "fight"
-        intervals [154]:
-            xmin = 51.4252
-            xmax = 51.7277
-            text = "our"
-        intervals [155]:
-            xmin = 51.7614
-            xmax = 52.0639
-            text = "battles"
-        intervals [156]:
-            xmin = 52.0975
-            xmax = 52.4000
-            text = "alone"
-        intervals [157]:
-            xmin = 52.4336
-            xmax = 52.7361
-            text = "there"
-        intervals [158]:
-            xmin = 52.7697
-            xmax = 53.0722
-            text = "is"
-        intervals [159]:
-            xmin = 53.1058
-            xmax = 53.4083
+        intervals [56]:
+            xmin = 29.9800
+            xmax = 29.9800
+            text = "have"
+        intervals [57]:
+            xmin = 29.9800
+            xmax = 29.9800
             text = "a"
-        intervals [160]:
-            xmin = 53.4419
-            xmax = 53.7444
+        intervals [58]:
+            xmin = 30.0000
+            xmax = 30.0600
+            text = "bit?"
+        intervals [59]:
+            xmin = 30.8200
+            xmax = 31.3000
+            text = "Sir,"
+        intervals [60]:
+            xmin = 31.5800
+            xmax = 31.7400
+            text = "we"
+        intervals [61]:
+            xmin = 31.7400
+            xmax = 31.8600
+            text = "are"
+        intervals [62]:
+            xmin = 31.8600
+            xmax = 32.0400
+            text = "not"
+        intervals [63]:
+            xmin = 32.0400
+            xmax = 32.2800
+            text = "weak,"
+        intervals [64]:
+            xmin = 32.7200
+            xmax = 32.8200
+            text = "if"
+        intervals [65]:
+            xmin = 32.8200
+            xmax = 32.9400
+            text = "we"
+        intervals [66]:
+            xmin = 32.9400
+            xmax = 33.1000
+            text = "make"
+        intervals [67]:
+            xmin = 33.1000
+            xmax = 33.2200
+            text = "a"
+        intervals [68]:
+            xmin = 33.2200
+            xmax = 33.4200
+            text = "proper"
+        intervals [69]:
+            xmin = 33.4200
+            xmax = 33.8000
+            text = "use"
+        intervals [70]:
+            xmin = 33.8000
+            xmax = 33.9600
+            text = "of"
+        intervals [71]:
+            xmin = 33.9600
+            xmax = 34.0800
+            text = "the"
+        intervals [72]:
+            xmin = 34.0800
+            xmax = 34.3000
+            text = "means"
+        intervals [73]:
+            xmin = 34.3000
+            xmax = 34.5800
+            text = "which"
+        intervals [74]:
+            xmin = 34.5800
+            xmax = 34.7600
+            text = "the"
+        intervals [75]:
+            xmin = 34.7600
+            xmax = 35.0000
+            text = "God"
+        intervals [76]:
+            xmin = 35.0000
+            xmax = 35.1600
+            text = "of"
+        intervals [77]:
+            xmin = 35.1600
+            xmax = 35.4000
+            text = "nature"
+        intervals [78]:
+            xmin = 35.4000
+            xmax = 35.7400
+            text = "hath"
+        intervals [79]:
+            xmin = 35.7400
+            xmax = 35.9400
+            text = "placed"
+        intervals [80]:
+            xmin = 35.9400
+            xmax = 36.2400
+            text = "in"
+        intervals [81]:
+            xmin = 36.2400
+            xmax = 36.3400
+            text = "our"
+        intervals [82]:
+            xmin = 36.3400
+            xmax = 36.7000
+            text = "power."
+        intervals [83]:
+            xmin = 37.6200
+            xmax = 38.0000
+            text = "Three"
+        intervals [84]:
+            xmin = 38.0000
+            xmax = 38.3000
+            text = "millions"
+        intervals [85]:
+            xmin = 38.3000
+            xmax = 38.5800
+            text = "of"
+        intervals [86]:
+            xmin = 38.5800
+            xmax = 38.8600
+            text = "people,"
+        intervals [87]:
+            xmin = 39.1800
+            xmax = 39.4200
+            text = "armed"
+        intervals [88]:
+            xmin = 39.4200
+            xmax = 39.5800
+            text = "in"
+        intervals [89]:
+            xmin = 39.5800
+            xmax = 39.6800
+            text = "the"
+        intervals [90]:
+            xmin = 39.6800
+            xmax = 39.8400
+            text = "holy"
+        intervals [91]:
+            xmin = 39.8400
+            xmax = 40.1600
+            text = "cause"
+        intervals [92]:
+            xmin = 40.1600
+            xmax = 40.3600
+            text = "of"
+        intervals [93]:
+            xmin = 40.3600
+            xmax = 40.6200
+            text = "liberty,"
+        intervals [94]:
+            xmin = 41.1600
+            xmax = 41.2200
+            text = "and"
+        intervals [95]:
+            xmin = 41.2200
+            xmax = 41.3400
+            text = "in"
+        intervals [96]:
+            xmin = 41.3400
+            xmax = 41.5400
+            text = "such"
+        intervals [97]:
+            xmin = 41.5400
+            xmax = 41.7000
+            text = "a"
+        intervals [98]:
+            xmin = 41.7000
+            xmax = 42.0000
+            text = "country"
+        intervals [99]:
+            xmin = 42.0000
+            xmax = 42.2400
+            text = "as"
+        intervals [100]:
+            xmin = 42.2400
+            xmax = 42.3800
+            text = "that"
+        intervals [101]:
+            xmin = 42.3800
+            xmax = 42.5400
+            text = "which"
+        intervals [102]:
+            xmin = 42.5400
+            xmax = 42.7200
+            text = "we"
+        intervals [103]:
+            xmin = 42.7200
+            xmax = 43.0200
+            text = "possess,"
+        intervals [104]:
+            xmin = 43.5400
+            xmax = 43.7200
+            text = "are"
+        intervals [105]:
+            xmin = 43.7200
+            xmax = 43.9600
+            text = "invincible"
+        intervals [106]:
+            xmin = 43.9600
+            xmax = 44.4000
+            text = "by"
+        intervals [107]:
+            xmin = 44.4000
+            xmax = 44.6200
+            text = "any"
+        intervals [108]:
+            xmin = 44.6200
+            xmax = 44.9000
+            text = "force"
+        intervals [109]:
+            xmin = 44.9000
+            xmax = 45.2000
+            text = "which"
+        intervals [110]:
+            xmin = 45.2000
+            xmax = 45.3600
+            text = "our"
+        intervals [111]:
+            xmin = 45.3600
+            xmax = 45.6200
+            text = "enemy"
+        intervals [112]:
+            xmin = 45.6200
+            xmax = 45.8400
+            text = "can"
+        intervals [113]:
+            xmin = 45.8400
+            xmax = 46.0600
+            text = "send"
+        intervals [114]:
+            xmin = 46.0600
+            xmax = 46.3000
+            text = "against"
+        intervals [115]:
+            xmin = 46.3000
+            xmax = 46.6600
+            text = "us."
+        intervals [116]:
+            xmin = 47.6600
+            xmax = 48.0000
+            text = "Besides,"
+        intervals [117]:
+            xmin = 48.5200
+            xmax = 48.8200
+            text = "sir,"
+        intervals [118]:
+            xmin = 49.2000
+            xmax = 49.2800
+            text = "we"
+        intervals [119]:
+            xmin = 49.2800
+            xmax = 49.4400
+            text = "shall"
+        intervals [120]:
+            xmin = 49.4400
+            xmax = 49.6800
+            text = "not"
+        intervals [121]:
+            xmin = 49.6800
+            xmax = 49.9000
+            text = "fight"
+        intervals [122]:
+            xmin = 49.9000
+            xmax = 50.1000
+            text = "our"
+        intervals [123]:
+            xmin = 50.1000
+            xmax = 50.4000
+            text = "battles"
+        intervals [124]:
+            xmin = 50.4000
+            xmax = 50.7400
+            text = "alone."
+        intervals [125]:
+            xmin = 51.5400
+            xmax = 52.0200
+            text = "There"
+        intervals [126]:
+            xmin = 52.0200
+            xmax = 52.1800
+            text = "is"
+        intervals [127]:
+            xmin = 52.1800
+            xmax = 52.2600
+            text = "a"
+        intervals [128]:
+            xmin = 52.2600
+            xmax = 52.5000
             text = "just"
-        intervals [161]:
-            xmin = 53.7780
-            xmax = 54.0805
-            text = "god"
-        intervals [162]:
-            xmin = 54.1141
-            xmax = 54.4166
+        intervals [129]:
+            xmin = 52.5000
+            xmax = 52.7600
+            text = "God"
+        intervals [130]:
+            xmin = 52.7600
+            xmax = 53.0600
             text = "who"
-        intervals [163]:
-            xmin = 54.4503
-            xmax = 54.7528
+        intervals [131]:
+            xmin = 53.0600
+            xmax = 53.5000
             text = "presides"
-        intervals [164]:
-            xmin = 54.7864
-            xmax = 55.0889
+        intervals [132]:
+            xmin = 53.5000
+            xmax = 53.8000
             text = "over"
+        intervals [133]:
+            xmin = 53.8000
+            xmax = 53.9200
+            text = "the"
+        intervals [134]:
+            xmin = 53.9200
+            xmax = 54.4200
+            text = "destinies"
+        intervals [135]:
+            xmin = 54.4200
+            xmax = 54.5800
+            text = "of"
+        intervals [136]:
+            xmin = 54.5800
+            xmax = 54.7400
+            text = "nations,"
+        intervals [137]:
+            xmin = 55.4000
+            xmax = 55.6200
+            text = "and"
+        intervals [138]:
+            xmin = 55.6200
+            xmax = 55.7400
+            text = "who"
+        intervals [139]:
+            xmin = 55.7400
+            xmax = 55.8400
+            text = "will"
+        intervals [140]:
+            xmin = 55.8400
+            xmax = 56.0400
+            text = "raise"
+        intervals [141]:
+            xmin = 56.0400
+            xmax = 56.2200
+            text = "up"
+        intervals [142]:
+            xmin = 56.2200
+            xmax = 56.4800
+            text = "friends"
+        intervals [143]:
+            xmin = 56.4800
+            xmax = 56.7600
+            text = "to"
+        intervals [144]:
+            xmin = 56.7600
+            xmax = 56.9400
+            text = "fight"
+        intervals [145]:
+            xmin = 56.9400
+            xmax = 57.1400
+            text = "our"
+        intervals [146]:
+            xmin = 57.1400
+            xmax = 57.4400
+            text = "battles"
+        intervals [147]:
+            xmin = 57.4400
+            xmax = 57.7000
+            text = "for"
+        intervals [148]:
+            xmin = 57.7000
+            xmax = 57.9200
+            text = "us."
+        intervals [149]:
+            xmin = 58.6600
+            xmax = 59.1400
+            text = "The"
+        intervals [150]:
+            xmin = 59.1400
+            xmax = 59.5000
+            text = "battle,"
+        intervals [151]:
+            xmin = 59.7400
+            xmax = 60.0000
+            text = "sir,"
+        intervals [152]:
+            xmin = 60.2400
+            xmax = 60.4400
+            text = "is"
+        intervals [153]:
+            xmin = 60.4400
+            xmax = 60.6200
+            text = "not"
+        intervals [154]:
+            xmin = 60.6200
+            xmax = 60.8200
+            text = "to"
+        intervals [155]:
+            xmin = 60.8200
+            xmax = 60.9200
+            text = "the"
+        intervals [156]:
+            xmin = 60.9200
+            xmax = 61.1200
+            text = "strong"
+        intervals [157]:
+            xmin = 61.1200
+            xmax = 61.4400
+            text = "alone,"
+        intervals [158]:
+            xmin = 62.0000
+            xmax = 62.1600
+            text = "it"
+        intervals [159]:
+            xmin = 62.1600
+            xmax = 62.3000
+            text = "is"
+        intervals [160]:
+            xmin = 62.3000
+            xmax = 62.4600
+            text = "to"
+        intervals [161]:
+            xmin = 62.4600
+            xmax = 62.5600
+            text = "the"
+        intervals [162]:
+            xmin = 62.5600
+            xmax = 62.8400
+            text = "vigilant,"
+        intervals [163]:
+            xmin = 63.3200
+            xmax = 63.3800
+            text = "the"
+        intervals [164]:
+            xmin = 63.3800
+            xmax = 63.6800
+            text = "active,"
         intervals [165]:
-            xmin = 55.1225
-            xmax = 55.4250
+            xmin = 64.1200
+            xmax = 64.2400
             text = "the"
         intervals [166]:
-            xmin = 55.4586
-            xmax = 55.7611
-            text = "destinies"
+            xmin = 64.2400
+            xmax = 64.4600
+            text = "brave."
         intervals [167]:
-            xmin = 55.7947
-            xmax = 56.0972
-            text = "of"
+            xmin = 65.7000
+            xmax = 65.7800
+            text = "The"
         intervals [168]:
-            xmin = 56.1308
-            xmax = 56.4333
-            text = "nations"
-        intervals [169]:
-            xmin = 56.4669
-            xmax = 56.7694
-            text = "and"
-        intervals [170]:
-            xmin = 56.8030
-            xmax = 57.1055
-            text = "who"
-        intervals [171]:
-            xmin = 57.1392
-            xmax = 57.4417
-            text = "will"
-        intervals [172]:
-            xmin = 57.4753
-            xmax = 57.7778
-            text = "raise"
-        intervals [173]:
-            xmin = 57.8114
-            xmax = 58.1139
-            text = "up"
-        intervals [174]:
-            xmin = 58.1475
-            xmax = 58.4500
-            text = "friends"
-        intervals [175]:
-            xmin = 58.4836
-            xmax = 58.7861
-            text = "to"
-        intervals [176]:
-            xmin = 58.8197
-            xmax = 59.1222
-            text = "fight"
-        intervals [177]:
-            xmin = 59.1558
-            xmax = 59.4583
-            text = "our"
-        intervals [178]:
-            xmin = 59.4919
-            xmax = 59.7944
-            text = "battles"
-        intervals [179]:
-            xmin = 59.8281
-            xmax = 60.1306
-            text = "for"
-        intervals [180]:
-            xmin = 60.1642
-            xmax = 60.4667
-            text = "us"
-        intervals [181]:
-            xmin = 60.5003
-            xmax = 60.8028
-            text = "the"
-        intervals [182]:
-            xmin = 60.8364
-            xmax = 61.1389
-            text = "battle"
-        intervals [183]:
-            xmin = 61.1725
-            xmax = 61.4750
-            text = "sir"
-        intervals [184]:
-            xmin = 61.5086
-            xmax = 61.8111
-            text = "is"
-        intervals [185]:
-            xmin = 61.8447
-            xmax = 62.1472
-            text = "not"
-        intervals [186]:
-            xmin = 62.1808
-            xmax = 62.4833
-            text = "to"
-        intervals [187]:
-            xmin = 62.5170
-            xmax = 62.8195
-            text = "the"
-        intervals [188]:
-            xmin = 62.8531
-            xmax = 63.1556
-            text = "strong"
-        intervals [189]:
-            xmin = 63.1892
-            xmax = 63.4917
-            text = "alone"
-        intervals [190]:
-            xmin = 63.5253
-            xmax = 63.8278
-            text = "it"
-        intervals [191]:
-            xmin = 63.8614
-            xmax = 64.1639
-            text = "is"
-        intervals [192]:
-            xmin = 64.1975
-            xmax = 64.5000
-            text = "to"
-        intervals [193]:
-            xmin = 64.5336
-            xmax = 64.8361
-            text = "the"
-        intervals [194]:
-            xmin = 64.8697
-            xmax = 65.1722
-            text = "vigilant"
-        intervals [195]:
-            xmin = 65.2059
-            xmax = 65.5084
-            text = "the"
-        intervals [196]:
-            xmin = 65.5420
-            xmax = 65.8445
-            text = "active"
-        intervals [197]:
-            xmin = 65.8781
-            xmax = 66.1806
-            text = "the"
-        intervals [198]:
-            xmin = 66.2142
-            xmax = 66.5167
-            text = "brave"
-        intervals [199]:
-            xmin = 66.5503
-            xmax = 66.8528
-            text = "the"
-        intervals [200]:
-            xmin = 66.8864
-            xmax = 67.1889
+            xmin = 65.7800
+            xmax = 65.9600
             text = "war"
-        intervals [201]:
-            xmin = 67.2225
-            xmax = 67.5250
+        intervals [169]:
+            xmin = 65.9600
+            xmax = 66.2000
             text = "is"
-        intervals [202]:
-            xmin = 67.5586
-            xmax = 67.8611
+        intervals [170]:
+            xmin = 66.2000
+            xmax = 66.5400
             text = "inevitable"
-        intervals [203]:
-            xmin = 67.8948
-            xmax = 68.1973
+        intervals [171]:
+            xmin = 66.5400
+            xmax = 66.9400
             text = "and"
-        intervals [204]:
-            xmin = 68.2309
-            xmax = 68.5334
+        intervals [172]:
+            xmin = 66.9400
+            xmax = 67.1200
             text = "let"
-        intervals [205]:
-            xmin = 68.5670
-            xmax = 68.8695
+        intervals [173]:
+            xmin = 67.1200
+            xmax = 67.2200
             text = "it"
-        intervals [206]:
-            xmin = 68.9031
-            xmax = 69.2056
-            text = "come"
-        intervals [207]:
-            xmin = 69.2392
-            xmax = 69.5417
-            text = "i"
-        intervals [208]:
-            xmin = 69.5753
-            xmax = 69.8778
+        intervals [174]:
+            xmin = 67.2200
+            xmax = 67.5000
+            text = "come."
+        intervals [175]:
+            xmin = 68.5200
+            xmax = 68.6800
+            text = "I"
+        intervals [176]:
+            xmin = 68.6800
+            xmax = 68.9000
             text = "repeat"
-        intervals [209]:
-            xmin = 69.9114
-            xmax = 70.2139
-            text = "it"
-        intervals [210]:
-            xmin = 70.2475
-            xmax = 70.5501
-            text = "sir"
-        intervals [211]:
-            xmin = 70.5837
-            xmax = 70.8862
+        intervals [177]:
+            xmin = 68.9000
+            xmax = 69.1800
+            text = "it,"
+        intervals [178]:
+            xmin = 69.4400
+            xmax = 69.7400
+            text = "sir,"
+        intervals [179]:
+            xmin = 70.0600
+            xmax = 70.1800
             text = "let"
-        intervals [212]:
-            xmin = 70.9198
-            xmax = 71.2223
+        intervals [180]:
+            xmin = 70.1800
+            xmax = 70.2800
             text = "it"
-        intervals [213]:
-            xmin = 71.2559
-            xmax = 71.5584
-            text = "come"
+        intervals [181]:
+            xmin = 70.2800
+            xmax = 70.5800
+            text = "come."
     item [2]:
         class = "IntervalTier"
         name = "phones"
         xmin = 0
         xmax = 71.5920
-        intervals: size = 493
+        intervals: size = 426
         intervals [1]:
-            xmin = 0.0000
-            xmax = 0.1513
-            text = "ph1"
+            xmin = 10.9600
+            xmax = 11.2200
+            text = "a1"
         intervals [2]:
-            xmin = 0.1513
-            xmax = 0.3025
-            text = "ph2"
+            xmin = 11.2200
+            xmax = 11.4800
+            text = "d2"
         intervals [3]:
-            xmin = 0.3361
-            xmax = 0.4874
-            text = "ph1"
+            xmin = 11.4800
+            xmax = 11.4800
+            text = "w1"
         intervals [4]:
-            xmin = 0.4874
-            xmax = 0.6386
-            text = "ph2"
+            xmin = 11.5050
+            xmax = 11.4800
+            text = "e2"
         intervals [5]:
-            xmin = 0.6722
-            xmax = 0.8235
-            text = "ph1"
+            xmin = 11.4800
+            xmax = 11.8100
+            text = "a1"
         intervals [6]:
-            xmin = 0.8235
-            xmax = 0.9747
-            text = "ph2"
+            xmin = 11.8100
+            xmax = 12.1400
+            text = "a2"
         intervals [7]:
-            xmin = 1.0083
-            xmax = 1.1596
-            text = "ph1"
+            xmin = 12.1400
+            xmax = 12.7733
+            text = "b1"
         intervals [8]:
-            xmin = 1.1596
-            xmax = 1.3108
-            text = "ph2"
+            xmin = 12.7733
+            xmax = 13.4067
+            text = "i2"
         intervals [9]:
-            xmin = 1.3445
-            xmax = 1.4957
-            text = "ph1"
+            xmin = 13.4067
+            xmax = 14.0400
+            text = "i3"
         intervals [10]:
-            xmin = 1.4957
-            xmax = 1.6470
-            text = "ph2"
+            xmin = 14.0400
+            xmax = 14.1900
+            text = "g1"
         intervals [11]:
-            xmin = 1.6806
-            xmax = 1.8318
-            text = "ph1"
+            xmin = 14.1900
+            xmax = 14.3400
+            text = "a2"
         intervals [12]:
-            xmin = 1.8318
-            xmax = 1.9831
-            text = "ph2"
+            xmin = 14.3400
+            xmax = 14.4800
+            text = "s1"
         intervals [13]:
-            xmin = 2.0167
-            xmax = 2.1679
-            text = "ph1"
+            xmin = 14.4800
+            xmax = 14.6200
+            text = "a2"
         intervals [14]:
-            xmin = 2.1679
-            xmax = 2.3192
-            text = "ph2"
+            xmin = 14.6200
+            xmax = 14.6900
+            text = "b1"
         intervals [15]:
-            xmin = 2.3528
-            xmax = 2.5040
-            text = "ph1"
+            xmin = 14.6900
+            xmax = 14.7600
+            text = "e2"
         intervals [16]:
-            xmin = 2.5040
-            xmax = 2.6553
-            text = "ph2"
+            xmin = 14.7600
+            xmax = 14.8150
+            text = "s1"
         intervals [17]:
-            xmin = 2.6889
-            xmax = 2.7897
-            text = "ph1"
+            xmin = 14.8150
+            xmax = 14.8700
+            text = "a2"
         intervals [18]:
-            xmin = 2.7897
-            xmax = 2.8906
-            text = "ph2"
+            xmin = 14.8700
+            xmax = 14.9250
+            text = "i3"
         intervals [19]:
-            xmin = 2.8906
-            xmax = 2.9914
-            text = "ph3"
+            xmin = 14.9250
+            xmax = 14.9800
+            text = "n4"
         intervals [20]:
-            xmin = 3.0250
-            xmax = 3.1763
-            text = "ph1"
+            xmin = 14.9800
+            xmax = 15.1600
+            text = "i1"
         intervals [21]:
-            xmin = 3.1763
-            xmax = 3.3275
-            text = "ph2"
+            xmin = 15.1600
+            xmax = 15.3400
+            text = "n2"
         intervals [22]:
-            xmin = 3.3611
-            xmax = 3.5124
-            text = "ph1"
+            xmin = 15.3400
+            xmax = 15.4400
+            text = "e1"
         intervals [23]:
-            xmin = 3.5124
-            xmax = 3.6636
-            text = "ph2"
+            xmin = 15.4400
+            xmax = 15.5400
+            text = "e2"
         intervals [24]:
-            xmin = 3.6972
-            xmax = 3.8485
-            text = "ph1"
+            xmin = 15.5400
+            xmax = 15.6533
+            text = "h1"
         intervals [25]:
-            xmin = 3.8485
-            xmax = 3.9997
-            text = "ph2"
+            xmin = 15.6533
+            xmax = 15.7667
+            text = "u2"
         intervals [26]:
-            xmin = 4.0334
-            xmax = 4.1846
-            text = "ph1"
+            xmin = 15.7667
+            xmax = 15.8800
+            text = "e3"
         intervals [27]:
-            xmin = 4.1846
-            xmax = 4.3359
-            text = "ph2"
+            xmin = 17.0000
+            xmax = 17.1000
+            text = "s1"
         intervals [28]:
-            xmin = 4.3695
-            xmax = 4.4300
-            text = "ph1"
+            xmin = 17.1000
+            xmax = 17.2000
+            text = "a2"
         intervals [29]:
-            xmin = 4.4300
-            xmax = 4.4905
-            text = "ph2"
+            xmin = 17.2000
+            xmax = 17.2700
+            text = "w1"
         intervals [30]:
-            xmin = 4.4905
-            xmax = 4.5510
-            text = "ph3"
+            xmin = 17.2700
+            xmax = 17.3400
+            text = "e2"
         intervals [31]:
-            xmin = 4.5510
-            xmax = 4.6115
-            text = "ph4"
+            xmin = 17.3400
+            xmax = 17.4000
+            text = "g1"
         intervals [32]:
-            xmin = 4.6115
-            xmax = 4.6720
-            text = "ph5"
+            xmin = 17.4000
+            xmax = 17.4600
+            text = "t2"
         intervals [33]:
-            xmin = 4.7056
-            xmax = 4.8568
-            text = "ph1"
+            xmin = 17.4600
+            xmax = 17.5200
+            text = "e3"
         intervals [34]:
-            xmin = 4.8568
-            xmax = 5.0081
-            text = "ph2"
+            xmin = 17.5200
+            xmax = 17.6200
+            text = "s1"
         intervals [35]:
-            xmin = 5.0417
-            xmax = 5.1173
-            text = "ph1"
+            xmin = 17.6200
+            xmax = 17.7200
+            text = "r2"
         intervals [36]:
-            xmin = 5.1173
-            xmax = 5.1929
-            text = "ph2"
+            xmin = 17.7200
+            xmax = 17.8200
+            text = "n3"
         intervals [37]:
-            xmin = 5.1929
-            xmax = 5.2686
-            text = "ph3"
+            xmin = 17.8200
+            xmax = 17.9200
+            text = "t4"
         intervals [38]:
-            xmin = 5.2686
-            xmax = 5.3442
-            text = "ph4"
+            xmin = 17.9200
+            xmax = 18.1000
+            text = "b1"
         intervals [39]:
-            xmin = 5.3778
-            xmax = 5.5291
-            text = "ph1"
+            xmin = 18.1000
+            xmax = 18.2800
+            text = "y2"
         intervals [40]:
-            xmin = 5.5291
-            xmax = 5.6803
-            text = "ph2"
+            xmin = 18.2800
+            xmax = 18.3600
+            text = "y1"
         intervals [41]:
-            xmin = 5.7139
-            xmax = 5.8652
-            text = "ph1"
+            xmin = 18.3600
+            xmax = 18.4400
+            text = "u2"
         intervals [42]:
-            xmin = 5.8652
-            xmax = 6.0164
-            text = "ph2"
+            xmin = 18.4400
+            xmax = 18.5040
+            text = "r1"
         intervals [43]:
-            xmin = 6.0500
-            xmax = 6.2013
-            text = "ph1"
+            xmin = 18.5040
+            xmax = 18.5680
+            text = "s2"
         intervals [44]:
-            xmin = 6.2013
-            xmax = 6.3525
-            text = "ph2"
+            xmin = 18.5680
+            xmax = 18.6320
+            text = "l3"
         intervals [45]:
-            xmin = 6.3861
-            xmax = 6.5374
-            text = "ph1"
+            xmin = 18.6320
+            xmax = 18.6960
+            text = "t4"
         intervals [46]:
-            xmin = 6.5374
-            xmax = 6.6886
-            text = "ph2"
+            xmin = 18.6960
+            xmax = 18.7600
+            text = "o5"
         intervals [47]:
-            xmin = 6.7223
-            xmax = 6.8735
-            text = "ph1"
+            xmin = 18.7600
+            xmax = 18.9600
+            text = "a1"
         intervals [48]:
-            xmin = 6.8735
-            xmax = 7.0248
-            text = "ph2"
+            xmin = 18.9600
+            xmax = 19.1600
+            text = "d2"
         intervals [49]:
-            xmin = 7.0584
-            xmax = 7.1340
-            text = "ph1"
+            xmin = 19.1600
+            xmax = 19.2250
+            text = "i1"
         intervals [50]:
-            xmin = 7.1340
-            xmax = 7.2096
-            text = "ph2"
+            xmin = 19.2250
+            xmax = 19.2900
+            text = "a2"
         intervals [51]:
-            xmin = 7.2096
-            xmax = 7.2852
-            text = "ph3"
+            xmin = 19.2900
+            xmax = 19.3550
+            text = "t3"
         intervals [52]:
-            xmin = 7.2852
-            xmax = 7.3609
-            text = "ph4"
+            xmin = 19.3550
+            xmax = 19.4200
+            text = "o4"
         intervals [53]:
-            xmin = 7.3945
-            xmax = 7.5457
-            text = "ph1"
+            xmin = 20.5000
+            xmax = 20.7000
+            text = "s1"
         intervals [54]:
-            xmin = 7.5457
-            xmax = 7.6970
-            text = "ph2"
+            xmin = 20.7000
+            xmax = 20.9000
+            text = "a2"
         intervals [55]:
-            xmin = 7.7306
-            xmax = 7.8818
-            text = "ph1"
+            xmin = 20.9000
+            xmax = 20.9800
+            text = "w1"
         intervals [56]:
-            xmin = 7.8818
-            xmax = 8.0331
-            text = "ph2"
+            xmin = 20.9800
+            xmax = 21.0600
+            text = "e2"
         intervals [57]:
-            xmin = 8.0667
-            xmax = 8.2180
-            text = "ph1"
+            xmin = 21.0600
+            xmax = 21.1333
+            text = "a1"
         intervals [58]:
-            xmin = 8.2180
-            xmax = 8.3692
-            text = "ph2"
+            xmin = 21.1333
+            xmax = 21.2067
+            text = "q2"
         intervals [59]:
-            xmin = 8.4028
-            xmax = 8.5541
-            text = "ph1"
+            xmin = 21.2067
+            xmax = 21.2800
+            text = "i3"
         intervals [60]:
-            xmin = 8.5541
-            xmax = 8.7053
-            text = "ph2"
+            xmin = 21.2800
+            xmax = 21.4500
+            text = "t1"
         intervals [61]:
-            xmin = 8.7389
-            xmax = 8.8902
-            text = "ph1"
+            xmin = 21.4500
+            xmax = 21.6200
+            text = "e2"
         intervals [62]:
-            xmin = 8.8902
-            xmax = 9.0414
-            text = "ph2"
+            xmin = 21.6200
+            xmax = 21.7100
+            text = "m1"
         intervals [63]:
-            xmin = 9.0750
-            xmax = 9.2263
-            text = "ph1"
+            xmin = 21.7100
+            xmax = 21.8000
+            text = "a2"
         intervals [64]:
-            xmin = 9.2263
-            xmax = 9.3775
-            text = "ph2"
+            xmin = 21.8000
+            xmax = 21.9300
+            text = "o1"
         intervals [65]:
-            xmin = 9.4112
-            xmax = 9.5624
-            text = "ph1"
+            xmin = 21.9300
+            xmax = 22.0600
+            text = "f2"
         intervals [66]:
-            xmin = 9.5624
-            xmax = 9.7137
-            text = "ph2"
+            xmin = 22.0600
+            xmax = 22.0900
+            text = "a1"
         intervals [67]:
-            xmin = 9.7473
-            xmax = 9.8985
-            text = "ph1"
+            xmin = 22.0900
+            xmax = 22.1200
+            text = "a2"
         intervals [68]:
-            xmin = 9.8985
-            xmax = 10.0498
-            text = "ph2"
+            xmin = 22.1200
+            xmax = 22.2267
+            text = "f1"
         intervals [69]:
-            xmin = 10.0834
-            xmax = 10.2346
-            text = "ph1"
+            xmin = 22.2267
+            xmax = 22.3333
+            text = "c2"
         intervals [70]:
-            xmin = 10.2346
-            xmax = 10.3859
-            text = "ph2"
+            xmin = 22.3333
+            xmax = 22.4400
+            text = "u3"
         intervals [71]:
-            xmin = 10.4195
-            xmax = 10.5707
-            text = "ph1"
+            xmin = 22.4400
+            xmax = 22.5240
+            text = "r1"
         intervals [72]:
-            xmin = 10.5707
-            xmax = 10.7220
-            text = "ph2"
+            xmin = 22.5240
+            xmax = 22.6080
+            text = "s2"
         intervals [73]:
-            xmin = 10.7556
-            xmax = 10.9069
-            text = "ph1"
+            xmin = 22.6080
+            xmax = 22.6920
+            text = "s3"
         intervals [74]:
-            xmin = 10.9069
-            xmax = 11.0581
-            text = "ph2"
+            xmin = 22.6920
+            xmax = 22.7760
+            text = "a4"
         intervals [75]:
-            xmin = 11.0917
-            xmax = 11.2430
-            text = "ph1"
+            xmin = 22.7760
+            xmax = 22.8600
+            text = "c5"
         intervals [76]:
-            xmin = 11.2430
-            xmax = 11.3942
-            text = "ph2"
+            xmin = 23.5000
+            xmax = 23.5800
+            text = "b1"
         intervals [77]:
-            xmin = 11.4278
-            xmax = 11.5791
-            text = "ph1"
+            xmin = 23.5800
+            xmax = 23.6600
+            text = "y2"
         intervals [78]:
-            xmin = 11.5791
-            xmax = 11.7303
-            text = "ph2"
+            xmin = 23.6600
+            xmax = 23.7900
+            text = "l1"
         intervals [79]:
-            xmin = 11.7639
-            xmax = 11.9152
-            text = "ph1"
+            xmin = 23.7900
+            xmax = 23.9200
+            text = "i2"
         intervals [80]:
-            xmin = 11.9152
-            xmax = 12.0664
-            text = "ph2"
+            xmin = 23.9200
+            xmax = 24.0950
+            text = "s1"
         intervals [81]:
-            xmin = 12.1001
-            xmax = 12.2513
-            text = "ph1"
+            xmin = 24.0950
+            xmax = 24.2700
+            text = "p2"
         intervals [82]:
-            xmin = 12.2513
-            xmax = 12.4026
-            text = "ph2"
+            xmin = 24.2700
+            xmax = 24.4450
+            text = "n3"
         intervals [83]:
-            xmin = 12.4362
-            xmax = 12.5874
-            text = "ph1"
+            xmin = 24.4450
+            xmax = 24.6200
+            text = "l4"
         intervals [84]:
-            xmin = 12.5874
-            xmax = 12.7387
-            text = "ph2"
+            xmin = 24.6200
+            xmax = 24.7100
+            text = "o1"
         intervals [85]:
-            xmin = 12.7723
-            xmax = 12.8731
-            text = "ph1"
+            xmin = 24.7100
+            xmax = 24.8000
+            text = "n2"
         intervals [86]:
-            xmin = 12.8731
-            xmax = 12.9739
-            text = "ph2"
+            xmin = 24.8000
+            xmax = 24.8600
+            text = "o1"
         intervals [87]:
-            xmin = 12.9739
-            xmax = 13.0748
-            text = "ph3"
+            xmin = 24.8600
+            xmax = 24.9200
+            text = "r2"
         intervals [88]:
-            xmin = 13.1084
-            xmax = 13.1840
-            text = "ph1"
+            xmin = 24.9200
+            xmax = 24.9867
+            text = "b1"
         intervals [89]:
-            xmin = 13.1840
-            xmax = 13.2596
-            text = "ph2"
+            xmin = 24.9867
+            xmax = 25.0533
+            text = "c2"
         intervals [90]:
-            xmin = 13.2596
-            xmax = 13.3353
-            text = "ph3"
+            xmin = 25.0533
+            xmax = 25.1200
+            text = "s3"
         intervals [91]:
-            xmin = 13.3353
-            xmax = 13.4109
-            text = "ph4"
+            xmin = 25.5400
+            xmax = 25.6500
+            text = "a1"
         intervals [92]:
-            xmin = 13.4445
-            xmax = 13.5958
-            text = "ph1"
+            xmin = 25.6500
+            xmax = 25.7600
+            text = "d2"
         intervals [93]:
-            xmin = 13.5958
-            xmax = 13.7470
-            text = "ph2"
+            xmin = 25.7600
+            xmax = 25.8267
+            text = "h1"
         intervals [94]:
-            xmin = 13.7806
-            xmax = 13.9319
-            text = "ph1"
+            xmin = 25.8267
+            xmax = 25.8933
+            text = "g2"
         intervals [95]:
-            xmin = 13.9319
-            xmax = 14.0831
-            text = "ph2"
+            xmin = 25.8933
+            xmax = 25.9600
+            text = "i3"
         intervals [96]:
-            xmin = 14.1167
-            xmax = 14.2680
-            text = "ph1"
+            xmin = 25.9600
+            xmax = 26.0800
+            text = "t1"
         intervals [97]:
-            xmin = 14.2680
-            xmax = 14.4192
-            text = "ph2"
+            xmin = 26.0800
+            xmax = 26.2000
+            text = "e2"
         intervals [98]:
-            xmin = 14.4528
-            xmax = 14.5537
-            text = "ph1"
+            xmin = 26.2000
+            xmax = 26.2850
+            text = "d1"
         intervals [99]:
-            xmin = 14.5537
-            xmax = 14.6545
-            text = "ph2"
+            xmin = 26.2850
+            xmax = 26.3700
+            text = "l2"
         intervals [100]:
-            xmin = 14.6545
-            xmax = 14.7553
-            text = "ph3"
+            xmin = 26.3700
+            xmax = 26.4550
+            text = "s3"
         intervals [101]:
-            xmin = 14.7890
-            xmax = 14.9402
-            text = "ph1"
+            xmin = 26.4550
+            xmax = 26.5400
+            text = "v4"
         intervals [102]:
-            xmin = 14.9402
-            xmax = 15.0915
-            text = "ph2"
+            xmin = 26.5400
+            xmax = 26.6467
+            text = "p1"
         intervals [103]:
-            xmin = 15.1251
-            xmax = 15.2763
-            text = "ph1"
+            xmin = 26.6467
+            xmax = 26.7533
+            text = "a2"
         intervals [104]:
-            xmin = 15.2763
-            xmax = 15.4276
-            text = "ph2"
+            xmin = 26.7533
+            xmax = 26.8600
+            text = "t3"
         intervals [105]:
-            xmin = 15.4612
-            xmax = 15.6124
-            text = "ph1"
+            xmin = 26.8600
+            xmax = 27.0100
+            text = "o1"
         intervals [106]:
-            xmin = 15.6124
-            xmax = 15.7637
-            text = "ph2"
+            xmin = 27.0100
+            xmax = 27.1600
+            text = "f2"
         intervals [107]:
-            xmin = 15.7973
-            xmax = 15.8729
-            text = "ph1"
+            xmin = 27.1600
+            xmax = 27.2600
+            text = "h1"
         intervals [108]:
-            xmin = 15.8729
-            xmax = 15.9485
-            text = "ph2"
+            xmin = 27.2600
+            xmax = 27.3600
+            text = "p2"
         intervals [109]:
-            xmin = 15.9485
-            xmax = 16.0242
-            text = "ph3"
+            xmin = 27.7200
+            xmax = 27.8500
+            text = "u1"
         intervals [110]:
-            xmin = 16.0242
-            xmax = 16.0998
-            text = "ph4"
+            xmin = 27.8500
+            xmax = 27.9800
+            text = "t2"
         intervals [111]:
-            xmin = 16.1334
-            xmax = 16.2847
-            text = "ph1"
+            xmin = 27.9800
+            xmax = 28.0800
+            text = "o1"
         intervals [112]:
-            xmin = 16.2847
-            xmax = 16.4359
-            text = "ph2"
+            xmin = 28.0800
+            xmax = 28.1800
+            text = "r2"
         intervals [113]:
-            xmin = 16.4695
-            xmax = 16.6208
-            text = "ph1"
+            xmin = 28.1800
+            xmax = 28.2600
+            text = "e1"
         intervals [114]:
-            xmin = 16.6208
-            xmax = 16.7720
-            text = "ph2"
+            xmin = 28.2600
+            xmax = 28.3400
+            text = "e2"
         intervals [115]:
-            xmin = 16.8056
-            xmax = 16.9569
-            text = "ph1"
+            xmin = 28.3400
+            xmax = 28.4200
+            text = "i3"
         intervals [116]:
-            xmin = 16.9569
-            xmax = 17.1081
-            text = "ph2"
+            xmin = 28.4200
+            xmax = 28.5800
+            text = "s1"
         intervals [117]:
-            xmin = 17.1417
-            xmax = 17.2930
-            text = "ph1"
+            xmin = 28.5800
+            xmax = 28.7400
+            text = "a2"
         intervals [118]:
-            xmin = 17.2930
-            xmax = 17.4442
-            text = "ph2"
+            xmin = 28.7400
+            xmax = 28.8100
+            text = "h1"
         intervals [119]:
-            xmin = 17.4779
-            xmax = 17.6291
-            text = "ph1"
+            xmin = 28.8100
+            xmax = 28.8800
+            text = "v2"
         intervals [120]:
-            xmin = 17.6291
-            xmax = 17.7804
-            text = "ph2"
+            xmin = 28.8800
+            xmax = 28.9800
+            text = "b1"
         intervals [121]:
-            xmin = 17.8140
-            xmax = 17.9148
-            text = "ph1"
+            xmin = 28.9800
+            xmax = 29.0800
+            text = "u2"
         intervals [122]:
-            xmin = 17.9148
-            xmax = 18.0156
-            text = "ph2"
+            xmin = 29.0800
+            xmax = 29.1800
+            text = "u1"
         intervals [123]:
-            xmin = 18.0156
-            xmax = 18.1165
-            text = "ph3"
+            xmin = 29.1800
+            xmax = 29.2800
+            text = "s2"
         intervals [124]:
-            xmin = 18.1501
-            xmax = 18.2257
-            text = "ph1"
+            xmin = 29.2800
+            xmax = 29.3900
+            text = "h1"
         intervals [125]:
-            xmin = 18.2257
-            xmax = 18.3013
-            text = "ph2"
+            xmin = 29.3900
+            xmax = 29.5000
+            text = "n2"
         intervals [126]:
-            xmin = 18.3013
-            xmax = 18.3770
-            text = "ph3"
+            xmin = 29.5000
+            xmax = 29.6000
+            text = "a1"
         intervals [127]:
-            xmin = 18.3770
-            xmax = 18.4526
-            text = "ph4"
+            xmin = 29.6000
+            xmax = 29.7000
+            text = "d2"
         intervals [128]:
-            xmin = 18.4862
-            xmax = 18.6374
-            text = "ph1"
+            xmin = 29.7000
+            xmax = 29.8000
+            text = "f1"
         intervals [129]:
-            xmin = 18.6374
-            xmax = 18.7887
-            text = "ph2"
+            xmin = 29.8000
+            xmax = 29.9000
+            text = "o2"
         intervals [130]:
-            xmin = 18.8223
-            xmax = 18.8727
-            text = "ph1"
+            xmin = 29.9800
+            xmax = 29.9800
+            text = "a1"
         intervals [131]:
-            xmin = 18.8727
-            xmax = 18.9231
-            text = "ph2"
+            xmin = 30.0050
+            xmax = 29.9800
+            text = "d2"
         intervals [132]:
-            xmin = 18.9231
-            xmax = 18.9736
-            text = "ph3"
+            xmin = 29.9800
+            xmax = 29.9800
+            text = "w1"
         intervals [133]:
-            xmin = 18.9736
-            xmax = 19.0240
-            text = "ph4"
+            xmin = 30.0050
+            xmax = 29.9800
+            text = "e2"
         intervals [134]:
-            xmin = 19.0240
-            xmax = 19.0744
-            text = "ph5"
+            xmin = 29.9800
+            xmax = 29.9800
+            text = "s1"
         intervals [135]:
-            xmin = 19.0744
-            xmax = 19.1248
-            text = "ph6"
+            xmin = 30.0050
+            xmax = 29.9800
+            text = "a2"
         intervals [136]:
-            xmin = 19.1584
-            xmax = 19.3097
-            text = "ph1"
+            xmin = 29.9800
+            xmax = 29.9800
+            text = "h1"
         intervals [137]:
-            xmin = 19.3097
-            xmax = 19.4609
-            text = "ph2"
+            xmin = 30.0050
+            xmax = 29.9800
+            text = "v2"
         intervals [138]:
-            xmin = 19.4945
-            xmax = 19.5702
-            text = "ph1"
+            xmin = 29.9800
+            xmax = 29.9800
+            text = "a1"
         intervals [139]:
-            xmin = 19.5702
-            xmax = 19.6458
-            text = "ph2"
+            xmin = 30.0050
+            xmax = 29.9800
+            text = "a2"
         intervals [140]:
-            xmin = 19.6458
-            xmax = 19.7214
-            text = "ph3"
+            xmin = 30.0000
+            xmax = 30.0300
+            text = "b1"
         intervals [141]:
-            xmin = 19.7214
-            xmax = 19.7970
-            text = "ph4"
+            xmin = 30.0300
+            xmax = 30.0600
+            text = "t2"
         intervals [142]:
-            xmin = 19.8306
-            xmax = 19.9819
-            text = "ph1"
+            xmin = 30.8200
+            xmax = 31.0600
+            text = "s1"
         intervals [143]:
-            xmin = 19.9819
-            xmax = 20.1331
-            text = "ph2"
+            xmin = 31.0600
+            xmax = 31.3000
+            text = "r2"
         intervals [144]:
-            xmin = 20.1668
-            xmax = 20.3180
-            text = "ph1"
+            xmin = 31.5800
+            xmax = 31.6600
+            text = "w1"
         intervals [145]:
-            xmin = 20.3180
-            xmax = 20.4693
-            text = "ph2"
+            xmin = 31.6600
+            xmax = 31.7400
+            text = "e2"
         intervals [146]:
-            xmin = 20.5029
-            xmax = 20.6037
-            text = "ph1"
+            xmin = 31.7400
+            xmax = 31.8000
+            text = "a1"
         intervals [147]:
-            xmin = 20.6037
-            xmax = 20.7045
-            text = "ph2"
+            xmin = 31.8000
+            xmax = 31.8600
+            text = "e2"
         intervals [148]:
-            xmin = 20.7045
-            xmax = 20.8054
-            text = "ph3"
+            xmin = 31.8600
+            xmax = 31.9500
+            text = "n1"
         intervals [149]:
-            xmin = 20.8390
-            xmax = 20.9902
-            text = "ph1"
+            xmin = 31.9500
+            xmax = 32.0400
+            text = "t2"
         intervals [150]:
-            xmin = 20.9902
-            xmax = 21.1415
-            text = "ph2"
+            xmin = 32.0400
+            xmax = 32.1600
+            text = "w1"
         intervals [151]:
-            xmin = 21.1751
-            xmax = 21.3263
-            text = "ph1"
+            xmin = 32.1600
+            xmax = 32.2800
+            text = "a2"
         intervals [152]:
-            xmin = 21.3263
-            xmax = 21.4776
-            text = "ph2"
+            xmin = 32.7200
+            xmax = 32.7700
+            text = "i1"
         intervals [153]:
-            xmin = 21.5112
-            xmax = 21.6625
-            text = "ph1"
+            xmin = 32.7700
+            xmax = 32.8200
+            text = "f2"
         intervals [154]:
-            xmin = 21.6625
-            xmax = 21.8137
-            text = "ph2"
+            xmin = 32.8200
+            xmax = 32.8800
+            text = "w1"
         intervals [155]:
-            xmin = 21.8473
-            xmax = 21.9229
-            text = "ph1"
+            xmin = 32.8800
+            xmax = 32.9400
+            text = "e2"
         intervals [156]:
-            xmin = 21.9229
-            xmax = 21.9986
-            text = "ph2"
+            xmin = 32.9400
+            xmax = 33.0200
+            text = "m1"
         intervals [157]:
-            xmin = 21.9986
-            xmax = 22.0742
-            text = "ph3"
+            xmin = 33.0200
+            xmax = 33.1000
+            text = "k2"
         intervals [158]:
-            xmin = 22.0742
-            xmax = 22.1498
-            text = "ph4"
+            xmin = 33.1000
+            xmax = 33.1600
+            text = "a1"
         intervals [159]:
-            xmin = 22.1834
-            xmax = 22.2439
-            text = "ph1"
+            xmin = 33.1600
+            xmax = 33.2200
+            text = "a2"
         intervals [160]:
-            xmin = 22.2439
-            xmax = 22.3044
-            text = "ph2"
+            xmin = 33.2200
+            xmax = 33.2867
+            text = "p1"
         intervals [161]:
-            xmin = 22.3044
-            xmax = 22.3649
-            text = "ph3"
+            xmin = 33.2867
+            xmax = 33.3533
+            text = "o2"
         intervals [162]:
-            xmin = 22.3649
-            xmax = 22.4254
-            text = "ph4"
+            xmin = 33.3533
+            xmax = 33.4200
+            text = "e3"
         intervals [163]:
-            xmin = 22.4254
-            xmax = 22.4859
-            text = "ph5"
+            xmin = 33.4200
+            xmax = 33.6100
+            text = "u1"
         intervals [164]:
-            xmin = 22.5195
-            xmax = 22.6708
-            text = "ph1"
+            xmin = 33.6100
+            xmax = 33.8000
+            text = "e2"
         intervals [165]:
-            xmin = 22.6708
-            xmax = 22.8221
-            text = "ph2"
+            xmin = 33.8000
+            xmax = 33.8800
+            text = "o1"
         intervals [166]:
-            xmin = 22.8557
-            xmax = 23.0069
-            text = "ph1"
+            xmin = 33.8800
+            xmax = 33.9600
+            text = "f2"
         intervals [167]:
-            xmin = 23.0069
-            xmax = 23.1582
-            text = "ph2"
+            xmin = 33.9600
+            xmax = 34.0200
+            text = "t1"
         intervals [168]:
-            xmin = 23.1918
-            xmax = 23.2674
-            text = "ph1"
+            xmin = 34.0200
+            xmax = 34.0800
+            text = "e2"
         intervals [169]:
-            xmin = 23.2674
-            xmax = 23.3430
-            text = "ph2"
+            xmin = 34.0800
+            xmax = 34.1900
+            text = "m1"
         intervals [170]:
-            xmin = 23.3430
-            xmax = 23.4187
-            text = "ph3"
+            xmin = 34.1900
+            xmax = 34.3000
+            text = "a2"
         intervals [171]:
-            xmin = 23.4187
-            xmax = 23.4943
-            text = "ph4"
+            xmin = 34.3000
+            xmax = 34.4400
+            text = "w1"
         intervals [172]:
-            xmin = 23.5279
-            xmax = 23.6791
-            text = "ph1"
+            xmin = 34.4400
+            xmax = 34.5800
+            text = "i2"
         intervals [173]:
-            xmin = 23.6791
-            xmax = 23.8304
-            text = "ph2"
+            xmin = 34.5800
+            xmax = 34.6700
+            text = "t1"
         intervals [174]:
-            xmin = 23.8640
-            xmax = 24.0153
-            text = "ph1"
+            xmin = 34.6700
+            xmax = 34.7600
+            text = "e2"
         intervals [175]:
-            xmin = 24.0153
-            xmax = 24.1665
-            text = "ph2"
+            xmin = 34.7600
+            xmax = 34.8800
+            text = "g1"
         intervals [176]:
-            xmin = 24.2001
-            xmax = 24.3514
-            text = "ph1"
+            xmin = 34.8800
+            xmax = 35.0000
+            text = "d2"
         intervals [177]:
-            xmin = 24.3514
-            xmax = 24.5026
-            text = "ph2"
+            xmin = 35.0000
+            xmax = 35.0800
+            text = "o1"
         intervals [178]:
-            xmin = 24.5362
-            xmax = 24.6875
-            text = "ph1"
+            xmin = 35.0800
+            xmax = 35.1600
+            text = "f2"
         intervals [179]:
-            xmin = 24.6875
-            xmax = 24.8387
-            text = "ph2"
+            xmin = 35.1600
+            xmax = 35.2400
+            text = "n1"
         intervals [180]:
-            xmin = 24.8723
-            xmax = 24.9732
-            text = "ph1"
+            xmin = 35.2400
+            xmax = 35.3200
+            text = "t2"
         intervals [181]:
-            xmin = 24.9732
-            xmax = 25.0740
-            text = "ph2"
+            xmin = 35.3200
+            xmax = 35.4000
+            text = "r3"
         intervals [182]:
-            xmin = 25.0740
-            xmax = 25.1748
-            text = "ph3"
+            xmin = 35.4000
+            xmax = 35.5700
+            text = "h1"
         intervals [183]:
-            xmin = 25.2085
-            xmax = 25.3597
-            text = "ph1"
+            xmin = 35.5700
+            xmax = 35.7400
+            text = "t2"
         intervals [184]:
-            xmin = 25.3597
-            xmax = 25.5110
-            text = "ph2"
+            xmin = 35.7400
+            xmax = 35.8067
+            text = "p1"
         intervals [185]:
-            xmin = 25.5446
-            xmax = 25.6202
-            text = "ph1"
+            xmin = 35.8067
+            xmax = 35.8733
+            text = "a2"
         intervals [186]:
-            xmin = 25.6202
-            xmax = 25.6958
-            text = "ph2"
+            xmin = 35.8733
+            xmax = 35.9400
+            text = "e3"
         intervals [187]:
-            xmin = 25.6958
-            xmax = 25.7714
-            text = "ph3"
+            xmin = 35.9400
+            xmax = 36.0900
+            text = "i1"
         intervals [188]:
-            xmin = 25.7714
-            xmax = 25.8471
-            text = "ph4"
+            xmin = 36.0900
+            xmax = 36.2400
+            text = "n2"
         intervals [189]:
-            xmin = 25.8807
-            xmax = 25.9815
-            text = "ph1"
+            xmin = 36.2400
+            xmax = 36.2900
+            text = "o1"
         intervals [190]:
-            xmin = 25.9815
-            xmax = 26.0823
-            text = "ph2"
+            xmin = 36.2900
+            xmax = 36.3400
+            text = "r2"
         intervals [191]:
-            xmin = 26.0823
-            xmax = 26.1832
-            text = "ph3"
+            xmin = 36.3400
+            xmax = 36.4600
+            text = "p1"
         intervals [192]:
-            xmin = 26.2168
-            xmax = 26.3680
-            text = "ph1"
+            xmin = 36.4600
+            xmax = 36.5800
+            text = "w2"
         intervals [193]:
-            xmin = 26.3680
-            xmax = 26.5193
-            text = "ph2"
+            xmin = 36.5800
+            xmax = 36.7000
+            text = "r3"
         intervals [194]:
-            xmin = 26.5529
-            xmax = 26.7042
-            text = "ph1"
+            xmin = 37.6200
+            xmax = 37.8100
+            text = "t1"
         intervals [195]:
-            xmin = 26.7042
-            xmax = 26.8554
-            text = "ph2"
+            xmin = 37.8100
+            xmax = 38.0000
+            text = "r2"
         intervals [196]:
-            xmin = 26.8890
-            xmax = 27.0403
-            text = "ph1"
+            xmin = 38.0000
+            xmax = 38.0750
+            text = "m1"
         intervals [197]:
-            xmin = 27.0403
-            xmax = 27.1915
-            text = "ph2"
+            xmin = 38.0750
+            xmax = 38.1500
+            text = "l2"
         intervals [198]:
-            xmin = 27.2251
-            xmax = 27.3764
-            text = "ph1"
+            xmin = 38.1500
+            xmax = 38.2250
+            text = "i3"
         intervals [199]:
-            xmin = 27.3764
-            xmax = 27.5276
-            text = "ph2"
+            xmin = 38.2250
+            xmax = 38.3000
+            text = "n4"
         intervals [200]:
-            xmin = 27.5612
-            xmax = 27.6621
-            text = "ph1"
+            xmin = 38.3000
+            xmax = 38.4400
+            text = "o1"
         intervals [201]:
-            xmin = 27.6621
-            xmax = 27.7629
-            text = "ph2"
+            xmin = 38.4400
+            xmax = 38.5800
+            text = "f2"
         intervals [202]:
-            xmin = 27.7629
-            xmax = 27.8637
-            text = "ph3"
+            xmin = 38.5800
+            xmax = 38.6733
+            text = "p1"
         intervals [203]:
-            xmin = 27.8974
-            xmax = 28.0486
-            text = "ph1"
+            xmin = 38.6733
+            xmax = 38.7667
+            text = "o2"
         intervals [204]:
-            xmin = 28.0486
-            xmax = 28.1999
-            text = "ph2"
+            xmin = 38.7667
+            xmax = 38.8600
+            text = "l3"
         intervals [205]:
-            xmin = 28.2335
-            xmax = 28.3847
-            text = "ph1"
+            xmin = 39.1800
+            xmax = 39.3000
+            text = "a1"
         intervals [206]:
-            xmin = 28.3847
-            xmax = 28.5360
-            text = "ph2"
+            xmin = 39.3000
+            xmax = 39.4200
+            text = "m2"
         intervals [207]:
-            xmin = 28.5696
-            xmax = 28.7208
-            text = "ph1"
+            xmin = 39.4200
+            xmax = 39.5000
+            text = "i1"
         intervals [208]:
-            xmin = 28.7208
-            xmax = 28.8721
-            text = "ph2"
+            xmin = 39.5000
+            xmax = 39.5800
+            text = "n2"
         intervals [209]:
-            xmin = 28.9057
-            xmax = 29.0569
-            text = "ph1"
+            xmin = 39.5800
+            xmax = 39.6300
+            text = "t1"
         intervals [210]:
-            xmin = 29.0569
-            xmax = 29.2082
-            text = "ph2"
+            xmin = 39.6300
+            xmax = 39.6800
+            text = "e2"
         intervals [211]:
-            xmin = 29.2418
-            xmax = 29.3931
-            text = "ph1"
+            xmin = 39.6800
+            xmax = 39.7600
+            text = "h1"
         intervals [212]:
-            xmin = 29.3931
-            xmax = 29.5443
-            text = "ph2"
+            xmin = 39.7600
+            xmax = 39.8400
+            text = "l2"
         intervals [213]:
-            xmin = 29.5779
-            xmax = 29.7292
-            text = "ph1"
+            xmin = 39.8400
+            xmax = 40.0000
+            text = "c1"
         intervals [214]:
-            xmin = 29.7292
-            xmax = 29.8804
-            text = "ph2"
+            xmin = 40.0000
+            xmax = 40.1600
+            text = "u2"
         intervals [215]:
-            xmin = 29.9140
-            xmax = 30.0653
-            text = "ph1"
+            xmin = 40.1600
+            xmax = 40.2600
+            text = "o1"
         intervals [216]:
-            xmin = 30.0653
-            xmax = 30.2165
-            text = "ph2"
+            xmin = 40.2600
+            xmax = 40.3600
+            text = "f2"
         intervals [217]:
-            xmin = 30.2501
-            xmax = 30.4014
-            text = "ph1"
+            xmin = 40.3600
+            xmax = 40.4250
+            text = "l1"
         intervals [218]:
-            xmin = 30.4014
-            xmax = 30.5526
-            text = "ph2"
+            xmin = 40.4250
+            xmax = 40.4900
+            text = "b2"
         intervals [219]:
-            xmin = 30.5863
-            xmax = 30.7375
-            text = "ph1"
+            xmin = 40.4900
+            xmax = 40.5550
+            text = "r3"
         intervals [220]:
-            xmin = 30.7375
-            xmax = 30.8888
-            text = "ph2"
+            xmin = 40.5550
+            xmax = 40.6200
+            text = "y4"
         intervals [221]:
-            xmin = 30.9224
-            xmax = 31.0736
-            text = "ph1"
+            xmin = 41.1600
+            xmax = 41.1900
+            text = "a1"
         intervals [222]:
-            xmin = 31.0736
-            xmax = 31.2249
-            text = "ph2"
+            xmin = 41.1900
+            xmax = 41.2200
+            text = "d2"
         intervals [223]:
-            xmin = 31.2585
-            xmax = 31.4097
-            text = "ph1"
+            xmin = 41.2200
+            xmax = 41.2800
+            text = "i1"
         intervals [224]:
-            xmin = 31.4097
-            xmax = 31.5610
-            text = "ph2"
+            xmin = 41.2800
+            xmax = 41.3400
+            text = "n2"
         intervals [225]:
-            xmin = 31.5946
-            xmax = 31.7458
-            text = "ph1"
+            xmin = 41.3400
+            xmax = 41.4400
+            text = "s1"
         intervals [226]:
-            xmin = 31.7458
-            xmax = 31.8971
-            text = "ph2"
+            xmin = 41.4400
+            xmax = 41.5400
+            text = "c2"
         intervals [227]:
-            xmin = 31.9307
-            xmax = 32.0820
-            text = "ph1"
+            xmin = 41.5400
+            xmax = 41.6200
+            text = "a1"
         intervals [228]:
-            xmin = 32.0820
-            xmax = 32.2332
-            text = "ph2"
+            xmin = 41.6200
+            xmax = 41.7000
+            text = "a2"
         intervals [229]:
-            xmin = 32.2668
-            xmax = 32.4181
-            text = "ph1"
+            xmin = 41.7000
+            xmax = 41.8000
+            text = "c1"
         intervals [230]:
-            xmin = 32.4181
-            xmax = 32.5693
-            text = "ph2"
+            xmin = 41.8000
+            xmax = 41.9000
+            text = "u2"
         intervals [231]:
-            xmin = 32.6029
-            xmax = 32.7542
-            text = "ph1"
+            xmin = 41.9000
+            xmax = 42.0000
+            text = "t3"
         intervals [232]:
-            xmin = 32.7542
-            xmax = 32.9054
-            text = "ph2"
+            xmin = 42.0000
+            xmax = 42.1200
+            text = "a1"
         intervals [233]:
-            xmin = 32.9390
-            xmax = 33.0903
-            text = "ph1"
+            xmin = 42.1200
+            xmax = 42.2400
+            text = "s2"
         intervals [234]:
-            xmin = 33.0903
-            xmax = 33.2415
-            text = "ph2"
+            xmin = 42.2400
+            xmax = 42.3100
+            text = "t1"
         intervals [235]:
-            xmin = 33.2752
-            xmax = 33.3760
-            text = "ph1"
+            xmin = 42.3100
+            xmax = 42.3800
+            text = "a2"
         intervals [236]:
-            xmin = 33.3760
-            xmax = 33.4768
-            text = "ph2"
+            xmin = 42.3800
+            xmax = 42.4600
+            text = "w1"
         intervals [237]:
-            xmin = 33.4768
-            xmax = 33.5777
-            text = "ph3"
+            xmin = 42.4600
+            xmax = 42.5400
+            text = "i2"
         intervals [238]:
-            xmin = 33.6113
-            xmax = 33.7625
-            text = "ph1"
+            xmin = 42.5400
+            xmax = 42.6300
+            text = "w1"
         intervals [239]:
-            xmin = 33.7625
-            xmax = 33.9138
-            text = "ph2"
+            xmin = 42.6300
+            xmax = 42.7200
+            text = "e2"
         intervals [240]:
-            xmin = 33.9474
-            xmax = 34.0986
-            text = "ph1"
+            xmin = 42.7200
+            xmax = 42.7950
+            text = "p1"
         intervals [241]:
-            xmin = 34.0986
-            xmax = 34.2499
-            text = "ph2"
+            xmin = 42.7950
+            xmax = 42.8700
+            text = "s2"
         intervals [242]:
-            xmin = 34.2835
-            xmax = 34.4347
-            text = "ph1"
+            xmin = 42.8700
+            xmax = 42.9450
+            text = "e3"
         intervals [243]:
-            xmin = 34.4347
-            xmax = 34.5860
-            text = "ph2"
+            xmin = 42.9450
+            xmax = 43.0200
+            text = "s4"
         intervals [244]:
-            xmin = 34.6196
-            xmax = 34.7709
-            text = "ph1"
+            xmin = 43.5400
+            xmax = 43.6300
+            text = "a1"
         intervals [245]:
-            xmin = 34.7709
-            xmax = 34.9221
-            text = "ph2"
+            xmin = 43.6300
+            xmax = 43.7200
+            text = "e2"
         intervals [246]:
-            xmin = 34.9557
-            xmax = 35.1070
-            text = "ph1"
+            xmin = 43.7200
+            xmax = 43.7680
+            text = "i1"
         intervals [247]:
-            xmin = 35.1070
-            xmax = 35.2582
-            text = "ph2"
+            xmin = 43.7680
+            xmax = 43.8160
+            text = "v2"
         intervals [248]:
-            xmin = 35.2918
-            xmax = 35.4431
-            text = "ph1"
+            xmin = 43.8160
+            xmax = 43.8640
+            text = "n3"
         intervals [249]:
-            xmin = 35.4431
-            xmax = 35.5943
-            text = "ph2"
+            xmin = 43.8640
+            xmax = 43.9120
+            text = "i4"
         intervals [250]:
-            xmin = 35.6279
-            xmax = 35.7792
-            text = "ph1"
+            xmin = 43.9120
+            xmax = 43.9600
+            text = "l5"
         intervals [251]:
-            xmin = 35.7792
-            xmax = 35.9304
-            text = "ph2"
+            xmin = 43.9600
+            xmax = 44.1800
+            text = "b1"
         intervals [252]:
-            xmin = 35.9641
-            xmax = 36.1153
-            text = "ph1"
+            xmin = 44.1800
+            xmax = 44.4000
+            text = "y2"
         intervals [253]:
-            xmin = 36.1153
-            xmax = 36.2666
-            text = "ph2"
+            xmin = 44.4000
+            xmax = 44.5100
+            text = "a1"
         intervals [254]:
-            xmin = 36.3002
-            xmax = 36.4010
-            text = "ph1"
+            xmin = 44.5100
+            xmax = 44.6200
+            text = "y2"
         intervals [255]:
-            xmin = 36.4010
-            xmax = 36.5018
-            text = "ph2"
+            xmin = 44.6200
+            xmax = 44.7600
+            text = "f1"
         intervals [256]:
-            xmin = 36.5018
-            xmax = 36.6027
-            text = "ph3"
+            xmin = 44.7600
+            xmax = 44.9000
+            text = "r2"
         intervals [257]:
-            xmin = 36.6363
-            xmax = 36.7875
-            text = "ph1"
+            xmin = 44.9000
+            xmax = 45.0500
+            text = "w1"
         intervals [258]:
-            xmin = 36.7875
-            xmax = 36.9388
-            text = "ph2"
+            xmin = 45.0500
+            xmax = 45.2000
+            text = "i2"
         intervals [259]:
-            xmin = 36.9724
-            xmax = 37.0732
-            text = "ph1"
+            xmin = 45.2000
+            xmax = 45.2800
+            text = "o1"
         intervals [260]:
-            xmin = 37.0732
-            xmax = 37.1741
-            text = "ph2"
+            xmin = 45.2800
+            xmax = 45.3600
+            text = "r2"
         intervals [261]:
-            xmin = 37.1741
-            xmax = 37.2749
-            text = "ph3"
+            xmin = 45.3600
+            xmax = 45.4900
+            text = "e1"
         intervals [262]:
-            xmin = 37.3085
-            xmax = 37.4598
-            text = "ph1"
+            xmin = 45.4900
+            xmax = 45.6200
+            text = "e2"
         intervals [263]:
-            xmin = 37.4598
-            xmax = 37.6110
-            text = "ph2"
+            xmin = 45.6200
+            xmax = 45.7300
+            text = "c1"
         intervals [264]:
-            xmin = 37.6446
-            xmax = 37.7959
-            text = "ph1"
+            xmin = 45.7300
+            xmax = 45.8400
+            text = "n2"
         intervals [265]:
-            xmin = 37.7959
-            xmax = 37.9471
-            text = "ph2"
+            xmin = 45.8400
+            xmax = 45.9500
+            text = "s1"
         intervals [266]:
-            xmin = 37.9807
-            xmax = 38.1320
-            text = "ph1"
+            xmin = 45.9500
+            xmax = 46.0600
+            text = "n2"
         intervals [267]:
-            xmin = 38.1320
-            xmax = 38.2832
-            text = "ph2"
+            xmin = 46.0600
+            xmax = 46.1400
+            text = "a1"
         intervals [268]:
-            xmin = 38.3168
-            xmax = 38.4681
-            text = "ph1"
+            xmin = 46.1400
+            xmax = 46.2200
+            text = "a2"
         intervals [269]:
-            xmin = 38.4681
-            xmax = 38.6193
-            text = "ph2"
+            xmin = 46.2200
+            xmax = 46.3000
+            text = "n3"
         intervals [270]:
-            xmin = 38.6530
-            xmax = 38.7286
-            text = "ph1"
+            xmin = 46.3000
+            xmax = 46.4800
+            text = "u1"
         intervals [271]:
-            xmin = 38.7286
-            xmax = 38.8042
-            text = "ph2"
+            xmin = 46.4800
+            xmax = 46.6600
+            text = ".2"
         intervals [272]:
-            xmin = 38.8042
-            xmax = 38.8798
-            text = "ph3"
+            xmin = 47.6600
+            xmax = 47.7450
+            text = "b1"
         intervals [273]:
-            xmin = 38.8798
-            xmax = 38.9555
-            text = "ph4"
+            xmin = 47.7450
+            xmax = 47.8300
+            text = "s2"
         intervals [274]:
-            xmin = 38.9891
-            xmax = 39.1403
-            text = "ph1"
+            xmin = 47.8300
+            xmax = 47.9150
+            text = "d3"
         intervals [275]:
-            xmin = 39.1403
-            xmax = 39.2916
-            text = "ph2"
+            xmin = 47.9150
+            xmax = 48.0000
+            text = "s4"
         intervals [276]:
-            xmin = 39.3252
-            xmax = 39.4260
-            text = "ph1"
+            xmin = 48.5200
+            xmax = 48.6700
+            text = "s1"
         intervals [277]:
-            xmin = 39.4260
-            xmax = 39.5269
-            text = "ph2"
+            xmin = 48.6700
+            xmax = 48.8200
+            text = "r2"
         intervals [278]:
-            xmin = 39.5269
-            xmax = 39.6277
-            text = "ph3"
+            xmin = 49.2000
+            xmax = 49.2400
+            text = "w1"
         intervals [279]:
-            xmin = 39.6613
-            xmax = 39.8125
-            text = "ph1"
+            xmin = 49.2400
+            xmax = 49.2800
+            text = "e2"
         intervals [280]:
-            xmin = 39.8125
-            xmax = 39.9638
-            text = "ph2"
+            xmin = 49.2800
+            xmax = 49.3600
+            text = "s1"
         intervals [281]:
-            xmin = 39.9974
-            xmax = 40.1487
-            text = "ph1"
+            xmin = 49.3600
+            xmax = 49.4400
+            text = "a2"
         intervals [282]:
-            xmin = 40.1487
-            xmax = 40.2999
-            text = "ph2"
+            xmin = 49.4400
+            xmax = 49.5600
+            text = "n1"
         intervals [283]:
-            xmin = 40.3335
-            xmax = 40.4848
-            text = "ph1"
+            xmin = 49.5600
+            xmax = 49.6800
+            text = "t2"
         intervals [284]:
-            xmin = 40.4848
-            xmax = 40.6360
-            text = "ph2"
+            xmin = 49.6800
+            xmax = 49.7900
+            text = "f1"
         intervals [285]:
-            xmin = 40.6696
-            xmax = 40.8209
-            text = "ph1"
+            xmin = 49.7900
+            xmax = 49.9000
+            text = "g2"
         intervals [286]:
-            xmin = 40.8209
-            xmax = 40.9721
-            text = "ph2"
+            xmin = 49.9000
+            xmax = 50.0000
+            text = "o1"
         intervals [287]:
-            xmin = 41.0057
-            xmax = 41.1570
-            text = "ph1"
+            xmin = 50.0000
+            xmax = 50.1000
+            text = "r2"
         intervals [288]:
-            xmin = 41.1570
-            xmax = 41.3082
-            text = "ph2"
+            xmin = 50.1000
+            xmax = 50.2000
+            text = "b1"
         intervals [289]:
-            xmin = 41.3419
-            xmax = 41.4931
-            text = "ph1"
+            xmin = 50.2000
+            xmax = 50.3000
+            text = "t2"
         intervals [290]:
-            xmin = 41.4931
-            xmax = 41.6444
-            text = "ph2"
+            xmin = 50.3000
+            xmax = 50.4000
+            text = "l3"
         intervals [291]:
-            xmin = 41.6780
-            xmax = 41.7788
-            text = "ph1"
+            xmin = 50.4000
+            xmax = 50.5133
+            text = "a1"
         intervals [292]:
-            xmin = 41.7788
-            xmax = 41.8796
-            text = "ph2"
+            xmin = 50.5133
+            xmax = 50.6267
+            text = "o2"
         intervals [293]:
-            xmin = 41.8796
-            xmax = 41.9805
-            text = "ph3"
+            xmin = 50.6267
+            xmax = 50.7400
+            text = "e3"
         intervals [294]:
-            xmin = 42.0141
-            xmax = 42.1653
-            text = "ph1"
+            xmin = 51.5400
+            xmax = 51.7800
+            text = "t1"
         intervals [295]:
-            xmin = 42.1653
-            xmax = 42.3166
-            text = "ph2"
+            xmin = 51.7800
+            xmax = 52.0200
+            text = "e2"
         intervals [296]:
-            xmin = 42.3502
-            xmax = 42.5014
-            text = "ph1"
+            xmin = 52.0200
+            xmax = 52.1000
+            text = "i1"
         intervals [297]:
-            xmin = 42.5014
-            xmax = 42.6527
-            text = "ph2"
+            xmin = 52.1000
+            xmax = 52.1800
+            text = "s2"
         intervals [298]:
-            xmin = 42.6863
-            xmax = 42.8376
-            text = "ph1"
+            xmin = 52.1800
+            xmax = 52.2200
+            text = "a1"
         intervals [299]:
-            xmin = 42.8376
-            xmax = 42.9888
-            text = "ph2"
+            xmin = 52.2200
+            xmax = 52.2600
+            text = "a2"
         intervals [300]:
-            xmin = 43.0224
-            xmax = 43.1737
-            text = "ph1"
+            xmin = 52.2600
+            xmax = 52.3800
+            text = "j1"
         intervals [301]:
-            xmin = 43.1737
-            xmax = 43.3249
-            text = "ph2"
+            xmin = 52.3800
+            xmax = 52.5000
+            text = "s2"
         intervals [302]:
-            xmin = 43.3585
-            xmax = 43.4594
-            text = "ph1"
+            xmin = 52.5000
+            xmax = 52.6300
+            text = "g1"
         intervals [303]:
-            xmin = 43.4594
-            xmax = 43.5602
-            text = "ph2"
+            xmin = 52.6300
+            xmax = 52.7600
+            text = "d2"
         intervals [304]:
-            xmin = 43.5602
-            xmax = 43.6610
-            text = "ph3"
+            xmin = 52.7600
+            xmax = 52.9100
+            text = "w1"
         intervals [305]:
-            xmin = 43.6946
-            xmax = 43.8459
-            text = "ph1"
+            xmin = 52.9100
+            xmax = 53.0600
+            text = "o2"
         intervals [306]:
-            xmin = 43.8459
-            xmax = 43.9971
-            text = "ph2"
+            xmin = 53.0600
+            xmax = 53.1700
+            text = "p1"
         intervals [307]:
-            xmin = 44.0308
-            xmax = 44.1820
-            text = "ph1"
+            xmin = 53.1700
+            xmax = 53.2800
+            text = "e2"
         intervals [308]:
-            xmin = 44.1820
-            xmax = 44.3333
-            text = "ph2"
+            xmin = 53.2800
+            xmax = 53.3900
+            text = "i3"
         intervals [309]:
-            xmin = 44.3669
-            xmax = 44.5181
-            text = "ph1"
+            xmin = 53.3900
+            xmax = 53.5000
+            text = "e4"
         intervals [310]:
-            xmin = 44.5181
-            xmax = 44.6694
-            text = "ph2"
+            xmin = 53.5000
+            xmax = 53.6500
+            text = "o1"
         intervals [311]:
-            xmin = 44.7030
-            xmax = 44.8542
-            text = "ph1"
+            xmin = 53.6500
+            xmax = 53.8000
+            text = "e2"
         intervals [312]:
-            xmin = 44.8542
-            xmax = 45.0055
-            text = "ph2"
+            xmin = 53.8000
+            xmax = 53.8600
+            text = "t1"
         intervals [313]:
-            xmin = 45.0391
-            xmax = 45.1399
-            text = "ph1"
+            xmin = 53.8600
+            xmax = 53.9200
+            text = "e2"
         intervals [314]:
-            xmin = 45.1399
-            xmax = 45.2408
-            text = "ph2"
+            xmin = 53.9200
+            xmax = 54.0450
+            text = "d1"
         intervals [315]:
-            xmin = 45.2408
-            xmax = 45.3416
-            text = "ph3"
+            xmin = 54.0450
+            xmax = 54.1700
+            text = "s2"
         intervals [316]:
-            xmin = 45.3752
-            xmax = 45.5265
-            text = "ph1"
+            xmin = 54.1700
+            xmax = 54.2950
+            text = "i3"
         intervals [317]:
-            xmin = 45.5265
-            xmax = 45.6777
-            text = "ph2"
+            xmin = 54.2950
+            xmax = 54.4200
+            text = "i4"
         intervals [318]:
-            xmin = 45.7113
-            xmax = 45.7718
-            text = "ph1"
+            xmin = 54.4200
+            xmax = 54.5000
+            text = "o1"
         intervals [319]:
-            xmin = 45.7718
-            xmax = 45.8323
-            text = "ph2"
+            xmin = 54.5000
+            xmax = 54.5800
+            text = "f2"
         intervals [320]:
-            xmin = 45.8323
-            xmax = 45.8928
-            text = "ph3"
+            xmin = 54.5800
+            xmax = 54.6200
+            text = "n1"
         intervals [321]:
-            xmin = 45.8928
-            xmax = 45.9533
-            text = "ph4"
+            xmin = 54.6200
+            xmax = 54.6600
+            text = "t2"
         intervals [322]:
-            xmin = 45.9533
-            xmax = 46.0138
-            text = "ph5"
+            xmin = 54.6600
+            xmax = 54.7000
+            text = "o3"
         intervals [323]:
-            xmin = 46.0474
-            xmax = 46.1987
-            text = "ph1"
+            xmin = 54.7000
+            xmax = 54.7400
+            text = "s4"
         intervals [324]:
-            xmin = 46.1987
-            xmax = 46.3499
-            text = "ph2"
+            xmin = 55.4000
+            xmax = 55.5100
+            text = "a1"
         intervals [325]:
-            xmin = 46.3835
-            xmax = 46.5348
-            text = "ph1"
+            xmin = 55.5100
+            xmax = 55.6200
+            text = "d2"
         intervals [326]:
-            xmin = 46.5348
-            xmax = 46.6861
-            text = "ph2"
+            xmin = 55.6200
+            xmax = 55.6800
+            text = "w1"
         intervals [327]:
-            xmin = 46.7197
-            xmax = 46.8709
-            text = "ph1"
+            xmin = 55.6800
+            xmax = 55.7400
+            text = "o2"
         intervals [328]:
-            xmin = 46.8709
-            xmax = 47.0222
-            text = "ph2"
+            xmin = 55.7400
+            xmax = 55.7900
+            text = "w1"
         intervals [329]:
-            xmin = 47.0558
-            xmax = 47.2070
-            text = "ph1"
+            xmin = 55.7900
+            xmax = 55.8400
+            text = "l2"
         intervals [330]:
-            xmin = 47.2070
-            xmax = 47.3583
-            text = "ph2"
+            xmin = 55.8400
+            xmax = 55.9400
+            text = "r1"
         intervals [331]:
-            xmin = 47.3919
-            xmax = 47.5431
-            text = "ph1"
+            xmin = 55.9400
+            xmax = 56.0400
+            text = "i2"
         intervals [332]:
-            xmin = 47.5431
-            xmax = 47.6944
-            text = "ph2"
+            xmin = 56.0400
+            xmax = 56.1300
+            text = "u1"
         intervals [333]:
-            xmin = 47.7280
-            xmax = 47.8793
-            text = "ph1"
+            xmin = 56.1300
+            xmax = 56.2200
+            text = "p2"
         intervals [334]:
-            xmin = 47.8793
-            xmax = 48.0305
-            text = "ph2"
+            xmin = 56.2200
+            xmax = 56.3067
+            text = "f1"
         intervals [335]:
-            xmin = 48.0641
-            xmax = 48.2154
-            text = "ph1"
+            xmin = 56.3067
+            xmax = 56.3933
+            text = "i2"
         intervals [336]:
-            xmin = 48.2154
-            xmax = 48.3666
-            text = "ph2"
+            xmin = 56.3933
+            xmax = 56.4800
+            text = "n3"
         intervals [337]:
-            xmin = 48.4002
-            xmax = 48.5515
-            text = "ph1"
+            xmin = 56.4800
+            xmax = 56.6200
+            text = "t1"
         intervals [338]:
-            xmin = 48.5515
-            xmax = 48.7027
-            text = "ph2"
+            xmin = 56.6200
+            xmax = 56.7600
+            text = "o2"
         intervals [339]:
-            xmin = 48.7363
-            xmax = 48.8372
-            text = "ph1"
+            xmin = 56.7600
+            xmax = 56.8500
+            text = "f1"
         intervals [340]:
-            xmin = 48.8372
-            xmax = 48.9380
-            text = "ph2"
+            xmin = 56.8500
+            xmax = 56.9400
+            text = "g2"
         intervals [341]:
-            xmin = 48.9380
-            xmax = 49.0388
-            text = "ph3"
+            xmin = 56.9400
+            xmax = 57.0400
+            text = "o1"
         intervals [342]:
-            xmin = 49.0725
-            xmax = 49.2237
-            text = "ph1"
+            xmin = 57.0400
+            xmax = 57.1400
+            text = "r2"
         intervals [343]:
-            xmin = 49.2237
-            xmax = 49.3750
-            text = "ph2"
+            xmin = 57.1400
+            xmax = 57.2400
+            text = "b1"
         intervals [344]:
-            xmin = 49.4086
-            xmax = 49.5094
-            text = "ph1"
+            xmin = 57.2400
+            xmax = 57.3400
+            text = "t2"
         intervals [345]:
-            xmin = 49.5094
-            xmax = 49.6102
-            text = "ph2"
+            xmin = 57.3400
+            xmax = 57.4400
+            text = "l3"
         intervals [346]:
-            xmin = 49.6102
-            xmax = 49.7111
-            text = "ph3"
+            xmin = 57.4400
+            xmax = 57.5700
+            text = "f1"
         intervals [347]:
-            xmin = 49.7447
-            xmax = 49.8959
-            text = "ph1"
+            xmin = 57.5700
+            xmax = 57.7000
+            text = "r2"
         intervals [348]:
-            xmin = 49.8959
-            xmax = 50.0472
-            text = "ph2"
+            xmin = 57.7000
+            xmax = 57.8100
+            text = "u1"
         intervals [349]:
-            xmin = 50.0808
-            xmax = 50.2320
-            text = "ph1"
+            xmin = 57.8100
+            xmax = 57.9200
+            text = ".2"
         intervals [350]:
-            xmin = 50.2320
-            xmax = 50.3833
-            text = "ph2"
+            xmin = 58.6600
+            xmax = 58.9000
+            text = "t1"
         intervals [351]:
-            xmin = 50.4169
-            xmax = 50.5682
-            text = "ph1"
+            xmin = 58.9000
+            xmax = 59.1400
+            text = "e2"
         intervals [352]:
-            xmin = 50.5682
-            xmax = 50.7194
-            text = "ph2"
+            xmin = 59.1400
+            xmax = 59.2600
+            text = "b1"
         intervals [353]:
-            xmin = 50.7530
-            xmax = 50.9043
-            text = "ph1"
+            xmin = 59.2600
+            xmax = 59.3800
+            text = "t2"
         intervals [354]:
-            xmin = 50.9043
-            xmax = 51.0555
-            text = "ph2"
+            xmin = 59.3800
+            xmax = 59.5000
+            text = "l3"
         intervals [355]:
-            xmin = 51.0891
-            xmax = 51.2404
-            text = "ph1"
+            xmin = 59.7400
+            xmax = 59.8700
+            text = "s1"
         intervals [356]:
-            xmin = 51.2404
-            xmax = 51.3916
-            text = "ph2"
+            xmin = 59.8700
+            xmax = 60.0000
+            text = "r2"
         intervals [357]:
-            xmin = 51.4252
-            xmax = 51.5765
-            text = "ph1"
+            xmin = 60.2400
+            xmax = 60.3400
+            text = "i1"
         intervals [358]:
-            xmin = 51.5765
-            xmax = 51.7277
-            text = "ph2"
+            xmin = 60.3400
+            xmax = 60.4400
+            text = "s2"
         intervals [359]:
-            xmin = 51.7614
-            xmax = 51.8622
-            text = "ph1"
+            xmin = 60.4400
+            xmax = 60.5300
+            text = "n1"
         intervals [360]:
-            xmin = 51.8622
-            xmax = 51.9630
-            text = "ph2"
+            xmin = 60.5300
+            xmax = 60.6200
+            text = "t2"
         intervals [361]:
-            xmin = 51.9630
-            xmax = 52.0639
-            text = "ph3"
+            xmin = 60.6200
+            xmax = 60.7200
+            text = "t1"
         intervals [362]:
-            xmin = 52.0975
-            xmax = 52.2487
-            text = "ph1"
+            xmin = 60.7200
+            xmax = 60.8200
+            text = "o2"
         intervals [363]:
-            xmin = 52.2487
-            xmax = 52.4000
-            text = "ph2"
+            xmin = 60.8200
+            xmax = 60.8700
+            text = "t1"
         intervals [364]:
-            xmin = 52.4336
-            xmax = 52.5848
-            text = "ph1"
+            xmin = 60.8700
+            xmax = 60.9200
+            text = "e2"
         intervals [365]:
-            xmin = 52.5848
-            xmax = 52.7361
-            text = "ph2"
+            xmin = 60.9200
+            xmax = 60.9867
+            text = "s1"
         intervals [366]:
-            xmin = 52.7697
-            xmax = 52.9209
-            text = "ph1"
+            xmin = 60.9867
+            xmax = 61.0533
+            text = "r2"
         intervals [367]:
-            xmin = 52.9209
-            xmax = 53.0722
-            text = "ph2"
+            xmin = 61.0533
+            xmax = 61.1200
+            text = "n3"
         intervals [368]:
-            xmin = 53.1058
-            xmax = 53.2571
-            text = "ph1"
+            xmin = 61.1200
+            xmax = 61.2267
+            text = "a1"
         intervals [369]:
-            xmin = 53.2571
-            xmax = 53.4083
-            text = "ph2"
+            xmin = 61.2267
+            xmax = 61.3333
+            text = "o2"
         intervals [370]:
-            xmin = 53.4419
-            xmax = 53.5932
-            text = "ph1"
+            xmin = 61.3333
+            xmax = 61.4400
+            text = "e3"
         intervals [371]:
-            xmin = 53.5932
-            xmax = 53.7444
-            text = "ph2"
+            xmin = 62.0000
+            xmax = 62.0800
+            text = "i1"
         intervals [372]:
-            xmin = 53.7780
-            xmax = 53.9293
-            text = "ph1"
+            xmin = 62.0800
+            xmax = 62.1600
+            text = "t2"
         intervals [373]:
-            xmin = 53.9293
-            xmax = 54.0805
-            text = "ph2"
+            xmin = 62.1600
+            xmax = 62.2300
+            text = "i1"
         intervals [374]:
-            xmin = 54.1141
-            xmax = 54.2654
-            text = "ph1"
+            xmin = 62.2300
+            xmax = 62.3000
+            text = "s2"
         intervals [375]:
-            xmin = 54.2654
-            xmax = 54.4166
-            text = "ph2"
+            xmin = 62.3000
+            xmax = 62.3800
+            text = "t1"
         intervals [376]:
-            xmin = 54.4503
-            xmax = 54.5259
-            text = "ph1"
+            xmin = 62.3800
+            xmax = 62.4600
+            text = "o2"
         intervals [377]:
-            xmin = 54.5259
-            xmax = 54.6015
-            text = "ph2"
+            xmin = 62.4600
+            xmax = 62.5100
+            text = "t1"
         intervals [378]:
-            xmin = 54.6015
-            xmax = 54.6771
-            text = "ph3"
+            xmin = 62.5100
+            xmax = 62.5600
+            text = "e2"
         intervals [379]:
-            xmin = 54.6771
-            xmax = 54.7528
-            text = "ph4"
+            xmin = 62.5600
+            xmax = 62.6300
+            text = "v1"
         intervals [380]:
-            xmin = 54.7864
-            xmax = 54.9376
-            text = "ph1"
+            xmin = 62.6300
+            xmax = 62.7000
+            text = "g2"
         intervals [381]:
-            xmin = 54.9376
-            xmax = 55.0889
-            text = "ph2"
+            xmin = 62.7000
+            xmax = 62.7700
+            text = "l3"
         intervals [382]:
-            xmin = 55.1225
-            xmax = 55.2737
-            text = "ph1"
+            xmin = 62.7700
+            xmax = 62.8400
+            text = "n4"
         intervals [383]:
-            xmin = 55.2737
-            xmax = 55.4250
-            text = "ph2"
+            xmin = 63.3200
+            xmax = 63.3500
+            text = "t1"
         intervals [384]:
-            xmin = 55.4586
-            xmax = 55.5342
-            text = "ph1"
+            xmin = 63.3500
+            xmax = 63.3800
+            text = "e2"
         intervals [385]:
-            xmin = 55.5342
-            xmax = 55.6098
-            text = "ph2"
+            xmin = 63.3800
+            xmax = 63.4800
+            text = "a1"
         intervals [386]:
-            xmin = 55.6098
-            xmax = 55.6855
-            text = "ph3"
+            xmin = 63.4800
+            xmax = 63.5800
+            text = "t2"
         intervals [387]:
-            xmin = 55.6855
-            xmax = 55.7611
-            text = "ph4"
+            xmin = 63.5800
+            xmax = 63.6800
+            text = "v3"
         intervals [388]:
-            xmin = 55.7947
-            xmax = 55.9460
-            text = "ph1"
+            xmin = 64.1200
+            xmax = 64.1800
+            text = "t1"
         intervals [389]:
-            xmin = 55.9460
-            xmax = 56.0972
-            text = "ph2"
+            xmin = 64.1800
+            xmax = 64.2400
+            text = "e2"
         intervals [390]:
-            xmin = 56.1308
-            xmax = 56.2317
-            text = "ph1"
+            xmin = 64.2400
+            xmax = 64.3133
+            text = "b1"
         intervals [391]:
-            xmin = 56.2317
-            xmax = 56.3325
-            text = "ph2"
+            xmin = 64.3133
+            xmax = 64.3867
+            text = "a2"
         intervals [392]:
-            xmin = 56.3325
-            xmax = 56.4333
-            text = "ph3"
+            xmin = 64.3867
+            xmax = 64.4600
+            text = "e3"
         intervals [393]:
-            xmin = 56.4669
-            xmax = 56.6182
-            text = "ph1"
+            xmin = 65.7000
+            xmax = 65.7400
+            text = "t1"
         intervals [394]:
-            xmin = 56.6182
-            xmax = 56.7694
-            text = "ph2"
+            xmin = 65.7400
+            xmax = 65.7800
+            text = "e2"
         intervals [395]:
-            xmin = 56.8030
-            xmax = 56.9543
-            text = "ph1"
+            xmin = 65.7800
+            xmax = 65.8700
+            text = "w1"
         intervals [396]:
-            xmin = 56.9543
-            xmax = 57.1055
-            text = "ph2"
+            xmin = 65.8700
+            xmax = 65.9600
+            text = "r2"
         intervals [397]:
-            xmin = 57.1392
-            xmax = 57.2904
-            text = "ph1"
+            xmin = 65.9600
+            xmax = 66.0800
+            text = "i1"
         intervals [398]:
-            xmin = 57.2904
-            xmax = 57.4417
-            text = "ph2"
+            xmin = 66.0800
+            xmax = 66.2000
+            text = "s2"
         intervals [399]:
-            xmin = 57.4753
-            xmax = 57.6265
-            text = "ph1"
+            xmin = 66.2000
+            xmax = 66.2680
+            text = "i1"
         intervals [400]:
-            xmin = 57.6265
-            xmax = 57.7778
-            text = "ph2"
+            xmin = 66.2680
+            xmax = 66.3360
+            text = "e2"
         intervals [401]:
-            xmin = 57.8114
-            xmax = 57.9626
-            text = "ph1"
+            xmin = 66.3360
+            xmax = 66.4040
+            text = "i3"
         intervals [402]:
-            xmin = 57.9626
-            xmax = 58.1139
-            text = "ph2"
+            xmin = 66.4040
+            xmax = 66.4720
+            text = "a4"
         intervals [403]:
-            xmin = 58.1475
-            xmax = 58.2483
-            text = "ph1"
+            xmin = 66.4720
+            xmax = 66.5400
+            text = "l5"
         intervals [404]:
-            xmin = 58.2483
-            xmax = 58.3492
-            text = "ph2"
+            xmin = 66.5400
+            xmax = 66.7400
+            text = "a1"
         intervals [405]:
-            xmin = 58.3492
-            xmax = 58.4500
-            text = "ph3"
+            xmin = 66.7400
+            xmax = 66.9400
+            text = "d2"
         intervals [406]:
-            xmin = 58.4836
-            xmax = 58.6349
-            text = "ph1"
+            xmin = 66.9400
+            xmax = 67.0300
+            text = "l1"
         intervals [407]:
-            xmin = 58.6349
-            xmax = 58.7861
-            text = "ph2"
+            xmin = 67.0300
+            xmax = 67.1200
+            text = "t2"
         intervals [408]:
-            xmin = 58.8197
-            xmax = 58.9710
-            text = "ph1"
+            xmin = 67.1200
+            xmax = 67.1700
+            text = "i1"
         intervals [409]:
-            xmin = 58.9710
-            xmax = 59.1222
-            text = "ph2"
+            xmin = 67.1700
+            xmax = 67.2200
+            text = "t2"
         intervals [410]:
-            xmin = 59.1558
-            xmax = 59.3071
-            text = "ph1"
+            xmin = 67.2200
+            xmax = 67.3600
+            text = "c1"
         intervals [411]:
-            xmin = 59.3071
-            xmax = 59.4583
-            text = "ph2"
+            xmin = 67.3600
+            xmax = 67.5000
+            text = "m2"
         intervals [412]:
-            xmin = 59.4919
-            xmax = 59.5928
-            text = "ph1"
+            xmin = 68.5200
+            xmax = 68.6000
+            text = "i1"
         intervals [413]:
-            xmin = 59.5928
-            xmax = 59.6936
-            text = "ph2"
+            xmin = 68.6000
+            xmax = 68.6800
+            text = "i2"
         intervals [414]:
-            xmin = 59.6936
-            xmax = 59.7944
-            text = "ph3"
+            xmin = 68.6800
+            xmax = 68.7533
+            text = "r1"
         intervals [415]:
-            xmin = 59.8281
-            xmax = 59.9793
-            text = "ph1"
+            xmin = 68.7533
+            xmax = 68.8267
+            text = "p2"
         intervals [416]:
-            xmin = 59.9793
-            xmax = 60.1306
-            text = "ph2"
+            xmin = 68.8267
+            xmax = 68.9000
+            text = "a3"
         intervals [417]:
-            xmin = 60.1642
-            xmax = 60.3154
-            text = "ph1"
+            xmin = 68.9000
+            xmax = 69.0400
+            text = "i1"
         intervals [418]:
-            xmin = 60.3154
-            xmax = 60.4667
-            text = "ph2"
+            xmin = 69.0400
+            xmax = 69.1800
+            text = ",2"
         intervals [419]:
-            xmin = 60.5003
-            xmax = 60.6515
-            text = "ph1"
+            xmin = 69.4400
+            xmax = 69.5900
+            text = "s1"
         intervals [420]:
-            xmin = 60.6515
-            xmax = 60.8028
-            text = "ph2"
+            xmin = 69.5900
+            xmax = 69.7400
+            text = "r2"
         intervals [421]:
-            xmin = 60.8364
-            xmax = 60.9372
-            text = "ph1"
+            xmin = 70.0600
+            xmax = 70.1200
+            text = "l1"
         intervals [422]:
-            xmin = 60.9372
-            xmax = 61.0381
-            text = "ph2"
+            xmin = 70.1200
+            xmax = 70.1800
+            text = "t2"
         intervals [423]:
-            xmin = 61.0381
-            xmax = 61.1389
-            text = "ph3"
+            xmin = 70.1800
+            xmax = 70.2300
+            text = "i1"
         intervals [424]:
-            xmin = 61.1725
-            xmax = 61.3238
-            text = "ph1"
+            xmin = 70.2300
+            xmax = 70.2800
+            text = "t2"
         intervals [425]:
-            xmin = 61.3238
-            xmax = 61.4750
-            text = "ph2"
+            xmin = 70.2800
+            xmax = 70.4300
+            text = "c1"
         intervals [426]:
-            xmin = 61.5086
-            xmax = 61.6599
-            text = "ph1"
-        intervals [427]:
-            xmin = 61.6599
-            xmax = 61.8111
-            text = "ph2"
-        intervals [428]:
-            xmin = 61.8447
-            xmax = 61.9960
-            text = "ph1"
-        intervals [429]:
-            xmin = 61.9960
-            xmax = 62.1472
-            text = "ph2"
-        intervals [430]:
-            xmin = 62.1808
-            xmax = 62.3321
-            text = "ph1"
-        intervals [431]:
-            xmin = 62.3321
-            xmax = 62.4833
-            text = "ph2"
-        intervals [432]:
-            xmin = 62.5170
-            xmax = 62.6682
-            text = "ph1"
-        intervals [433]:
-            xmin = 62.6682
-            xmax = 62.8195
-            text = "ph2"
-        intervals [434]:
-            xmin = 62.8531
-            xmax = 62.9539
-            text = "ph1"
-        intervals [435]:
-            xmin = 62.9539
-            xmax = 63.0547
-            text = "ph2"
-        intervals [436]:
-            xmin = 63.0547
-            xmax = 63.1556
-            text = "ph3"
-        intervals [437]:
-            xmin = 63.1892
-            xmax = 63.3404
-            text = "ph1"
-        intervals [438]:
-            xmin = 63.3404
-            xmax = 63.4917
-            text = "ph2"
-        intervals [439]:
-            xmin = 63.5253
-            xmax = 63.6765
-            text = "ph1"
-        intervals [440]:
-            xmin = 63.6765
-            xmax = 63.8278
-            text = "ph2"
-        intervals [441]:
-            xmin = 63.8614
-            xmax = 64.0127
-            text = "ph1"
-        intervals [442]:
-            xmin = 64.0127
-            xmax = 64.1639
-            text = "ph2"
-        intervals [443]:
-            xmin = 64.1975
-            xmax = 64.3488
-            text = "ph1"
-        intervals [444]:
-            xmin = 64.3488
-            xmax = 64.5000
-            text = "ph2"
-        intervals [445]:
-            xmin = 64.5336
-            xmax = 64.6849
-            text = "ph1"
-        intervals [446]:
-            xmin = 64.6849
-            xmax = 64.8361
-            text = "ph2"
-        intervals [447]:
-            xmin = 64.8697
-            xmax = 64.9454
-            text = "ph1"
-        intervals [448]:
-            xmin = 64.9454
-            xmax = 65.0210
-            text = "ph2"
-        intervals [449]:
-            xmin = 65.0210
-            xmax = 65.0966
-            text = "ph3"
-        intervals [450]:
-            xmin = 65.0966
-            xmax = 65.1722
-            text = "ph4"
-        intervals [451]:
-            xmin = 65.2059
-            xmax = 65.3571
-            text = "ph1"
-        intervals [452]:
-            xmin = 65.3571
-            xmax = 65.5084
-            text = "ph2"
-        intervals [453]:
-            xmin = 65.5420
-            xmax = 65.6428
-            text = "ph1"
-        intervals [454]:
-            xmin = 65.6428
-            xmax = 65.7436
-            text = "ph2"
-        intervals [455]:
-            xmin = 65.7436
-            xmax = 65.8445
-            text = "ph3"
-        intervals [456]:
-            xmin = 65.8781
-            xmax = 66.0293
-            text = "ph1"
-        intervals [457]:
-            xmin = 66.0293
-            xmax = 66.1806
-            text = "ph2"
-        intervals [458]:
-            xmin = 66.2142
-            xmax = 66.3654
-            text = "ph1"
-        intervals [459]:
-            xmin = 66.3654
-            xmax = 66.5167
-            text = "ph2"
-        intervals [460]:
-            xmin = 66.5503
-            xmax = 66.7016
-            text = "ph1"
-        intervals [461]:
-            xmin = 66.7016
-            xmax = 66.8528
-            text = "ph2"
-        intervals [462]:
-            xmin = 66.8864
-            xmax = 67.0377
-            text = "ph1"
-        intervals [463]:
-            xmin = 67.0377
-            xmax = 67.1889
-            text = "ph2"
-        intervals [464]:
-            xmin = 67.2225
-            xmax = 67.3738
-            text = "ph1"
-        intervals [465]:
-            xmin = 67.3738
-            xmax = 67.5250
-            text = "ph2"
-        intervals [466]:
-            xmin = 67.5586
-            xmax = 67.6191
-            text = "ph1"
-        intervals [467]:
-            xmin = 67.6191
-            xmax = 67.6796
-            text = "ph2"
-        intervals [468]:
-            xmin = 67.6796
-            xmax = 67.7401
-            text = "ph3"
-        intervals [469]:
-            xmin = 67.7401
-            xmax = 67.8006
-            text = "ph4"
-        intervals [470]:
-            xmin = 67.8006
-            xmax = 67.8611
-            text = "ph5"
-        intervals [471]:
-            xmin = 67.8948
-            xmax = 68.0460
-            text = "ph1"
-        intervals [472]:
-            xmin = 68.0460
-            xmax = 68.1973
-            text = "ph2"
-        intervals [473]:
-            xmin = 68.2309
-            xmax = 68.3821
-            text = "ph1"
-        intervals [474]:
-            xmin = 68.3821
-            xmax = 68.5334
-            text = "ph2"
-        intervals [475]:
-            xmin = 68.5670
-            xmax = 68.7182
-            text = "ph1"
-        intervals [476]:
-            xmin = 68.7182
-            xmax = 68.8695
-            text = "ph2"
-        intervals [477]:
-            xmin = 68.9031
-            xmax = 69.0543
-            text = "ph1"
-        intervals [478]:
-            xmin = 69.0543
-            xmax = 69.2056
-            text = "ph2"
-        intervals [479]:
-            xmin = 69.2392
-            xmax = 69.3905
-            text = "ph1"
-        intervals [480]:
-            xmin = 69.3905
-            xmax = 69.5417
-            text = "ph2"
-        intervals [481]:
-            xmin = 69.5753
-            xmax = 69.6762
-            text = "ph1"
-        intervals [482]:
-            xmin = 69.6762
-            xmax = 69.7770
-            text = "ph2"
-        intervals [483]:
-            xmin = 69.7770
-            xmax = 69.8778
-            text = "ph3"
-        intervals [484]:
-            xmin = 69.9114
-            xmax = 70.0627
-            text = "ph1"
-        intervals [485]:
-            xmin = 70.0627
-            xmax = 70.2139
-            text = "ph2"
-        intervals [486]:
-            xmin = 70.2475
-            xmax = 70.3988
-            text = "ph1"
-        intervals [487]:
-            xmin = 70.3988
-            xmax = 70.5501
-            text = "ph2"
-        intervals [488]:
-            xmin = 70.5837
-            xmax = 70.7349
-            text = "ph1"
-        intervals [489]:
-            xmin = 70.7349
-            xmax = 70.8862
-            text = "ph2"
-        intervals [490]:
-            xmin = 70.9198
-            xmax = 71.0710
-            text = "ph1"
-        intervals [491]:
-            xmin = 71.0710
-            xmax = 71.2223
-            text = "ph2"
-        intervals [492]:
-            xmin = 71.2559
-            xmax = 71.4071
-            text = "ph1"
-        intervals [493]:
-            xmin = 71.4071
-            xmax = 71.5584
-            text = "ph2"
+            xmin = 70.4300
+            xmax = 70.5800
+            text = "m2"

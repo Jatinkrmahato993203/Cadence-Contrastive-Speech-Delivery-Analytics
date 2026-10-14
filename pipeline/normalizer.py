@@ -3,21 +3,31 @@ pipeline/normalizer.py
 ----------------------
 Speaker-agnostic normalization (§2.3).
 
-Pitch   -> semitones from speaker's own median F0
-Energy  -> dB relative to speaker's own 95th-pct RMS
-Rate    -> z-score relative to speaker's own mean words/sec
+Every clip is normalized against ITS OWN robust statistics, computed over the
+whole clip (not a 10-word bootstrap that a flaw near the start would corrupt):
 
-New-speaker bootstrap (mode-agnostic):
-  For any speaker with no prior history (Mode A re-recording OR Mode B upload),
-  per-speaker statistics are bootstrapped from the first BOOTSTRAP_WORDS words of
-  the current clip and refined online as more words are processed.
-  If prior clips exist, accumulated statistics across ALL prior clips are used.
+  Pitch level       -> semitones from the clip's median voiced F0
+  Pitch variability -> robust spread (IQR/1.349, semitones) of voiced frames over a 3-word window
+  Energy            -> dB relative to the clip's 90th-percentile word level
+  Tempo             -> words per second of articulation (pauses excluded),
+                       and log2 tempo relative to the clip median
+  Pauses            -> seconds of silence before each word
+  Clarity           -> chosen spectral measure (config: normalization.clarity_feature)
+                       minus the clip median
+
+Why self-normalization and not "measure the participant against the baseline
+speaker's profile": two different people reading the same text differ in F0
+by up to an octave and in loudness by recording setup. Measuring a participant
+in the baseline speaker's units penalises their voice instead of their delivery.
+After self-normalization, pitch variability and tempo stay comparable across
+speakers (a monotone or rushed reading still shows up), while absolute pitch
+and recording gain cancel out.
 """
 
 from __future__ import annotations
 
-import math
 import logging
+import math
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Optional
@@ -28,41 +38,50 @@ import yaml
 logger = logging.getLogger(__name__)
 CONFIG_PATH = Path(__file__).parent.parent / "config.yaml"
 
+CLARITY_FEATURES = ("hnr_db", "spectral_contrast", "spectral_flux", "hf_ratio_db", "spectral_flatness")
+
 
 def _load_cfg() -> dict:
     with open(CONFIG_PATH) as f:
         return yaml.safe_load(f)
 
 
-# -- Speaker profile (accumulates across recordings) ----------------------------
+# -- Speaker profile ------------------------------------------------------------------
 
 @dataclass
 class SpeakerProfile:
+    """Robust per-speaker statistics. Only pool clips from the SAME speaker."""
     speaker_id: str
-    f0_samples: list[float] = field(default_factory=list)    # all voiced F0 Hz values
-    rms_samples: list[float] = field(default_factory=list)   # all RMS dB values
-    rate_samples: list[float] = field(default_factory=list)  # all word-rate values
-    bootstrapped: bool = False   # True if derived from single-clip bootstrap
+    f0_samples: list[float] = field(default_factory=list)    # voiced F0 frames (Hz)
+    rms_samples: list[float] = field(default_factory=list)   # word levels (dB)
+    rate_samples: list[float] = field(default_factory=list)  # word tempo (words/s)
+    clarity_samples: list[float] = field(default_factory=list)
+    bootstrapped: bool = False                               # kept for API compatibility
 
     @property
     def f0_median(self) -> float:
         voiced = [v for v in self.f0_samples if v > 0]
-        return float(np.median(voiced)) if voiced else 200.0  # fallback
+        return float(np.median(voiced)) if voiced else 0.0
 
+    @property
+    def rms_ref(self) -> float:
+        return float(np.percentile(self.rms_samples, 90)) if self.rms_samples else 0.0
+
+    # Backwards-compatible alias
     @property
     def rms_95pct(self) -> float:
-        return float(np.percentile(self.rms_samples, 95)) if self.rms_samples else 0.0
+        return self.rms_ref
 
     @property
-    def rate_mean(self) -> float:
-        return float(np.mean(self.rate_samples)) if self.rate_samples else 3.0
+    def rate_median(self) -> float:
+        return float(np.median(self.rate_samples)) if self.rate_samples else 0.0
 
     @property
-    def rate_std(self) -> float:
-        return float(np.std(self.rate_samples)) if len(self.rate_samples) > 1 else 1.0
+    def clarity_median(self) -> float:
+        return float(np.median(self.clarity_samples)) if self.clarity_samples else 0.0
 
 
-# -- Per-word normalized features ----------------------------------------------
+# -- Normalized records ---------------------------------------------------------------
 
 @dataclass
 class NormalizedWord:
@@ -70,15 +89,22 @@ class NormalizedWord:
     word: str
     start: float
     end: float
-    pitch_st: float         # semitones from speaker median F0
-    energy_db_rel: float    # dB relative to speaker 95th-pct RMS
-    rate_zscore: float      # z-score vs speaker mean rate
-    pause_flag: bool        # True if gap before this word > threshold
-    pause_duration_s: float
-    clarity_mfcc: float     # MFCC cosine distance from clip mean (0-1)
-    clarity_hnr: float      # raw HNR in dB (used as delta in grounding)
-    mfcc_mean: list[float]  # raw MFCCs (for cosine distance computation)
-    hnr_db: float
+    pitch_st: float = 0.0           # semitones from the clip's median F0 (0 if unvoiced)
+    pitch_var_st: float = 0.0       # local pitch variability (semitones)
+    energy_db_rel: float = 0.0      # dB relative to the clip's 90th-percentile word level
+    rate_wps: float = 0.0           # local articulation tempo (words / s of speech)
+    rate_zscore: float = 0.0        # log2 tempo relative to the clip median (name kept for compatibility)
+    pause_flag: bool = False        # silence before this word > pause_gap_threshold_s
+    pause_duration_s: float = 0.0
+    clarity: float = 0.0            # selected clarity measure minus clip median (higher = clearer)
+    clarity_raw: Optional[float] = None   # selected clarity measure, un-normalized (sign applied)
+    energy_db: Optional[float] = None     # word level in dB, un-normalized
+    clarity_mfcc: float = 0.0       # MFCC cosine distance from the clip mean (diagnostic)
+    clarity_hnr: float = 0.0        # raw HNR (dB)
+    duration_s: float = 0.0
+    mfcc_mean: list[float] = field(default_factory=list)
+    hnr_db: float = 0.0
+    uncertain: bool = False
 
 
 @dataclass
@@ -86,13 +112,18 @@ class NormalizedClip:
     clip_path: str
     speaker_profile: SpeakerProfile
     words: list[NormalizedWord]
-    # Clip-level contours in normalized units for plotting
-    f0_contour_st: list[float]
-    rms_contour_db_rel: list[float]
-    rate_contour_zscore: list[float]
+    f0_contour_st: list[float]           # per 10 ms frame (NaN when unvoiced)
+    rms_contour_db_rel: list[float]      # per 10 ms frame
+    rate_contour_zscore: list[float]     # per word (log2 tempo rel. clip median)
+    duration_s: float = 0.0
+    frame_hop_s: float = 0.01
+
+    @property
+    def word_times(self) -> list[float]:
+        return [(w.start + w.end) / 2 for w in self.words]
 
 
-# -- Normalization helpers -----------------------------------------------------
+# -- Helpers ---------------------------------------------------------------------------
 
 def f0_to_semitones(f0_hz: float, median_hz: float) -> float:
     if f0_hz <= 0 or median_hz <= 0:
@@ -101,116 +132,139 @@ def f0_to_semitones(f0_hz: float, median_hz: float) -> float:
 
 
 def _cosine_distance(a: list[float], b: list[float]) -> float:
-    a, b = np.array(a), np.array(b)
-    if np.linalg.norm(a) == 0 or np.linalg.norm(b) == 0:
+    a, b = np.asarray(a, float), np.asarray(b, float)
+    na, nb = np.linalg.norm(a), np.linalg.norm(b)
+    if na == 0 or nb == 0:
         return 0.0
-    return float(1.0 - np.dot(a, b) / (np.linalg.norm(a) * np.linalg.norm(b)))
+    return float(1.0 - np.dot(a, b) / (na * nb))
 
 
-# -- Bootstrap helpers ---------------------------------------------------------
-
-def _bootstrap_profile(words_features, n: int, speaker_id: str) -> SpeakerProfile:
-    """Build a SpeakerProfile from the first n words of a clip."""
-    profile = SpeakerProfile(speaker_id=speaker_id, bootstrapped=True)
-    for wf in words_features[:n]:
-        voiced = [v for v in wf.f0_values if v > 0]
-        profile.f0_samples.extend(voiced)
-        profile.rms_samples.append(wf.rms_db)
-        profile.rate_samples.append(wf.rate_wps)
-    return profile
+def _fill_nan(x: np.ndarray) -> np.ndarray:
+    """Replace NaNs by the nearest finite value (or 0 if none)."""
+    x = np.asarray(x, float)
+    ok = np.isfinite(x)
+    if not ok.any():
+        return np.zeros_like(x)
+    idx = np.arange(len(x))
+    return np.interp(idx, idx[ok], x[ok])
 
 
-# -- Public API ----------------------------------------------------------------
+def articulation_tempo(durations: list[float], half_window: int = 2) -> np.ndarray:
+    """Words per second of articulation over a (2*half_window+1)-word window."""
+    d = np.maximum(np.asarray(durations, float), 0.03)
+    out = np.empty(len(d))
+    for i in range(len(d)):
+        lo, hi = max(0, i - half_window), min(len(d), i + half_window + 1)
+        out[i] = (hi - lo) / d[lo:hi].sum()
+    return out
+
+
+def _profile_from_clip(clip_features, speaker_id: str, clarity_feature: str) -> SpeakerProfile:
+    wfs = clip_features.words
+    return SpeakerProfile(
+        speaker_id=speaker_id,
+        f0_samples=[v for v in clip_features.f0_contour if v > 0],
+        rms_samples=[w.rms_db for w in wfs],
+        rate_samples=list(articulation_tempo([w.duration_s or (w.end - w.start) for w in wfs])),
+        clarity_samples=[float(getattr(w, clarity_feature, 0.0)) for w in wfs],
+    )
+
+
+# -- Public API -----------------------------------------------------------------------
 
 def normalize(
-    clip_features,           # ClipFeatures from features.py
+    clip_features,
     speaker_id: str,
     speaker_profile: Optional[SpeakerProfile] = None,
     cfg: Optional[dict] = None,
     pause_gap_s: float = 0.15,
 ) -> tuple[NormalizedClip, SpeakerProfile]:
     """
-    Normalize *clip_features* to speaker-agnostic units.
+    Normalize *clip_features* (pipeline.features.ClipFeatures) to speaker-agnostic units.
 
-    Parameters
-    ----------
-    clip_features : ClipFeatures
-        Output of pipeline.features.extract().
-    speaker_id : str
-        Unique speaker identifier.
-    speaker_profile : SpeakerProfile | None
-        Existing profile if speaker has prior clips; None triggers bootstrap.
-    cfg : dict | None
-        Config dict; loads from config.yaml if None.
-
-    Returns
-    -------
-    (NormalizedClip, updated_SpeakerProfile)
+    *speaker_profile* may carry statistics from earlier recordings of the SAME
+    speaker; they are pooled with this clip. Never pass another speaker's profile.
     """
     if cfg is None:
         cfg = _load_cfg()
-
-    n_bootstrap = cfg.get("normalization", {}).get("bootstrap_words", 10)
+    n_cfg = cfg.get("normalization", {})
+    clarity_feature = n_cfg.get("clarity_feature", "hnr_db")
+    clarity_sign = float(n_cfg.get("clarity_sign", 1.0))   # -1 when the raw measure rises as clarity falls
     pause_gap_s = cfg.get("grounding", {}).get("pause_gap_threshold_s", pause_gap_s)
 
     wfs = clip_features.words
-
-    # Build or update speaker profile
-    if speaker_profile is None:
-        profile = _bootstrap_profile(wfs, n_bootstrap, speaker_id)
-    else:
-        profile = speaker_profile
-        # Refine online with new clip data
-        for wf in wfs:
-            voiced = [v for v in wf.f0_values if v > 0]
-            profile.f0_samples.extend(voiced)
-            profile.rms_samples.append(wf.rms_db)
-            profile.rate_samples.append(wf.rate_wps)
+    profile = _profile_from_clip(clip_features, speaker_id, clarity_feature)
+    if speaker_profile is not None:
+        if speaker_profile.speaker_id != speaker_id:
+            logger.warning(
+                "Speaker profile '%s' pooled into clip for '%s' — profiles must come from the same speaker",
+                speaker_profile.speaker_id, speaker_id,
+            )
+        profile.f0_samples = speaker_profile.f0_samples + profile.f0_samples
+        profile.rms_samples = speaker_profile.rms_samples + profile.rms_samples
+        profile.rate_samples = speaker_profile.rate_samples + profile.rate_samples
+        profile.clarity_samples = speaker_profile.clarity_samples + profile.clarity_samples
 
     f0_med = profile.f0_median
-    rms_95 = profile.rms_95pct
-    rate_mu = profile.rate_mean
-    rate_sig = profile.rate_std or 1.0
+    rms_ref = profile.rms_ref
+    rate_med = profile.rate_median or 1.0
+    clar_med = profile.clarity_median
 
-    # Compute clip mean MFCC for cosine distance
-    all_mfccs = [wf.mfcc_mean for wf in wfs if wf.mfcc_mean]
-    clip_mfcc_mean = list(np.mean(all_mfccs, axis=0)) if all_mfccs else [0.0] * 13
+    durations = [w.duration_s or (w.end - w.start) for w in wfs]
+    tempo = articulation_tempo(durations)
+
+    # Local pitch variability over a 3-word window of voiced frames. Interquartile
+    # spread (IQR / 1.349), not std: a few octave errors from the F0 tracker
+    # (+/-12 st) would otherwise dominate.
+    word_st = []
+    for w in wfs:
+        v = np.asarray(w.f0_values, float)
+        v = v[v > 0]
+        word_st.append(12.0 * np.log2(v / f0_med) if len(v) and f0_med > 0 else np.array([]))
+    pitch_var = np.full(len(wfs), np.nan)
+    for i in range(len(wfs)):
+        frames = np.concatenate(word_st[max(0, i - 1): i + 2]) if wfs else np.array([])
+        if len(frames) >= 5:
+            q75, q25 = np.percentile(frames, [75, 25])
+            pitch_var[i] = float((q75 - q25) / 1.349)
+    pitch_var = _fill_nan(pitch_var)
+
+    all_mfcc = [w.mfcc_mean for w in wfs if w.mfcc_mean]
+    mfcc_ref = list(np.mean(all_mfcc, axis=0)) if all_mfcc else []
 
     norm_words: list[NormalizedWord] = []
-    for wf in wfs:
-        pitch_st = f0_to_semitones(wf.f0_hz, f0_med)
-        energy_db_rel = wf.rms_db - rms_95
-        rate_z = (wf.rate_wps - rate_mu) / rate_sig
-        pause_flag = wf.pause_before_s > pause_gap_s
-        clarity_mfcc = _cosine_distance(wf.mfcc_mean, clip_mfcc_mean)
-        clarity_hnr = wf.hnr_db
-
+    for i, w in enumerate(wfs):
+        clar_raw = float(getattr(w, clarity_feature, 0.0))
+        if not np.isfinite(clar_raw):
+            clar_raw = clar_med
         norm_words.append(NormalizedWord(
-            word_idx=wf.word_idx,
-            word=wf.word,
-            start=wf.start,
-            end=wf.end,
-            pitch_st=pitch_st,
-            energy_db_rel=energy_db_rel,
-            rate_zscore=rate_z,
-            pause_flag=pause_flag,
-            pause_duration_s=wf.pause_before_s,
-            clarity_mfcc=clarity_mfcc,
-            clarity_hnr=clarity_hnr,
-            mfcc_mean=wf.mfcc_mean,
-            hnr_db=wf.hnr_db,
+            word_idx=w.word_idx,
+            word=w.word,
+            start=w.start,
+            end=w.end,
+            pitch_st=f0_to_semitones(w.f0_hz, f0_med),
+            pitch_var_st=float(pitch_var[i]),
+            energy_db_rel=float(w.rms_db - rms_ref),
+            rate_wps=float(tempo[i]),
+            rate_zscore=float(np.log2(tempo[i] / rate_med)),
+            pause_flag=w.pause_before_s > pause_gap_s,
+            pause_duration_s=float(w.pause_before_s),
+            clarity=float(clarity_sign * (clar_raw - clar_med)),
+            clarity_raw=float(clarity_sign * clar_raw),
+            energy_db=float(w.rms_db),
+            clarity_mfcc=_cosine_distance(w.mfcc_mean, mfcc_ref) if mfcc_ref else 0.0,
+            clarity_hnr=float(w.hnr_db),
+            duration_s=float(durations[i]),
+            mfcc_mean=w.mfcc_mean,
+            hnr_db=float(w.hnr_db),
+            uncertain=bool(getattr(w, "uncertain", False)),
         ))
 
-    # Normalized clip-level contours for plotting
-    voiced_f0 = [v for v in clip_features.f0_contour if v > 0]
     contour_st = [
-        f0_to_semitones(v, f0_med) if v > 0 else 0.0
+        12.0 * math.log2(v / f0_med) if (v > 0 and f0_med > 0) else float("nan")
         for v in clip_features.f0_contour
     ]
-    rms_contour_rel = [r - rms_95 for r in clip_features.rms_contour]
-    rate_z_contour = [
-        (r - rate_mu) / rate_sig for r in clip_features.rate_contour
-    ]
+    rms_rel = [r - rms_ref for r in clip_features.rms_contour]
 
     return (
         NormalizedClip(
@@ -218,46 +272,9 @@ def normalize(
             speaker_profile=profile,
             words=norm_words,
             f0_contour_st=contour_st,
-            rms_contour_db_rel=rms_contour_rel,
-            rate_contour_zscore=rate_z_contour,
+            rms_contour_db_rel=rms_rel,
+            rate_contour_zscore=[w.rate_zscore for w in norm_words],
+            duration_s=clip_features.duration_s,
         ),
         profile,
     )
-
-
-def compute_calibration_stats(
-    norm_clips_librivox: list[NormalizedClip],
-    norm_clips_team: list[NormalizedClip],
-) -> dict:
-    """
-    Compute sigma_group_librivox, sigma_group_team, sigma_pooled_all for config.yaml.
-    Called once after calibration-set normalization.
-    """
-
-    def _collect(clips: list[NormalizedClip]) -> dict:
-        pitch, energy, rate, mfcc, hnr = [], [], [], [], []
-        for nc in clips:
-            for w in nc.words:
-                pitch.append(w.pitch_st)
-                energy.append(w.energy_db_rel)
-                rate.append(w.rate_zscore)
-                mfcc.append(w.clarity_mfcc)
-                hnr.append(w.clarity_hnr)
-        return {
-            "pitch": float(np.std(pitch)) if pitch else 1.0,
-            "energy": float(np.std(energy)) if energy else 1.0,
-            "rate": float(np.std(rate)) if rate else 1.0,
-            "clarity_mfcc": float(np.std(mfcc)) if mfcc else 0.1,
-            "clarity_hnr": float(np.std(hnr)) if hnr else 1.0,
-        }
-
-    lv = _collect(norm_clips_librivox)
-    tm = _collect(norm_clips_team)
-    all_clips = norm_clips_librivox + norm_clips_team
-    pooled = _collect(all_clips)
-
-    return {
-        "sigma_group_librivox": lv,
-        "sigma_group_team": tm,
-        "sigma_pooled_all": pooled,
-    }
