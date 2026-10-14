@@ -23,14 +23,19 @@ Every number spoken in this script is read from `dataset/labels/heldout_results.
 > *endure*'."
 
 ### 2. Dataset, honestly (0:40–1:40)
-> "Our eight clean baselines are synthesized with Microsoft neural TTS voices.
-> That gives us exact control, but they are not real orators. So we also added two
-> genuine human readings from LibriVox — the Gettysburg Address and Patrick Henry —
-> trimmed to the transcript.
-> From every baseline we generate seventeen variants: mild, moderate and
-> egregious pacing, monotone pitch, pauses, volume and slurred clarity, plus a
-> combined clip. Each label gives the exact time span of the edit, and a test
-> checks that every labelled pause is actual silence in the audio."
+> "We have thirteen clean baselines. Three are real presidential speeches — Kennedy's
+> 'We choose to go to the Moon', and the first inaugurals of Reagan and Eisenhower —
+> so the reference really is a highly effective speaker. Two are human LibriVox
+> readings, the Gettysburg Address and Patrick Henry. The other eight are Microsoft
+> neural TTS voices: fully controllable, but synthetic, and we say so.
+> From every baseline we generate seventeen variants: mild, moderate and egregious
+> pacing, monotone pitch, pauses, volume and slurred clarity, plus a combined clip
+> and a near-perfect one — 221 flawed clips. Only the edit window is changed, snapped
+> to gaps between words, and each label gives its exact time span; a test checks
+> that every labelled pause is real silence.
+> Thresholds are calibrated on six TTS texts only. The presidents, two TTS texts
+> and the human readings are held out. Generation is seeded, so rerunning the
+> scripts rebuilds every clip byte for byte."
 
 ### 3. Alignment & features (1:40–2:50)
 > "Free speech recognition drops and mis-hears words, so we force the known
