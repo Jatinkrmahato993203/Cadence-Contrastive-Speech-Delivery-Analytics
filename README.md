@@ -1,5 +1,7 @@
 # Cadence — Contrastive Speech Delivery Analytics
 
+> Pinpoint where your speech falters, and learn why.
+
 Cadence finds delivery flaws in a speech recording — pacing, monotone pitch,
 unplanned pauses, volume drops, slurred articulation — gives each one a start and
 end time, and explains it in plain language using the measured numbers.
@@ -14,6 +16,39 @@ It works by comparing a recording with a reference reading of the same text
 > Detection is strong against a reference recording of the same speaker; against a
 > different speaker's reading, or with no reference (Mode B), only large or
 > sustained flaws are found (see Results).
+
+## Contents
+
+1. [What it detects](#what-it-detects)
+2. [Results](#results)
+3. [Requirements](#requirements)
+4. [Installation](#installation)
+5. [Using the dashboard](#using-the-dashboard)
+6. [Reading the results](#reading-the-results)
+7. [Analysing your own recording](#analysing-your-own-recording)
+8. [Using Cadence from Python](#using-cadence-from-python)
+9. [Configuration](#configuration)
+10. [Tests](#tests)
+11. [Reproducing everything](#reproducing-everything)
+12. [How it works](#how-it-works)
+13. [Project structure](#project-structure)
+14. [Troubleshooting](#troubleshooting)
+15. [Limitations](#limitations)
+16. [Provenance](#provenance)
+
+## What it detects
+
+| Dimension | What is measured (per word, relative to the speaker's own voice) | Example finding |
+|---|---|---|
+| **Pacing** | articulation tempo, pauses excluded | a passage read much slower or faster than the reference |
+| **Pitch** | pitch variability in semitones | intonation flattened towards a monotone |
+| **Pauses** | silence before each word | an unplanned 1.4 s silence between *long* and *endure* |
+| **Volume** | level in the 80–2000 Hz vowel band | speech dropping well below the reference level |
+| **Clarity** | high-frequency share of the spectral envelope | softened consonants — slurred articulation |
+
+Every flaw gets a time span, a severity (how many times it exceeds its threshold),
+and an explanation of *what* changed, *where*, *why* and its likely *effect* on a
+listener — built only from measured values.
 
 ## Results
 
@@ -37,40 +72,207 @@ Severity gradient — score falls from mild to moderate to egregious in **34/35*
 ground-truth region. *False positives* — seconds flagged (any type) outside ground
 truth of the same type.
 
-## How it works
+## Requirements
 
-| Stage | Module | What it does |
-|---|---|---|
-| Alignment | `pipeline/aligner.py` | Forces the given transcript onto the audio with Whisper `base.en`: windowed cross-attention evidence + one global DTW, then word boundaries snapped to silences. Every transcript word gets a timestamp. |
-| Features | `pipeline/features.py` | One STFT and one Praat pass per clip: F0, HNR, spectral centroid/flatness/contrast/flux, MFCC, energy, word durations, pauses, jitter/shimmer. |
-| Normalization | `pipeline/normalizer.py` | Each clip against its own whole-clip statistics (semitones, relative dB, articulation tempo), so different voices are comparable. |
-| Grounding | `pipeline/grounder.py` | Word-for-word deltas; threshold τ = max(calibrated floor, k × robust noise); same-sign runs merged into time regions. |
-| Explanation | `pipeline/explainer.py` | What / where / why / effect for every region, from measured values only; severity = |Δ| / τ. |
-| Scoring | `pipeline/scorer.py` | Five 0–20 dimensions; NaN-safe. |
-| Dashboard | `app/streamlit_app.py` | Upload audio + transcript, time-aligned participant-vs-baseline overlays, delta-vs-threshold charts, flaw cards, rubric, evaluation panel. |
+| Requirement | Notes |
+|---|---|
+| **Python 3.10** | pinned in `.python-version`; 3.10.5 produced the published results |
+| **Git LFS** | the dataset audio (`dataset/audio/**/*.wav`) is stored in LFS |
+| **FFmpeg** | only needed to decode MP3 / OGG uploads; WAV and FLAC work without it |
+| **Disk space** | ~2 GB for the Python packages (CPU PyTorch) and the dataset |
+| **Internet on first run** | Whisper `base.en` (~140 MB) is downloaded once to `~/.cache/whisper` |
 
-Details and design decisions: [technical_report.md](technical_report.md).
-Dataset: [dataset/README.md](dataset/README.md).
+No GPU is needed; everything runs on CPU. Developed on Windows 11; CI is configured
+for Ubuntu and Windows.
 
-## Quick start
+## Installation
+
+**1. Clone with the dataset audio**
 
 ```bash
+git lfs install
+```
+
+```bash
+git clone <repository-url> Cadence
+```
+
+```bash
+cd Cadence
+```
+
+If you cloned before installing Git LFS, the WAV files are small text pointers —
+fetch the real audio with:
+
+```bash
+git lfs pull
+```
+
+**2. Create a virtual environment and install dependencies**
+
+Windows (PowerShell):
+
+```powershell
 python -m venv .venv
-.venv\Scripts\activate            # macOS/Linux: source .venv/bin/activate
+.venv\Scripts\activate
 pip install -r requirements.txt --extra-index-url https://download.pytorch.org/whl/cpu
+```
+
+macOS / Linux:
+
+```bash
+python3.10 -m venv .venv && source .venv/bin/activate
+```
+
+```bash
+pip install -r requirements.txt --extra-index-url https://download.pytorch.org/whl/cpu
+```
+
+The `--extra-index-url` installs the CPU-only PyTorch build, which is much smaller.
+To reproduce the published numbers exactly, install the fully pinned set instead:
+
+```bash
+pip install -r requirements.lock.txt --extra-index-url https://download.pytorch.org/whl/cpu
+```
+
+Using conda instead (also installs FFmpeg):
+
+```bash
+conda env create -f environment.yml && conda activate cadence
+```
+
+**3. Check the installation**
+
+```bash
+python scripts/build_manifest.py --check
+```
+
+This verifies every dataset file against `dataset/MANIFEST.sha256` and prints
+`manifest OK`. A mismatch on WAV files usually means Git LFS did not fetch them.
+
+## Using the dashboard
+
+Start it from the project root:
+
+```bash
 streamlit run app/streamlit_app.py
 ```
 
-Whisper `base.en` (~140 MB) is downloaded on first use. A new upload takes
-~30–60 s to align on CPU; bundled clips use the alignment cache.
+It opens at <http://localhost:8501>. The first analysis loads Whisper (a few
+seconds); bundled clips are then fast because their alignments are cached in
+`dataset/alignments/`.
 
-## Reproducibility
+### Step by step
 
-Flaw generation and alignment are bit-reproducible (seeded Praat/Python randomness,
-greedy Whisper decoding, fixed thread count), every dataset file is hashed in
-`dataset/MANIFEST.sha256`, and `requirements.lock.txt` pins the exact environment.
-CI (`.github/workflows/tests.yml`) runs the suite on Linux and Windows. See the
-technical report §8 for what is and is not verified.
+1. **Pick a preset** in the sidebar under *Preset or upload*. The audio and its
+   transcript are filled in for you. Presets are grouped:
+
+   | Prefix | What it is | Reference used |
+   |---|---|---|
+   | 🎤 | JFK, Reagan and Eisenhower speeches — the original and edited versions (inserted pauses, monotone stretch, slowed passage) | the original speech recording |
+   | 🧑 *Human reader — … (vs TTS baseline)* | a clean LibriVox reading | the TTS baseline (a different voice) |
+   | 🧑 *Human reader — inserted pauses / monotone stretch / slowed passage* | edited LibriVox readings | your choice (step 3) |
+   | 🧪 | held-out TTS texts with one injected flaw (pause, slurring, slowed passage, volume drop, combined) | the clean TTS recording |
+
+2. **Check the transcript** box. It must contain the exact words spoken.
+3. **Reference recording** (only for edited human readings): *Same speaker's clean
+   recording* gives the most precise result; *Bundled GOOD baseline (TTS)* shows
+   how Cadence behaves when the reference is a different voice.
+4. Optionally tick **Force Mode B** to ignore the reference and compare the speaker
+   only with their own typical delivery.
+5. Click **🚀 Analyze**. A new recording takes ~30–60 s on CPU.
+
+A good first demo: *🎤 JFK — Moon speech: inserted pauses*, then
+*🧑 Human reader — inserted pauses (text 1)* with the same-speaker reference.
+
+## Reading the results
+
+| Section | What it shows |
+|---|---|
+| **Mode badge** | *Mode A — paired with text #N* (and whether the reference is an edited copy of the same recording, or a different recording, which widens thresholds) or *Mode B*. A red **HELD-OUT TEXT** tag means the text was never used for calibration. |
+| **🔊 Audio & alignment** | an audio player and a word ruler: every transcript word at its aligned time. Coloured bands are flagged regions; **grey bands** are words with low alignment confidence — treat their boundaries as approximate. |
+| **📈 Participant vs baseline** | one tab per dimension. *Top chart:* the participant's contour (blue) against the time-aligned GOOD baseline (green, dotted). *Bottom chart:* the per-word difference with the threshold ±τ as dashed yellow lines; red dots are words beyond the threshold. |
+| **🔍 Flaw regions and causes** | one card per flaw: type, start–end time, direction, severity as a multiple of the threshold, and the explanation. Card colour: yellow = mild (< 1.5×), orange = moderate (< 3×), red = severe. Open **Evidence** for the raw measured numbers behind the sentence. |
+| **🏆 Rubric** | Pacing, Pitch, Pauses, Volume and Clarity, each out of 20 (100 total). A dimension loses points in proportion to the share of the clip that is flagged and how severe it is; no flags = 20. Hover a score for the region count and flagged seconds. |
+| **🔄 Re-run (determinism check)** | runs the analysis again from scratch and confirms the regions and scores are identical. |
+| **📊 Held-out evaluation** | the evaluation tables per flaw type and severity tier (toggle with *Show held-out evaluation* in the sidebar). |
+
+## Analysing your own recording
+
+1. Choose **Custom upload** in *Preset or upload*.
+2. Upload a WAV, FLAC, MP3 or OGG file (stereo is mixed to mono and resampled to 16 kHz).
+3. Paste the **exact words spoken** into the transcript box — not a summary, and
+   without speaker names or stage directions. Alignment forces this text onto the
+   audio, so missing or extra words shift the timings.
+4. Click **Analyze**.
+
+**Which mode will I get?**
+
+* **Mode A** — if your transcript is ≥ 90 % the same word sequence as one of the 11
+  bundled texts (`dataset/transcripts/text_01.txt` … `text_11.txt`), your recording is
+  compared word for word with that text's GOOD baseline. Read one of those texts aloud
+  to try it.
+* **Mode B** — any other text. Each word is compared with your own typical delivery
+  in the rest of the clip, so only large or sustained changes are flagged.
+
+**Tips for good results**
+
+* 30 s – 3 min of continuous speech from one speaker.
+* A quiet room and a steady microphone distance — background noise or music lowers
+  alignment confidence (grey bands) and can mask pauses.
+* Trim long silence or applause at the start and end.
+* Write numbers and abbreviations as they are spoken ("nineteen sixty-two").
+
+## Using Cadence from Python
+
+The dashboard, the evaluation scripts and the tests all call the same function:
+
+```python
+from pipeline.analysis import analyze
+
+transcript = open("my_transcript.txt", encoding="utf-8").read()
+res = analyze("my_speech.wav", transcript)
+
+print(res.mode, res.matched_id)                 # e.g. "A" 9  or  "B" None
+print(f"Overall {res.rubric.overall:.1f}/100")
+for dim in res.rubric.dimensions:
+    print(f"  {dim.dimension}: {dim.score:.1f}/20")
+for e in res.explanations:
+    print(e.template_text)
+```
+
+Useful arguments:
+
+| Argument | Effect |
+|---|---|
+| `baseline_override="ref.wav"` | compare against your own reference recording of the same words (e.g. your best take) instead of the bundled baseline |
+| `force_mode_b=True` | skip the reference and use Mode B |
+| `use_llm=True` | rewrite each explanation more fluently with the OpenAI API — only if `OPENAI_API_KEY` is set; without a key the deterministic text is returned |
+| `cfg=...` | a modified copy of `config.yaml` (see below) |
+
+Run scripts from the project root so `pipeline` is importable.
+
+## Configuration
+
+`config.yaml` holds every tunable value:
+
+| Section | Contents |
+|---|---|
+| `aligner` | Whisper model (`base.en`) and the confidence below which words are marked uncertain |
+| `normalization` | the clarity measure chosen by calibration (`hf_ratio_db`) |
+| `grounding` | thresholds: `floors`, noise multipliers `k_noise`, Mode B floors, merge gap, minimum run length per feature |
+| `flaw_params` | the severity tiers used to generate the flawed dataset |
+
+The `grounding` and `normalization` values are **written by calibration**
+(`python scripts/04_extract_features.py --calibrate`); edit them by hand only to
+experiment, then re-run the evaluation.
+
+Environment variables:
+
+| Variable | Default | Purpose |
+|---|---|---|
+| `CADENCE_TORCH_THREADS` | `4` | PyTorch threads for alignment; fixed so results do not depend on the machine's core count |
+| `OPENAI_API_KEY` | unset | enables the optional `use_llm=True` wording polish |
 
 ## Tests
 
@@ -78,12 +280,18 @@ technical report §8 for what is and is not verified.
 pytest tests/
 ```
 
-`tests/test_detection.py` runs the real pipeline on dataset audio: an identical copy
-of a baseline must score 100 with no flags, every transcript word must be aligned,
-injected held-out flaws must be found where they were injected, scores must fall
-with severity, and every pause label must coincide with silence in the audio.
+56 tests, about 2 minutes on CPU. `tests/test_detection.py` runs the real pipeline on
+dataset audio: an identical copy of a baseline must score 100 with no flags, every
+transcript word must be aligned, injected held-out flaws must be found where they were
+injected, scores must fall with severity, and every pause label must coincide with
+silence in the audio. `tests/test_reproducibility.py` checks that flaw generation is
+bit-reproducible and the dataset matches its manifest. CI
+(`.github/workflows/tests.yml`) is configured to run the suite on Ubuntu and Windows.
 
 ## Reproducing everything
+
+The dataset, alignments and results are already in the repository; these steps
+rebuild them from scratch:
 
 ```bash
 python scripts/generate_dataset.py          # TTS baselines (needs network for edge-tts)
@@ -96,6 +304,79 @@ python scripts/05_evaluate_heldout.py
 python scripts/render_results.py            # results tables in README + report
 python scripts/build_manifest.py            # dataset checksums (--check to verify)
 ```
+
+Flaw generation and alignment are bit-reproducible (seeded Python/Praat randomness,
+greedy Whisper decoding, fixed thread count); every dataset file is hashed in
+`dataset/MANIFEST.sha256`, and `requirements.lock.txt` pins the exact environment.
+See [technical_report.md](technical_report.md) §8 for what is and is not verified.
+
+## How it works
+
+| Stage | Module | What it does |
+|---|---|---|
+| Alignment | `pipeline/aligner.py` | Forces the given transcript onto the audio with Whisper `base.en`: windowed cross-attention evidence + one global DTW, then word boundaries snapped to silences. Every transcript word gets a timestamp. |
+| Features | `pipeline/features.py` | One STFT and one Praat pass per clip: F0 (speaker-adaptive range), HNR, spectral centroid/flatness/contrast/flux, envelope high-frequency ratio, MFCC, vowel-band level, articulation time, pauses, jitter/shimmer. |
+| Normalization | `pipeline/normalizer.py` | Each clip against its own whole-clip statistics (semitones, relative dB, articulation tempo), so different voices are comparable. |
+| Grounding | `pipeline/grounder.py` | Word-for-word deltas; threshold τ = max(calibrated floor, k × robust noise); same-sign runs merged into time regions. |
+| Explanation | `pipeline/explainer.py` | What / where / why / effect for every region, from measured values only; severity = \|Δ\| / τ. |
+| Scoring | `pipeline/scorer.py` | Five 0–20 dimensions; NaN-safe. |
+| Orchestration | `pipeline/analysis.py` | `analyze()`: align → features → normalize → detect mode → ground → explain → score. |
+| Evaluation | `pipeline/evaluation.py` | Temporal IoU and false-positive seconds against the labels. |
+| Dashboard | `app/streamlit_app.py` | Upload audio + transcript, time-aligned overlays, delta-vs-threshold charts, flaw cards, rubric, evaluation panel. |
+
+Details and design decisions: [technical_report.md](technical_report.md).
+Dataset: [dataset/README.md](dataset/README.md).
+
+## Project structure
+
+```
+Cadence/
+├── app/streamlit_app.py        # dashboard
+├── pipeline/                   # alignment, features, normalization, grounding, explanation, scoring
+├── scripts/                    # dataset generation, alignment, calibration, evaluation
+├── tests/                      # pytest suite (56 tests)
+├── dataset/
+│   ├── audio/                  # GOOD baselines + flawed variants (Git LFS)
+│   │   └── real_speakers/      # LibriVox human readings
+│   ├── transcripts/            # text_01.txt … text_11.txt, real02.txt
+│   ├── labels/                 # per-clip ground truth, calibration report, results
+│   ├── alignments/             # cached word alignments
+│   ├── textgrids/              # word tiers of the baseline alignments
+│   ├── MANIFEST.sha256         # checksum of every dataset file
+│   └── README.md               # dataset documentation
+├── config.yaml                 # thresholds and generation parameters
+├── requirements.txt            # direct dependencies
+├── requirements.lock.txt       # exact pinned environment
+├── environment.yml             # conda alternative
+├── packages.txt                # system packages for Streamlit Community Cloud (ffmpeg)
+├── technical_report.md         # design, evaluation and limitations
+└── video_script.md             # demo video script
+```
+
+## Troubleshooting
+
+| Problem | Fix |
+|---|---|
+| Errors reading bundled WAVs, or `build_manifest.py --check` mismatches on WAVs | Git LFS did not fetch the audio: run `git lfs install`, then `git lfs pull`. |
+| MP3 / OGG upload fails to decode | Install FFmpeg (`winget install ffmpeg`, `brew install ffmpeg`, `sudo apt install ffmpeg` or `conda install ffmpeg`), or upload WAV. |
+| First analysis seems stuck at "Aligning…" | Whisper is downloading (~140 MB); it needs internet once. |
+| `ModuleNotFoundError: No module named 'pipeline'` | Run commands from the project root. |
+| Very large `torch` download | Add `--extra-index-url https://download.pytorch.org/whl/cpu` to get the CPU build. |
+| Many grey (uncertain) bands | The transcript does not match the speech, or there is heavy noise or music; correct the transcript or trim the audio. |
+| Got Mode B but expected Mode A | The transcript must match a bundled text (≥ 90 % of the word sequence); compare with `dataset/transcripts/`. |
+| Results differ slightly on another machine | Keep `CADENCE_TORCH_THREADS` at its default and install from `requirements.lock.txt`. |
+
+## Limitations
+
+* Against a different speaker's reading, or without a reference (Mode B), only large
+  or sustained flaws are found — natural differences between readers are as large as
+  moderate injected flaws.
+* Clarity boundaries are the least precise (90th-percentile edge error 5–11 s).
+* Flaws are synthetic edits of real or TTS recordings; filler words, up-talk and
+  hesitations are not modelled.
+* Explanations are mechanism-level and have not been validated with listeners.
+
+Full list and next steps: [technical_report.md](technical_report.md) §7.
 
 ## Provenance
 
