@@ -39,12 +39,14 @@ AUDIO = ROOT / "dataset" / "audio"
 LABELS = ROOT / "dataset" / "labels"
 REAL_AUDIO = AUDIO / "real_speakers"
 REAL_LABELS = LABELS / "real_speakers"
-HELDOUT_TEXTS = [6, 8]
+HELDOUT_TEXTS = [6, 8]          # TTS baselines
+ORATOR_TEXTS = [9, 10, 11]      # real presidential addresses (JFK, Reagan, Eisenhower) as GOOD baselines
 TIER_ORDER = {"near_perfect": 0, "moderate": 1, "egregious": 2}
 
 
-def run(audio: Path, label: dict | None, transcript: str, cfg: dict, baseline: Path | None = None) -> dict:
-    res = analyze(audio, transcript, cfg=cfg, baseline_override=baseline)
+def run(audio: Path, label: dict | None, transcript: str, cfg: dict, baseline: Path | None = None,
+        mode_b: bool = False) -> dict:
+    res = analyze(audio, transcript, cfg=cfg, baseline_override=baseline, force_mode_b=mode_b)
     label = label or {"flaw_regions": [], "flaw_type": "none", "severity_tier": "clean"}
     m = clip_metrics(res.grounding, label, res.duration_s)
     return {
@@ -107,6 +109,7 @@ def main():
     bundled, _ = load_bundled()
     results: dict = {"held_out_texts": HELDOUT_TEXTS, "config": {
         "floors": cfg["grounding"]["floors"], "k_noise": cfg["grounding"]["k_noise"],
+        "k_long": cfg["grounding"].get("k_long"), "floors_mode_b": cfg["grounding"].get("floors_mode_b"),
         "clarity_feature": cfg["normalization"]["clarity_feature"]}}
 
     # A. Held-out TTS texts
@@ -123,6 +126,39 @@ def main():
     grad = []
     for tid in HELDOUT_TEXTS:
         grad += gradient_check(rows_a, f"text_{tid:02d}")
+
+    # O. Real orators as the GOOD baseline (held out)
+    rows_o = []
+    for tid in ORATOR_TEXTS:
+        if not (AUDIO / f"text_{tid:02d}_good.wav").exists():
+            continue
+        rows_o.append(run(AUDIO / f"text_{tid:02d}_good.wav", None, bundled[tid], cfg))
+        for lp in sorted(LABELS.glob(f"text_{tid:02d}_*.json")):
+            if lp.stem.endswith("_features"):
+                continue
+            rows_o.append(run(AUDIO / f"{lp.stem}.wav", json.loads(lp.read_text()), bundled[tid], cfg))
+            r = rows_o[-1]
+            print(f"O {r['clip_id']:30s} IoU={r['target_iou']}  FP={r['fp_seconds']:5.1f}s  score={r['score']:5.1f}", flush=True)
+        grad += gradient_check(rows_o, f"text_{tid:02d}")
+    if rows_o:
+        results["heldout_orators"] = {"summary": summarize(rows_o), "per_clip": rows_o}
+
+    # M. Mode B (no reference) on every held-out recording
+    rows_m = []
+    for tid in HELDOUT_TEXTS + ORATOR_TEXTS:
+        for wav in sorted(AUDIO.glob(f"text_{tid:02d}_*.wav")):
+            lp = LABELS / f"{wav.stem}.json"
+            label = json.loads(lp.read_text()) if lp.exists() else None
+            rows_m.append(run(wav, label, bundled[tid], cfg, mode_b=True))
+    for good in sorted(REAL_AUDIO.glob("real*_good.wav")) if REAL_LABELS.exists() else []:
+        prefix = good.stem.replace("_good", "")
+        own = ROOT / "dataset" / "transcripts" / f"{prefix}.txt"
+        tx = own.read_text(encoding="utf-8").strip() if own.exists() else bundled[int(prefix[4:])]
+        for wav in sorted(REAL_AUDIO.glob(f"{prefix}_*.wav")):
+            lp = REAL_LABELS / f"{wav.stem}.json"
+            rows_m.append(run(wav, json.loads(lp.read_text()) if lp.exists() else None, tx, cfg, mode_b=True))
+    print(f"M Mode B: {len(rows_m)} clips", flush=True)
+    results["mode_b"] = {"summary": summarize(rows_m), "per_clip": rows_m}
 
     # B / C. Real human recordings
     rows_b, rows_c = [], []
@@ -155,7 +191,7 @@ def main():
 
     (LABELS / "heldout_results.json").write_text(json.dumps(results, indent=2))
     print("\n=== Summary ===")
-    for key in ("heldout_tts", "real_same_speaker", "real_cross_speaker"):
+    for key in ("heldout_tts", "heldout_orators", "real_same_speaker", "real_cross_speaker", "mode_b"):
         if key in results:
             s = results[key]["summary"]
             print(f"{key:20s} mean target IoU={s['mean_target_iou']}  mean FP={s['mean_fp_seconds']}s  (n={s['n_clips']})")

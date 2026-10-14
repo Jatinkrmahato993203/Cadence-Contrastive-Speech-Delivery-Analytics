@@ -1,0 +1,19 @@
+{
+  "clip_id": "text_11_volume_mild",
+  "source_text_id": 11,
+  "speaker_id": "Dwight D. Eisenhower",
+  "speaker_source": "orator",
+  "flaw_type": "volume",
+  "severity_tier": "near_perfect",
+  "split": "heldout",
+  "flaw_regions": [
+    {
+      "start_s": 15.088,
+      "end_s": 22.632,
+      "mechanism": "gain_-6dB_bounded_15.09to22.63s"
+    }
+  ],
+  "label_timeline": "output",
+  "transcript_path": "dataset/transcripts/text_11.txt",
+  "audio_path": "dataset/audio/text_11_volume_mild.wav"
+}

@@ -16,12 +16,16 @@ by `scripts/05_evaluate_heldout.py` and stored in `dataset/labels/heldout_result
 | Source | Count | Notes |
 |---|---|---|
 | Microsoft Edge neural TTS (`edge-tts`) | 8 texts | Clean and controllable; **synthetic** — not real orators |
+| **Presidential addresses** (public domain, US federal works) | 3 — JFK, Rice University "We choose to go to the Moon" (1962); Reagan, first inaugural (1981); Eisenhower, first inaugural (1953) | Texts 9–11: the real orator IS the GOOD baseline; ~67–75 s passages located in the full recordings and cut in silence by `scripts/prepare_orators.py`; held out |
 | LibriVox volunteer readings (public domain) | 2 (Gettysburg Address — Andrew Marty; Patrick Henry — Mark F. Smith) | Genuine human delivery; trimmed to the transcript span by `scripts/prepare_real_speakers.py` (recognition-matched, cut in silence) |
 
-Requirement 1a asks for recordings of highly effective speakers. The benchmark only
-partly meets it: two genuine human readings are included and evaluated, but they
-are audiobook narrations, and the bulk of the benchmark uses TTS. §7 lists what
-would close this gap.
+Requirement 1a asks for recordings of highly effective speakers. Texts 9–11 use
+three US presidents' own delivery of landmark addresses as the GOOD baseline, with
+the full flaw gradient built from them. The JFK recording comes from the JFK
+Presidential Library; the Reagan and Eisenhower files are tagged public domain on
+Wikimedia Commons with the author only assumed to be the White House. Transcripts are
+the official texts adjusted to what is spoken (JFK repeats "We choose to go to the
+moon" three times). Texts 1–8 remain TTS.
 
 #### 1.2 Flaw gradient (Requirement 1b)
 Every baseline gets 17 variants: mild / moderate / egregious versions of five flaws
@@ -113,7 +117,7 @@ aligned to the same tokens, so word *i* is compared with word *i*:
 | Pitch | log2(pitch variability ratio) |
 | Energy | raw dB difference, re-centred (see below) |
 | Rate | log2 ratio of 5-word articulation time (boundary errors cancel inside the window) |
-| Pause | silence difference, tolerant to a ±1-word shift of the pause |
+| Pause | silence difference, capped by the difference in total silence over ±1 word (a pause that only moved one word cancels; one inserted beside a natural pause still counts) |
 | Clarity | raw HNR difference, re-centred (see below) |
 
 Energy and clarity are compared raw, then a global offset (gain, timbre) is removed:
@@ -138,12 +142,21 @@ target IoU − 2 × false-positive fraction; floors and k are alternated until s
 
 Flagged words form same-sign runs (≥ 2 words; ≥ 6 for rate, since pacing is
 sustained and human phrase-final lengthening spans a few words; 1 for pauses),
-merged across gaps < 300 ms. A pause must at least double the reference silence only where the
+merged across gaps < 300 ms.
+
+**Long-scale detector (different recordings and Mode B).** Natural differences
+between two readers are mostly word-to-word fluctuation; a delivery flaw is usually
+sustained over a phrase. Each feature's deltas are also averaged over 15 words, with
+the noise scale divided by √15, and flagged runs of ≥ 7 words are added. Its
+multiplier k_long is calibrated like k (≤ 2% of the clean human-vs-TTS pairs). A pause must at least double the reference silence only where the
 surrounding tempo also changed (otherwise a slowed passage would report its
 stretched pauses as pause flaws).
 
 **Mode B** (no matching text): deltas from the speaker's own robust centre; pauses
-flagged above an absolute 1 s.
+flagged above an absolute length. Its floors are calibrated on the calibration texts
+(clean and flawed clips, same objective as Mode A). Without a reference, sustained
+volume drops and long pauses are found, but monotone pitch, pacing and clarity
+changes are largely indistinguishable from a speaker's natural variation (§6.4b).
 
 ### 4. Causal explanations (Requirement 3b, `pipeline/explainer.py`)
 One explanation per region, built only from measured values — *what* (feature,
@@ -169,19 +182,32 @@ exactly 20 (explicit NaN-safe base case).
 
 | Evaluation set | Clips | Mean target IoU | Mean false-positive seconds / clip |
 |---|---|---|---|
-| TTS held-out texts 6 & 8 (reference = same recording) | 34 | 0.84 | 8.8 |
-| Human LibriVox readers, same-speaker reference | 32 | 0.82 | 14.4 |
-| Human readers vs the TTS baseline (different voice) | 34 | 0.12 | 1.9 |
+| Real orators — JFK, Reagan, Eisenhower — held out (reference = same recording) | 51 | 0.80 | 13.7 |
+| TTS held-out texts 6 & 8 (reference = same recording) | 34 | 0.88 | 10.9 |
+| Human LibriVox readers, same-speaker reference | 32 | 0.85 | 14.4 |
+| Human readers vs the TTS baseline (different voice) | 34 | 0.17 | 5.3 |
+| Mode B — no reference recording, all held-out audio | 119 | 0.22 | 19.1 |
 
-#### 6.2 Held-out TTS texts — target IoU (false-positive seconds) per tier
+#### 6.2 Real orators (texts 9-11, held out) — target IoU (false-positive seconds) per tier
+
+| Flaw | mild | moderate | egregious |
+|---|---|---|---|
+| pacing | 0.66 (8 s) | 0.83 (24 s) | 0.83 (24 s) |
+| pitch | 0.61 (2 s) | 0.94 (4 s) | 0.95 (6 s) |
+| pause | 0.57 (1 s) | 0.63 (3 s) | 0.98 (10 s) |
+| volume | 0.85 (4 s) | 0.89 (7 s) | 0.97 (20 s) |
+| clarity | 0.65 (6 s) | 0.84 (30 s) | 0.91 (55 s) |
+| combined | — | — | 0.67 (29 s) |
+
+#### 6.2b Held-out TTS texts — target IoU (false-positive seconds) per tier
 
 | Flaw | mild | moderate | egregious |
 |---|---|---|---|
 | pacing | 0.89 (10 s) | 0.86 (8 s) | 0.92 (29 s) |
 | pitch | 0.92 (3 s) | 0.98 (2 s) | 0.99 (3 s) |
-| pause | 0.46 (0 s) | 0.59 (2 s) | 0.86 (4 s) |
+| pause | 0.92 (0 s) | 0.59 (2 s) | 0.86 (4 s) |
 | volume | 0.96 (0 s) | 0.98 (1 s) | 0.94 (8 s) |
-| clarity | 0.70 (8 s) | 0.97 (18 s) | 0.65 (35 s) |
+| clarity | 0.70 (8 s) | 0.97 (18 s) | 0.90 (72 s) |
 | combined | — | — | 0.75 (21 s) |
 
 #### 6.3 Human recordings, same-speaker reference
@@ -190,7 +216,7 @@ exactly 20 (explicit NaN-safe base case).
 |---|---|---|---|
 | pacing | 0.48 (9 s) | 0.98 (17 s) | 0.96 (22 s) |
 | pitch | 0.72 (19 s) | 0.93 (7 s) | 0.96 (3 s) |
-| pause | 0.45 (1 s) | 0.48 (1 s) | 0.71 (4 s) |
+| pause | 0.45 (1 s) | 0.96 (1 s) | 0.71 (4 s) |
 | volume | 0.95 (2 s) | 0.95 (3 s) | 0.99 (16 s) |
 | clarity | 0.73 (8 s) | 0.95 (33 s) | 0.99 (63 s) |
 | combined | — | — | 0.81 (21 s) |
@@ -199,20 +225,31 @@ exactly 20 (explicit NaN-safe base case).
 
 | Flaw | mild | moderate | egregious |
 |---|---|---|---|
-| pacing | 0.00 (3 s) | 0.00 (2 s) | 0.00 (0 s) |
-| pitch | 0.03 (3 s) | 0.00 (1 s) | 0.00 (1 s) |
-| pause | 0.00 (3 s) | 0.00 (2 s) | 0.72 (3 s) |
-| volume | 0.05 (2 s) | 0.28 (2 s) | 0.49 (4 s) |
-| clarity | 0.00 (1 s) | 0.00 (1 s) | 0.00 (2 s) |
-| combined | — | — | 0.29 (1 s) |
+| pacing | 0.00 (7 s) | 0.00 (5 s) | 0.00 (2 s) |
+| pitch | 0.12 (6 s) | 0.12 (7 s) | 0.00 (7 s) |
+| pause | 0.00 (5 s) | 0.00 (3 s) | 0.59 (4 s) |
+| volume | 0.05 (5 s) | 0.49 (4 s) | 0.47 (7 s) |
+| clarity | 0.00 (4 s) | 0.19 (9 s) | 0.18 (10 s) |
+| combined | — | — | 0.57 (3 s) |
 
-Clean human readings compared with the TTS baseline (both used to set k, so in-sample): `real01_good` scores 99.9/100 with 0.6 s of 64 s flagged; `real02_good` scores 99.2/100 with 4.0 s of 114 s flagged.
+Clean human readings compared with the TTS baseline (both used to set k, so in-sample): `real01_good` scores 99.1/100 with 1.0 s of 64 s flagged; `real02_good` scores 98.7/100 with 4.7 s of 114 s flagged.
+
+#### 6.4b Mode B (no reference recording)
+
+| Flaw | mild | moderate | egregious |
+|---|---|---|---|
+| pacing | 0.03 (7 s) | 0.14 (12 s) | 0.25 (23 s) |
+| pitch | 0.00 (10 s) | 0.00 (13 s) | 0.01 (30 s) |
+| pause | 0.00 (10 s) | 0.02 (12 s) | 0.57 (9 s) |
+| volume | 0.40 (12 s) | 0.74 (13 s) | 0.91 (13 s) |
+| clarity | 0.03 (13 s) | 0.01 (26 s) | 0.00 (53 s) |
+| combined | — | — | 0.44 (58 s) |
 
 #### 6.5 Severity gradient
-Score falls monotonically mild → moderate → egregious in 19/20 cases.
+Score falls monotonically mild → moderate → egregious in 30/35 cases.
 
 #### 6.6 Calibrated parameters
-Clarity measure `hnr_db`; floors `{'pitch': 0.2806, 'energy': 5.5114, 'rate': 0.0981, 'pause': 0.1671, 'clarity': 1.2629}`; k (different recording) `{'pitch': 3.5, 'energy': 4.0, 'rate': 1.5, 'pause': 2.0, 'clarity': 4.0}`; k (edited copy) `3.0`; same-recording gate (timbre distance) `12.35`.
+Clarity measure `hnr_db`; floors `{'pitch': 0.2806, 'energy': 5.5114, 'rate': 0.0981, 'pause': 0.14, 'clarity': 1.2629}`; k (different recording) `{'pitch': 3.5, 'energy': 4.0, 'rate': 1.5, 'pause': 1.5, 'clarity': 4.0}`; k (edited copy) `3.0`; same-recording gate (timbre distance) `12.35`.
 <!-- RESULTS:END -->
 
 ### 7. Limitations and next steps
@@ -220,12 +257,12 @@ Clarity measure `hnr_db`; floors `{'pitch': 0.2806, 'energy': 5.5114, 'rate': 0.
 
 | Requirement | Status |
 |---|---|
-| 1a Recordings of highly effective speakers | **Partly met.** Two genuine human readings (LibriVox narrators) are included and evaluated; the 8 benchmark baselines are TTS. No recordings of prominent orators/debaters. |
+| 1a Recordings of highly effective speakers | **Met for texts 9–11** (JFK, Reagan, Eisenhower as GOOD baselines, held out) plus 2 LibriVox readings; texts 1–8 are TTS. Two of the three presidential files have assumed rather than archive-documented public-domain provenance. |
 | 1b Gradient egregious → near-perfect | Met for five synthetic flaw types (3 tiers each + combined). Real-world flaws such as filler words, up-talk or hesitations are not modelled. |
 | 1c Time-bounded paired labels | Met; labels verified against the audio. |
 | 2a Forced alignment | Met (transcript-forced Whisper alignment; every word aligned). |
 | 2b Feature extraction | Met (STFT/FFT, MFCC, F0, HNR, energy, tempo, pauses). |
-| 3a Temporal grounding | Strong when the reference is the same recording (§6.2–6.3). Weak across different speakers: only large flaws are found (§6.4). |
+| 3a Temporal grounding | Strong against a reference recording of the same speaker, including real orators (§6.2–6.3). Weak against a different speaker's reading and without any reference (Mode B): only large or sustained flaws are found (§6.4, 6.4b). |
 | 3b Causal explanations | Deterministic, measurement-grounded, mechanism-level; not validated with listeners. |
 | 4a/4b Upload UI and overlay | Met (time-aligned overlays, delta-vs-threshold charts, flaw cards). |
 
@@ -233,8 +270,9 @@ Clarity measure `hnr_db`; floors `{'pitch': 0.2806, 'energy': 5.5114, 'rate': 0.
 * *Cross-speaker comparison* — natural stylistic differences between two readers are
   as large as moderate synthetic flaws, so thresholds must widen; k is fitted on
   only two human readings (in-sample for the clean pairs).
-* *Mild pauses* next to a natural pause are often missed: a pause only counts if it
-  exceeds every reference pause within one word.
+* *Mild pauses* (0.2–0.35 s) are still found only about half the time.
+* *Mode B* cannot separate monotone pitch, pacing or clarity changes from a speaker's
+  natural variation, and flags 15–25 s of the presidents' own dramatic delivery.
 * *Collateral detections* — spectral smoothing (clarity edits) also disturbs pitch
   tracking, and resynthesis shifts alignment slightly, which shows up as
   false-positive seconds on clarity and combined clips.
@@ -244,8 +282,8 @@ Clarity measure `hnr_db`; floors `{'pitch': 0.2806, 'energy': 5.5114, 'rate': 0.
   excluded from summary means.
 
 **Next steps (in order of impact)**
-1. Recordings of genuinely effective speakers, and the *same* speakers delivering
-   badly, to calibrate cross-speaker comparison on real variation.
+1. Recordings of the *same* people delivering both well and badly (self-recorded),
+   to calibrate cross-speaker and reference-free detection on real variation.
 2. A phoneme-level aligner (wav2vec2 / MMS forced alignment) for real phone
    boundaries and tighter word edges.
 3. A listener study to validate the flaw regions and the explanations.

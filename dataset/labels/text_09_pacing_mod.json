@@ -1,0 +1,19 @@
+{
+  "clip_id": "text_09_pacing_mod",
+  "source_text_id": 9,
+  "speaker_id": "John F. Kennedy",
+  "speaker_source": "orator",
+  "flaw_type": "pacing",
+  "severity_tier": "moderate",
+  "split": "heldout",
+  "flaw_regions": [
+    {
+      "start_s": 14.954,
+      "end_s": 59.816,
+      "mechanism": "time_stretch_0.75x_bounded_14.95to59.82s"
+    }
+  ],
+  "label_timeline": "output",
+  "transcript_path": "dataset/transcripts/text_09.txt",
+  "audio_path": "dataset/audio/text_09_pacing_mod.wav"
+}

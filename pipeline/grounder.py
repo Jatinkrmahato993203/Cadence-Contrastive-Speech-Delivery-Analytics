@@ -195,12 +195,17 @@ def pause_delta(u_p: list[float], b_p: list[float], i: int, j: int) -> float:
     """
     Pause delta tolerant to a one-word shift in where the aligner puts a short
     word next to a silence (either side of the pause is acoustically plausible).
-    An inserted pause must exceed every baseline pause within +/-1 word; a
-    removed pause must exceed every upload pause within +/-1 word.
+    The per-word difference is capped by the difference in TOTAL silence over
+    the +/-1-word window: a pause that merely moved one word cancels out, while
+    a pause inserted next to a natural pause still counts in full.
     """
-    if u_p[i] >= b_p[j]:
-        return max(0.0, u_p[i] - _neighbour_max(b_p, j))
-    return -max(0.0, b_p[j] - _neighbour_max(u_p, i))
+    raw = u_p[i] - b_p[j]
+    excess = sum(u_p[max(0, i - 1): i + 2]) - sum(b_p[max(0, j - 1): j + 2])
+    if raw > 0:
+        return max(0.0, min(raw, excess))
+    if raw < 0:
+        return min(0.0, max(raw, excess))
+    return 0.0
 
 
 def _window_durations(words, half: int) -> np.ndarray:
@@ -475,6 +480,30 @@ def prepared_delta(raw: np.ndarray, feature: str, smooth: int) -> tuple[np.ndarr
     return _rolling_median(raw, smooth), robust_noise(raw) * SMOOTH_NOISE_FACTOR.get(smooth, 1.0)
 
 
+def _rolling_mean(x: np.ndarray, width: int) -> np.ndarray:
+    out = np.full(len(x), np.nan)
+    h = width // 2
+    for i in range(len(x)):
+        win = x[max(0, i - h): i + h + 1]
+        win = win[np.isfinite(win)]
+        if len(win) >= max(3, width // 2):
+            out[i] = float(np.mean(win))
+    return out
+
+
+LONG_SCALE_FEATURES = ("pitch", "energy", "rate", "clarity")
+
+
+def long_scale_delta(raw: np.ndarray, width: int) -> tuple[np.ndarray, float]:
+    """
+    Sustained-deviation series: the per-word deltas averaged over *width* words,
+    with the noise scale shrunk accordingly (1/sqrt(width)). Natural differences
+    between two readers are mostly word-to-word fluctuation that averages out;
+    a flaw sustained over a phrase or longer does not.
+    """
+    return _rolling_mean(raw, width), robust_noise(raw) / np.sqrt(width)
+
+
 def k_for(g: dict, feature: str) -> float:
     k = g.get("k_noise", 3.0)
     return float(k.get(feature, 3.0) if isinstance(k, dict) else k)
@@ -537,6 +566,16 @@ def ground(
                                         pause_ratio=float(g.get("pause_ratio", 2.0)),
                                         rate_context=(prepared["rate"], thresholds["rate"]) if feature == "pause" else None)
         prepared[feature] = d
+        width = int(g.get("long_window_words", 15))
+        k_long = g.get("k_long", {})
+        if not same_rec and feature in LONG_SCALE_FEATURES and feature in k_long and len(u_words) >= 2 * width:
+            d_long, noise_long = long_scale_delta(raw[feature], width)
+            tau_long = max(floors[feature], float(k_long[feature]) * noise_long)
+            long_regions, long_flags = _build_regions(
+                feature, d_long, tau_long, u_words, b_words, pairs,
+                {**min_consec, feature: max(min_consec.get(feature, 2), width // 2)}, merge_gap_s)
+            regions = _merge_regions(regions + long_regions, merge_gap_s)
+            flags = [a or b for a, b in zip(flags, long_flags)]
         all_regions.extend(regions)
         word_deviant[feature] = flags
         word_deltas[feature] = [float(x) if np.isfinite(x) else 0.0 for x in d]

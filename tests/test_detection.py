@@ -41,6 +41,15 @@ def _label(clip_id: str) -> dict:
     return json.loads((LABELS / f"{clip_id}.json").read_text())
 
 
+def test_real_orator_original_is_clean(tmp_path):
+    """An untouched presidential recording, uploaded under another name, is matched and not flagged."""
+    copy = tmp_path / "speech.wav"
+    shutil.copy(AUDIO / "text_10_good.wav", copy)
+    res = analyze(copy, BUNDLED[10], cfg=CFG)
+    assert res.mode == "A" and res.matched_id == 10
+    assert res.grounding.flaw_regions == [] and res.rubric.overall == pytest.approx(100.0)
+
+
 def test_identical_copy_scores_perfectly(tmp_path):
     copy = tmp_path / "participant_upload.wav"
     shutil.copy(AUDIO / "text_06_good.wav", copy)
@@ -58,16 +67,44 @@ def test_forced_alignment_returns_every_transcript_word():
 
 
 @pytest.mark.parametrize("clip_id,feature,min_iou", [
+    ("text_09_volume_mod", "energy", 0.8),     # real orator baseline (JFK)
+    ("text_10_pitch_mod", "pitch", 0.6),       # real orator baseline (Reagan)
     ("text_06_volume_mod", "energy", 0.8),
     ("text_08_pitch_mod", "pitch", 0.6),
     ("text_06_pause_egregious", "pause", 0.6),
     ("text_08_pacing_mod", "rate", 0.5),
 ])
 def test_heldout_flaw_is_grounded(clip_id, feature, min_iou):
+    """
+    IoU over SPEECH time: ground-truth regions are clipped to the span of aligned
+    words, since a gain change applied to applause (JFK, text 9) is not a delivery
+    flaw a word-level analysis can — or should — report.
+    """
     tid = int(clip_id[5:7])
     res = analyze(AUDIO / f"{clip_id}.wav", BUNDLED[tid], cfg=CFG)
-    m = clip_metrics(res.grounding, _label(clip_id), res.duration_s)
-    assert m["iou_by_feature"][feature] >= min_iou, m
+    words = res.upload.norm.words
+    label = _label(clip_id)
+    speech = [(w.start, w.end) for w in words]
+    clipped = []
+    for r in label["flaw_regions"]:
+        for a, b in speech:
+            lo, hi = max(a, r["start_s"]), min(b, r["end_s"])
+            if hi > lo:
+                clipped.append({**r, "start_s": lo, "end_s": hi})
+    det = []
+    for reg in res.grounding.flaw_regions:
+        for a, b in speech:
+            lo, hi = max(a, reg.start_s), min(b, reg.end_s)
+            if hi > lo:
+                det.append({"start_s": lo, "end_s": hi, "flaw_type": reg.flaw_type})
+    if feature == "pause":   # pauses ARE the non-speech time: use the plain metric
+        m = clip_metrics(res.grounding, label, res.duration_s)
+        iou = m["iou_by_feature"][feature]
+    else:
+        from pipeline.evaluation import temporal_iou, gt_by_feature
+        iou = temporal_iou([d for d in det if d["flaw_type"] == feature],
+                           gt_by_feature({"flaw_regions": clipped})[feature], res.duration_s)
+    assert iou >= min_iou, (clip_id, feature, round(iou, 3))
 
 
 def test_every_egregious_pause_is_found():

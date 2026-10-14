@@ -1,0 +1,44 @@
+{
+  "clip_id": "text_11_combined_egregious",
+  "source_text_id": 11,
+  "speaker_id": "Dwight D. Eisenhower",
+  "speaker_source": "orator",
+  "flaw_type": "combined",
+  "severity_tier": "egregious",
+  "split": "heldout",
+  "flaw_regions": [
+    {
+      "start_s": 7.544,
+      "end_s": 18.86,
+      "mechanism": "gain_-18dB_bounded_7.54to18.86s"
+    },
+    {
+      "start_s": 18.86,
+      "end_s": 42.775,
+      "mechanism": "f0_variance_compress_0.10_bounded_18.86to41.49s"
+    },
+    {
+      "start_s": 22.285,
+      "end_s": 23.568,
+      "mechanism": "silence_splice_1.28s_at_src_22.285s"
+    },
+    {
+      "start_s": 42.775,
+      "end_s": 65.199,
+      "mechanism": "clarity_xfade80ms_smooth15bin_bounded_41.49to60.35s"
+    },
+    {
+      "start_s": 43.428,
+      "end_s": 45.346,
+      "mechanism": "silence_splice_1.92s_at_src_42.145s"
+    },
+    {
+      "start_s": 56.051,
+      "end_s": 57.697,
+      "mechanism": "silence_splice_1.65s_at_src_52.850s"
+    }
+  ],
+  "label_timeline": "output",
+  "transcript_path": "dataset/transcripts/text_11.txt",
+  "audio_path": "dataset/audio/text_11_combined_egregious.wav"
+}

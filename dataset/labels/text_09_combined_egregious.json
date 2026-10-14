@@ -1,0 +1,44 @@
+{
+  "clip_id": "text_09_combined_egregious",
+  "source_text_id": 9,
+  "speaker_id": "John F. Kennedy",
+  "speaker_source": "orator",
+  "flaw_type": "combined",
+  "severity_tier": "egregious",
+  "split": "heldout",
+  "flaw_regions": [
+    {
+      "start_s": 7.477,
+      "end_s": 20.042,
+      "mechanism": "gain_-18dB_bounded_7.48to18.69s"
+    },
+    {
+      "start_s": 15.44,
+      "end_s": 16.79,
+      "mechanism": "silence_splice_1.35s_at_src_15.440s"
+    },
+    {
+      "start_s": 20.042,
+      "end_s": 43.962,
+      "mechanism": "f0_variance_compress_0.10_bounded_18.69to41.12s"
+    },
+    {
+      "start_s": 34.145,
+      "end_s": 35.634,
+      "mechanism": "silence_splice_1.49s_at_src_32.795s"
+    },
+    {
+      "start_s": 43.962,
+      "end_s": 64.267,
+      "mechanism": "clarity_xfade71ms_smooth15bin_bounded_41.12to59.82s"
+    },
+    {
+      "start_s": 47.589,
+      "end_s": 49.201,
+      "mechanism": "silence_splice_1.61s_at_src_44.750s"
+    }
+  ],
+  "label_timeline": "output",
+  "transcript_path": "dataset/transcripts/text_09.txt",
+  "audio_path": "dataset/audio/text_09_combined_egregious.wav"
+}

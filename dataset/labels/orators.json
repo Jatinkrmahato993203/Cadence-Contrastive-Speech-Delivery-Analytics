@@ -1,0 +1,59 @@
+{
+  "text_09": {
+    "title": "Address at Rice University on the Nation's Space Effort (\"We choose to go to the Moon\")",
+    "speaker": "John F. Kennedy",
+    "date": "1962-09-12",
+    "commons_file": "File:Jfk rice university we choose to go to the moon.ogg",
+    "url": "https://upload.wikimedia.org/wikipedia/commons/5/50/Jfk_rice_university_we_choose_to_go_to_the_moon.ogg",
+    "source": "John F. Kennedy Presidential Library & Museum, White House Audio Collection (JFKWHA-127-002)",
+    "license": "Public domain (work of the US federal government)",
+    "text_id": 9,
+    "trim_s": [
+      501.41,
+      576.18
+    ],
+    "duration_s": 74.77,
+    "transcript_coverage": 0.981,
+    "transcript_path": "dataset/transcripts/text_09.txt",
+    "wav_file": "dataset/audio/text_09_good.wav",
+    "split": "heldout"
+  },
+  "text_10": {
+    "title": "First Inaugural Address",
+    "speaker": "Ronald Reagan",
+    "date": "1981-01-20",
+    "commons_file": "File:Ronald Reagan First Inaugural.ogg",
+    "url": "https://upload.wikimedia.org/wikipedia/commons/1/10/Ronald_Reagan_First_Inaugural.ogg",
+    "source": "Wikimedia Commons; author recorded as 'assumed to be the White House', public-domain status per americanrhetoric.com",
+    "license": "Public domain (tagged on Commons; provenance assumed, not documented by an archive)",
+    "text_id": 10,
+    "trim_s": [
+      333.38,
+      400.35
+    ],
+    "duration_s": 66.97,
+    "transcript_coverage": 0.978,
+    "transcript_path": "dataset/transcripts/text_10.txt",
+    "wav_file": "dataset/audio/text_10_good.wav",
+    "split": "heldout"
+  },
+  "text_11": {
+    "title": "First Inaugural Address",
+    "speaker": "Dwight D. Eisenhower",
+    "date": "1953-01-20",
+    "commons_file": "File:Dwight D. Eisenhower's first Inaugural Address, 1953-01-20.ogg",
+    "url": "https://upload.wikimedia.org/wikipedia/commons/3/3e/Dwight_D._Eisenhower%27s_first_Inaugural_Address%2C_1953-01-20.ogg",
+    "source": "Wikimedia Commons via Internet Archive / Miller Center; author recorded as 'Whitehouse (assumed)'",
+    "license": "Public domain (tagged on Commons; provenance assumed, not documented by an archive)",
+    "text_id": 11,
+    "trim_s": [
+      96.44,
+      171.88
+    ],
+    "duration_s": 75.44,
+    "transcript_coverage": 0.961,
+    "transcript_path": "dataset/transcripts/text_11.txt",
+    "wav_file": "dataset/audio/text_11_good.wav",
+    "split": "heldout"
+  }
+}

@@ -1,0 +1,19 @@
+{
+  "clip_id": "text_09_nearperfect",
+  "source_text_id": 9,
+  "speaker_id": "John F. Kennedy",
+  "speaker_source": "orator",
+  "flaw_type": "nearperfect",
+  "severity_tier": "near_perfect",
+  "split": "heldout",
+  "flaw_regions": [
+    {
+      "start_s": 18.692,
+      "end_s": 41.449,
+      "mechanism": "time_stretch_1.15x_bounded_18.69to41.45s"
+    }
+  ],
+  "label_timeline": "output",
+  "transcript_path": "dataset/transcripts/text_09.txt",
+  "audio_path": "dataset/audio/text_09_nearperfect.wav"
+}

@@ -1,0 +1,19 @@
+{
+  "clip_id": "text_11_pacing_egregious",
+  "source_text_id": 11,
+  "speaker_id": "Dwight D. Eisenhower",
+  "speaker_source": "orator",
+  "flaw_type": "pacing",
+  "severity_tier": "egregious",
+  "split": "heldout",
+  "flaw_regions": [
+    {
+      "start_s": 11.316,
+      "end_s": 80.953,
+      "mechanism": "time_stretch_0.65x_bounded_11.32to80.95s"
+    }
+  ],
+  "label_timeline": "output",
+  "transcript_path": "dataset/transcripts/text_11.txt",
+  "audio_path": "dataset/audio/text_11_pacing_egregious.wav"
+}

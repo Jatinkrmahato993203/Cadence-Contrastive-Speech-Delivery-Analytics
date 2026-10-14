@@ -1,0 +1,19 @@
+{
+  "clip_id": "text_11_pause_mild",
+  "source_text_id": 11,
+  "speaker_id": "Dwight D. Eisenhower",
+  "speaker_source": "orator",
+  "flaw_type": "pause",
+  "severity_tier": "near_perfect",
+  "split": "heldout",
+  "flaw_regions": [
+    {
+      "start_s": 22.55,
+      "end_s": 22.818,
+      "mechanism": "silence_splice_0.27s_at_src_22.550s"
+    }
+  ],
+  "label_timeline": "output",
+  "transcript_path": "dataset/transcripts/text_11.txt",
+  "audio_path": "dataset/audio/text_11_pause_mild.wav"
+}

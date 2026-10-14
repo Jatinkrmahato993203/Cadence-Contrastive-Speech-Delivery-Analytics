@@ -1,0 +1,19 @@
+{
+  "clip_id": "text_09_pause_mod",
+  "source_text_id": 9,
+  "speaker_id": "John F. Kennedy",
+  "speaker_source": "orator",
+  "flaw_type": "pause",
+  "severity_tier": "moderate",
+  "split": "heldout",
+  "flaw_regions": [
+    {
+      "start_s": 27.56,
+      "end_s": 28.021,
+      "mechanism": "silence_splice_0.46s_at_src_27.560s"
+    }
+  ],
+  "label_timeline": "output",
+  "transcript_path": "dataset/transcripts/text_09.txt",
+  "audio_path": "dataset/audio/text_09_pause_mod.wav"
+}

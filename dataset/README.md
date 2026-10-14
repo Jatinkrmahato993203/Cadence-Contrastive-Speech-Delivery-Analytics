@@ -5,6 +5,7 @@
 | Set | Baseline ("GOOD") recordings | Flawed variants | Purpose |
 |---|---|---|---|
 | **TTS benchmark** — `audio/text_NN_*.wav` | 8 texts, synthesized with 8 Microsoft Edge neural voices | 17 per text → 136 | Calibration (texts 1–5, 7) and held-out evaluation (texts 6, 8) |
+| **Real orators** — `audio/text_09_*` … `text_11_*` | 3 presidential addresses: JFK "We choose to go to the Moon" (1962), Reagan first inaugural (1981), Eisenhower first inaugural (1953); ~67–75 s passages | 17 per speech → 51 | Held-out evaluation with a genuinely effective speaker as the GOOD baseline |
 | **Human recordings** — `audio/real_speakers/realNN_*.wav` | 2 genuine LibriVox readings (Gettysburg Address, Patrick Henry) trimmed to the transcript | 17 per recording → 34 | Evaluation only: same-speaker and cross-speaker (human vs TTS) |
 
 All audio is 16 kHz / 16-bit mono WAV. Every flawed clip has a label JSON with
@@ -15,6 +16,14 @@ time-bounded ground-truth regions on the clip's own timeline.
   They are clean and fully controllable, but they are not "highly effective public
   speakers". The `speaker_id` values such as `librivox_reader_01_guy` are legacy
   names — they denote Edge TTS voices (`en-US-GuyNeural`, …), not LibriVox readers.
+* Texts 9–11 are recordings of the presidents themselves (`labels/orators.json`, built by
+  `scripts/prepare_orators.py`). Public domain as works of the US federal government:
+  the JFK recording comes from the JFK Presidential Library (White House Audio
+  Collection); the Reagan and Eisenhower files are tagged public domain on Wikimedia
+  Commons with the author only *assumed* to be the White House — check before
+  redistributing. Source audio is downloaded on demand into `.cache/sources/`.
+  Transcripts are the official texts, adjusted to what is actually spoken (JFK says
+  "We choose to go to the moon" three times).
 * The 2 human recordings are LibriVox volunteer readings (public domain), source URLs
   in `labels/real_speakers.json`. They are read speech by audiobook volunteers, not
   the original orators or champion debaters.
@@ -63,7 +72,7 @@ time-bounded ground-truth regions on the clip's own timeline.
 | Split | Texts | Used for |
 |---|---|---|
 | Calibration | 1, 2, 3, 4, 5, 7 | choosing the clarity measure and per-feature thresholds (`scripts/04_extract_features.py --calibrate`) |
-| Held-out | 6, 8 | reporting only (`scripts/05_evaluate_heldout.py`) |
+| Held-out | 6, 8 (TTS) and 9, 10, 11 (real orators) | reporting only (`scripts/05_evaluate_heldout.py`) |
 | Human recordings | real01, real02 | reporting only; `real01_good` vs the TTS text-1 baseline was used to set the noise multiplier `k_noise` |
 
 ## Other files

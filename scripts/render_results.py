@@ -25,9 +25,11 @@ TIERS = (("near_perfect", "mild"), ("moderate", "moderate"), ("egregious", "egre
 
 
 def _summary_table(r: dict) -> str:
-    rows = [("TTS held-out texts 6 & 8 (reference = same recording)", "heldout_tts"),
+    rows = [("Real orators — JFK, Reagan, Eisenhower — held out (reference = same recording)", "heldout_orators"),
+            ("TTS held-out texts 6 & 8 (reference = same recording)", "heldout_tts"),
             ("Human LibriVox readers, same-speaker reference", "real_same_speaker"),
-            ("Human readers vs the TTS baseline (different voice)", "real_cross_speaker")]
+            ("Human readers vs the TTS baseline (different voice)", "real_cross_speaker"),
+            ("Mode B — no reference recording, all held-out audio", "mode_b")]
     out = ["| Evaluation set | Clips | Mean target IoU | Mean false-positive seconds / clip |",
            "|---|---|---|---|"]
     for name, key in rows:
@@ -74,13 +76,17 @@ def render() -> tuple[str, str]:
     report = "\n\n".join([
         "#### 6.1 Summary",
         _summary_table(r),
-        "#### 6.2 Held-out TTS texts — target IoU (false-positive seconds) per tier",
+        "#### 6.2 Real orators (texts 9-11, held out) — target IoU (false-positive seconds) per tier",
+        _tier_table(r, "heldout_orators") if "heldout_orators" in r else "",
+        "#### 6.2b Held-out TTS texts — target IoU (false-positive seconds) per tier",
         _tier_table(r, "heldout_tts"),
         "#### 6.3 Human recordings, same-speaker reference",
         _tier_table(r, "real_same_speaker"),
         "#### 6.4 Human recordings against the TTS baseline",
         _tier_table(r, "real_cross_speaker"),
         _clean_pairs(r),
+        "#### 6.4b Mode B (no reference recording)",
+        _tier_table(r, "mode_b") if "mode_b" in r else "",
         f"#### 6.5 Severity gradient\nScore falls monotonically mild → moderate → egregious in {grad} cases.",
         "#### 6.6 Calibrated parameters\n"
         f"Clarity measure `{cal.get('clarity_feature')}`; floors `{cal.get('floors')}`; "

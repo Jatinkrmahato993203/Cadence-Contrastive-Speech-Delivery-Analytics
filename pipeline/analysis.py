@@ -19,7 +19,8 @@ import yaml
 ROOT = Path(__file__).parent.parent
 DATASET = ROOT / "dataset"
 SPLITS = {1: "calibration", 2: "calibration", 3: "calibration", 4: "calibration",
-          5: "calibration", 6: "heldout", 7: "calibration", 8: "heldout"}
+          5: "calibration", 6: "heldout", 7: "calibration", 8: "heldout",
+          9: "heldout", 10: "heldout", 11: "heldout"}   # 9-11: real presidential addresses
 
 
 def load_config() -> dict:

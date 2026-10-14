@@ -1,0 +1,44 @@
+{
+  "clip_id": "text_10_combined_egregious",
+  "source_text_id": 10,
+  "speaker_id": "Ronald Reagan",
+  "speaker_source": "orator",
+  "flaw_type": "combined",
+  "severity_tier": "egregious",
+  "split": "heldout",
+  "flaw_regions": [
+    {
+      "start_s": 6.697,
+      "end_s": 19.303,
+      "mechanism": "gain_-18dB_bounded_6.70to16.74s"
+    },
+    {
+      "start_s": 9.765,
+      "end_s": 10.897,
+      "mechanism": "silence_splice_1.13s_at_src_9.765s"
+    },
+    {
+      "start_s": 17.012,
+      "end_s": 18.441,
+      "mechanism": "silence_splice_1.43s_at_src_15.880s"
+    },
+    {
+      "start_s": 19.303,
+      "end_s": 40.983,
+      "mechanism": "f0_variance_compress_0.10_bounded_16.74to36.83s"
+    },
+    {
+      "start_s": 34.066,
+      "end_s": 35.654,
+      "mechanism": "silence_splice_1.59s_at_src_31.505s"
+    },
+    {
+      "start_s": 40.983,
+      "end_s": 57.725,
+      "mechanism": "clarity_xfade75ms_smooth15bin_bounded_36.83to53.58s"
+    }
+  ],
+  "label_timeline": "output",
+  "transcript_path": "dataset/transcripts/text_10.txt",
+  "audio_path": "dataset/audio/text_10_combined_egregious.wav"
+}

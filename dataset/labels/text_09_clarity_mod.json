@@ -1,0 +1,19 @@
+{
+  "clip_id": "text_09_clarity_mod",
+  "source_text_id": 9,
+  "speaker_id": "John F. Kennedy",
+  "speaker_source": "orator",
+  "flaw_type": "clarity",
+  "severity_tier": "moderate",
+  "split": "heldout",
+  "flaw_regions": [
+    {
+      "start_s": 14.954,
+      "end_s": 48.6,
+      "mechanism": "clarity_xfade55ms_smooth7bin_bounded_14.95to48.60s"
+    }
+  ],
+  "label_timeline": "output",
+  "transcript_path": "dataset/transcripts/text_09.txt",
+  "audio_path": "dataset/audio/text_09_clarity_mod.wav"
+}

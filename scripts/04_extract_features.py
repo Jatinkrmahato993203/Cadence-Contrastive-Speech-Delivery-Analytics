@@ -175,6 +175,44 @@ def calibrate_floors(items, g: dict) -> dict:
     return floors
 
 
+# -- 4. Mode B floors -------------------------------------------------------------------
+
+MODE_B_GRIDS = {
+    "pitch": np.round(np.arange(0.4, 2.01, 0.1), 2),
+    "energy": np.arange(4.0, 16.1, 1.0),
+    "rate": np.round(np.arange(0.2, 1.21, 0.05), 2),
+    "pause": np.round(np.arange(0.5, 2.01, 0.1), 2),
+    "clarity": np.round(np.arange(2.0, 12.1, 0.5), 2),
+}
+
+
+def calibrate_floors_mode_b(cfg: dict, bundled: dict) -> dict:
+    """Mode B floors on the calibration texts (flawed clips and clean baselines, no reference)."""
+    from pipeline.evaluation import temporal_iou, false_positive_seconds
+    clips = [(AUDIO_DIR / f"text_{t:02d}_good.wav", {"flaw_regions": []}, t) for t in CALIBRATION_TEXTS]
+    clips += [(AUDIO_DIR / f"{cid}.wav", lab, t) for t, cid, lab in flawed_clips(CALIBRATION_TEXTS)]
+    norms = [(prepare(w, bundled[t], cfg), lab) for w, lab, t in clips]
+    floors = dict(cfg["grounding"].get("floors_mode_b", {}))
+    for feat in G.FLAW_TYPES:
+        best = None
+        for fl in MODE_B_GRIDS[feat]:
+            c = json.loads(json.dumps(cfg))
+            c["grounding"]["floors_mode_b"] = {**floors, feat: float(fl)}
+            ious, fps = [], []
+            for prep, lab in norms:
+                regs = [r for r in G.ground(prep.norm, "B", None, None, cfg=c).flaw_regions if r.flaw_type == feat]
+                gt = gt_by_feature(lab)
+                if feat in gt:
+                    ious.append(temporal_iou(regs, gt[feat], prep.features.duration_s))
+                fps.append(false_positive_seconds(regs, gt, prep.features.duration_s) / prep.features.duration_s)
+            obj = (np.mean(ious) if ious else 0.0) - LAMBDA_FP * np.mean(fps)
+            if best is None or obj > best[0]:
+                best = (obj, float(fl), float(np.mean(ious)) if ious else 0.0, float(np.mean(fps)))
+        floors[feat] = best[1]
+        print(f"  Mode B floor {feat:8s} = {best[1]:.2f}  (target IoU {best[2]:.3f}, FP fraction {best[3]:.3f})")
+    return floors
+
+
 # -- 0. Same-recording gate -----------------------------------------------------------
 
 def calibrate_recording_gate(cfg: dict, bundled: dict) -> float:
@@ -232,6 +270,25 @@ def calibrate_k(cfg: dict, bundled: dict) -> dict | None:
         chosen[feat] = k
         print(f"  k[{feat:7s}] = {k:.1f}  (clean human-vs-TTS pairs flagged: "
               f"{', '.join(f'{x:.1%}' for x in fracs)})")
+
+    # Long-scale (15-word) detector: smallest multiplier keeping the same budget
+    # with both scales active.
+    cfg["grounding"]["k_noise"] = chosen
+    k_long = {}
+    for feat in G.LONG_SCALE_FEATURES:
+        for kl in K_GRID:
+            c = json.loads(json.dumps(cfg))
+            c["grounding"]["k_long"] = {**{f: K_GRID[-1] * 3 for f in G.LONG_SCALE_FEATURES}, feat: kl}
+            fracs = []
+            for tid, base, up in pairs:
+                res = G.ground(up.norm, "A", tid, "calibration", baseline_norm_clip=base.norm, cfg=c)
+                fracs.append(sum(r.end_s - r.start_s for r in res.flaw_regions if r.flaw_type == feat)
+                             / up.features.duration_s)
+            if max(fracs) <= MAX_CLEAN_FLAGGED_PER_FEATURE:
+                break
+        k_long[feat] = kl
+        print(f"  k_long[{feat:7s}] = {kl:.1f}  (both scales on clean pairs: {', '.join(f'{x:.1%}' for x in fracs)})")
+    cfg["grounding"]["k_long"] = k_long
     return chosen
 
 
@@ -265,6 +322,9 @@ def main():
                 break
             g["k_noise"] = k
 
+        print("4. Mode B floors (calibration texts)")
+        g["floors_mode_b"] = calibrate_floors_mode_b(cfg, bundled)
+
         header = ("# Thresholds under grounding.floors / k_noise / normalization.clarity_feature are\n"
                   "# written by: python scripts/04_extract_features.py --calibrate  (calibration texts only)\n")
         CONFIG_PATH.write_text(header + yaml.safe_dump(cfg, sort_keys=False))
@@ -273,6 +333,7 @@ def main():
             "clarity_feature": feat, "clarity_sign": sign,
             "floors": g["floors"], "k_noise": g["k_noise"], "lambda_fp": LAMBDA_FP,
             "same_recording_max_dist": g.get("same_recording_max_dist"),
+            "k_long": g.get("k_long"), "floors_mode_b": g.get("floors_mode_b"),
             "k_same_recording": g.get("k_same_recording", 3.0),
             "max_clean_flagged_per_feature": MAX_CLEAN_FLAGGED_PER_FEATURE,
         }, indent=2))

@@ -1,0 +1,29 @@
+{
+  "clip_id": "text_10_pause_egregious",
+  "source_text_id": 10,
+  "speaker_id": "Ronald Reagan",
+  "speaker_source": "orator",
+  "flaw_type": "pause",
+  "severity_tier": "egregious",
+  "split": "heldout",
+  "flaw_regions": [
+    {
+      "start_s": 12.365,
+      "end_s": 13.737,
+      "mechanism": "silence_splice_1.37s_at_src_12.365s"
+    },
+    {
+      "start_s": 19.267,
+      "end_s": 21.143,
+      "mechanism": "silence_splice_1.88s_at_src_17.895s"
+    },
+    {
+      "start_s": 47.073,
+      "end_s": 48.53,
+      "mechanism": "silence_splice_1.46s_at_src_43.825s"
+    }
+  ],
+  "label_timeline": "output",
+  "transcript_path": "dataset/transcripts/text_10.txt",
+  "audio_path": "dataset/audio/text_10_pause_egregious.wav"
+}

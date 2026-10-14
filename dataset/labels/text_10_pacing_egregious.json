@@ -1,0 +1,19 @@
+{
+  "clip_id": "text_10_pacing_egregious",
+  "source_text_id": 10,
+  "speaker_id": "Ronald Reagan",
+  "speaker_source": "orator",
+  "flaw_type": "pacing",
+  "severity_tier": "egregious",
+  "split": "heldout",
+  "flaw_regions": [
+    {
+      "start_s": 10.045,
+      "end_s": 71.864,
+      "mechanism": "time_stretch_0.65x_bounded_10.05to71.86s"
+    }
+  ],
+  "label_timeline": "output",
+  "transcript_path": "dataset/transcripts/text_10.txt",
+  "audio_path": "dataset/audio/text_10_pacing_egregious.wav"
+}

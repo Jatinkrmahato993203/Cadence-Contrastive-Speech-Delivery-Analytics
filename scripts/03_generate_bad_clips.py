@@ -46,6 +46,10 @@ TEXT_META = {
     6: {"speaker_id": "librivox_reader_06", "speaker_source": "librivox", "split": "heldout"},
     7: {"speaker_id": "team_member_01",     "speaker_source": "team",     "split": "calibration"},
     8: {"speaker_id": "team_member_02",     "speaker_source": "team",     "split": "heldout"},
+    # Real presidential addresses (see scripts/prepare_orators.py)
+    9: {"speaker_id": "John F. Kennedy",      "speaker_source": "orator",   "split": "heldout"},
+    10: {"speaker_id": "Ronald Reagan",       "speaker_source": "orator",   "split": "heldout"},
+    11: {"speaker_id": "Dwight D. Eisenhower", "speaker_source": "orator",  "split": "heldout"},
 }
 
 FLAW_SUFFIX = {

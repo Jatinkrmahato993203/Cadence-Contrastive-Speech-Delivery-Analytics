@@ -262,6 +262,12 @@ def _presets() -> dict:
                 if f.exists():
                     p[f"🧑 Human reader — {name} (text {tid})"] = {"path": f, "text_id": tid, "real": key,
                                                                     "same_speaker": good}
+    for tid, who in ((9, "JFK — Moon speech"), (10, "Reagan — 1981 inaugural"), (11, "Eisenhower — 1953 inaugural")):
+        for suf, name in (("good", "original"), ("pause_egregious", "inserted pauses"),
+                          ("pitch_mod", "monotone stretch"), ("pacing_mod", "slowed passage")):
+            f = AUDIO / f"text_{tid:02d}_{suf}.wav"
+            if f.exists():
+                p[f"🎤 {who}: {name}"] = {"path": f, "text_id": tid}
     for tid, suf, name in ((6, "pause_mod", "unplanned pause"), (6, "clarity_mod", "slurred passage"),
                            (8, "pacing_mod", "slowed passage"), (8, "volume_mod", "volume drop"),
                            (8, "combined_egregious", "combined flaws")):

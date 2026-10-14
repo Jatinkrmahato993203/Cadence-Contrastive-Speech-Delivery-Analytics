@@ -1,0 +1,19 @@
+{
+  "clip_id": "text_10_nearperfect",
+  "source_text_id": 10,
+  "speaker_id": "Ronald Reagan",
+  "speaker_source": "orator",
+  "flaw_type": "nearperfect",
+  "severity_tier": "near_perfect",
+  "split": "heldout",
+  "flaw_regions": [
+    {
+      "start_s": 16.742,
+      "end_s": 37.125,
+      "mechanism": "time_stretch_1.15x_bounded_16.74to37.12s"
+    }
+  ],
+  "label_timeline": "output",
+  "transcript_path": "dataset/transcripts/text_10.txt",
+  "audio_path": "dataset/audio/text_10_nearperfect.wav"
+}

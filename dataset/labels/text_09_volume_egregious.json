@@ -1,0 +1,19 @@
+{
+  "clip_id": "text_09_volume_egregious",
+  "source_text_id": 9,
+  "speaker_id": "John F. Kennedy",
+  "speaker_source": "orator",
+  "flaw_type": "volume",
+  "severity_tier": "egregious",
+  "split": "heldout",
+  "flaw_regions": [
+    {
+      "start_s": 7.477,
+      "end_s": 29.908,
+      "mechanism": "gain_-18dB_bounded_7.48to29.91s"
+    }
+  ],
+  "label_timeline": "output",
+  "transcript_path": "dataset/transcripts/text_09.txt",
+  "audio_path": "dataset/audio/text_09_volume_egregious.wav"
+}

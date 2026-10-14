@@ -1,0 +1,19 @@
+{
+  "clip_id": "text_09_volume_mild",
+  "source_text_id": 9,
+  "speaker_id": "John F. Kennedy",
+  "speaker_source": "orator",
+  "flaw_type": "volume",
+  "severity_tier": "near_perfect",
+  "split": "heldout",
+  "flaw_regions": [
+    {
+      "start_s": 14.954,
+      "end_s": 22.431,
+      "mechanism": "gain_-6dB_bounded_14.95to22.43s"
+    }
+  ],
+  "label_timeline": "output",
+  "transcript_path": "dataset/transcripts/text_09.txt",
+  "audio_path": "dataset/audio/text_09_volume_mild.wav"
+}

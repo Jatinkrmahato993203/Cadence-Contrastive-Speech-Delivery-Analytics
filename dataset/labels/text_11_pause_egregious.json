@@ -1,0 +1,29 @@
+{
+  "clip_id": "text_11_pause_egregious",
+  "source_text_id": 11,
+  "speaker_id": "Dwight D. Eisenhower",
+  "speaker_source": "orator",
+  "flaw_type": "pause",
+  "severity_tier": "egregious",
+  "split": "heldout",
+  "flaw_regions": [
+    {
+      "start_s": 17.465,
+      "end_s": 18.511,
+      "mechanism": "silence_splice_1.05s_at_src_17.465s"
+    },
+    {
+      "start_s": 19.151,
+      "end_s": 20.718,
+      "mechanism": "silence_splice_1.57s_at_src_18.105s"
+    },
+    {
+      "start_s": 33.098,
+      "end_s": 35.067,
+      "mechanism": "silence_splice_1.97s_at_src_30.485s"
+    }
+  ],
+  "label_timeline": "output",
+  "transcript_path": "dataset/transcripts/text_11.txt",
+  "audio_path": "dataset/audio/text_11_pause_egregious.wav"
+}

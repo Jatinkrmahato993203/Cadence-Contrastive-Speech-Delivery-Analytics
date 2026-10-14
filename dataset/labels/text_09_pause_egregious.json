@@ -1,0 +1,29 @@
+{
+  "clip_id": "text_09_pause_egregious",
+  "source_text_id": 9,
+  "speaker_id": "John F. Kennedy",
+  "speaker_source": "orator",
+  "flaw_type": "pause",
+  "severity_tier": "egregious",
+  "split": "heldout",
+  "flaw_regions": [
+    {
+      "start_s": 11.605,
+      "end_s": 12.951,
+      "mechanism": "silence_splice_1.35s_at_src_11.605s"
+    },
+    {
+      "start_s": 20.881,
+      "end_s": 21.988,
+      "mechanism": "silence_splice_1.11s_at_src_19.535s"
+    },
+    {
+      "start_s": 47.618,
+      "end_s": 49.034,
+      "mechanism": "silence_splice_1.42s_at_src_45.165s"
+    }
+  ],
+  "label_timeline": "output",
+  "transcript_path": "dataset/transcripts/text_09.txt",
+  "audio_path": "dataset/audio/text_09_pause_egregious.wav"
+}
