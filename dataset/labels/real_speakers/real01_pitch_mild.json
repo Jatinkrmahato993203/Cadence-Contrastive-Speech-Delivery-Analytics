@@ -8,9 +8,9 @@
   "split": "real_speaker",
   "flaw_regions": [
     {
-      "start_s": 16.023,
-      "end_s": 38.454,
-      "mechanism": "f0_variance_compress_0.70_bounded_16.02to38.45s"
+      "start_s": 16.105,
+      "end_s": 38.405,
+      "mechanism": "f0_variance_compress_0.70_bounded_16.11to38.41s"
     }
   ],
   "label_timeline": "output",

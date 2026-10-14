@@ -70,6 +70,24 @@ class ClipFeatures:
 
 # -- Clip-level analyses ----------------------------------------------------------
 
+def speaker_pitch_range(snd) -> tuple[float, float]:
+    """
+    Speaker-adaptive pitch search range (De Looze & Hirst, 2008): a wide first pass
+    (50-700 Hz) estimates the speaker's register, then floor = 0.72 x q35 and
+    ceiling = 1.9 x q65. A fixed 60-500 Hz range mis-tracks deep voices (octave
+    errors near the floor) and very high ones.
+    """
+    from parselmouth.praat import call
+
+    first = call(snd, "To Pitch (ac)", HOP_S, 50.0, 15, "no", 0.01, 0.45, 0.01, 0.35, 0.14, 700.0)
+    v = first.selected_array["frequency"]
+    v = v[v > 0]
+    if len(v) < 20:
+        return 60.0, 500.0
+    q35, q65 = np.percentile(v, [35, 65])
+    return float(np.clip(0.72 * q35, 40.0, 200.0)), float(np.clip(1.9 * q65, 250.0, 800.0))
+
+
 def _praat_contours(y: np.ndarray, sr: int, n_frames: int) -> tuple[np.ndarray, np.ndarray, float, float]:
     """F0 (Hz) and HNR (dB) per 10 ms frame, plus clip jitter/shimmer."""
     f0 = np.zeros(n_frames)
@@ -88,7 +106,8 @@ def _praat_contours(y: np.ndarray, sr: int, n_frames: int) -> tuple[np.ndarray, 
     # Praat's default silence thresholds are relative to the clip PEAK, so a passage
     # spoken (or recorded) 15-20 dB quieter would lose its pitch and HNR entirely.
     # 0.01 of peak (-40 dB) keeps quiet speech; the voicing threshold still rejects noise.
-    pitch = call(snd, "To Pitch (ac)", HOP_S, 60.0, 15, "no", 0.01, 0.45, 0.01, 0.35, 0.14, 500.0)
+    floor, ceiling = speaker_pitch_range(snd)
+    pitch = call(snd, "To Pitch (ac)", HOP_S, floor, 15, "no", 0.01, 0.45, 0.01, 0.35, 0.14, ceiling)
     pt, pv = pitch.xs(), pitch.selected_array["frequency"]
     if len(pt):
         idx = np.clip(np.round((times - pt[0]) / HOP_S).astype(int), 0, len(pv) - 1)
@@ -127,12 +146,26 @@ def _spectral_frames(y: np.ndarray, sr: int) -> dict[str, np.ndarray]:
     freqs = librosa.fft_frequencies(sr=sr, n_fft=N_FFT)
     logS = np.log(S)
 
-    hf = P[freqs >= HF_SPLIT_HZ].sum(axis=0)
-    lf = P[(freqs >= 80) & (freqs < HF_SPLIT_HZ)].sum(axis=0)
+    # High-frequency ratio from the cepstral spectral ENVELOPE (fine structure removed):
+    # the envelope carries articulation (formants, consonant spectra), while the raw
+    # spectrum also depends on harmonic spacing, i.e. on the speaker's F0 — raising a
+    # voice by 5 semitones moved the raw ratio enough to read as a clarity problem.
+    ceps = np.fft.irfft(logS, n=N_FFT, axis=0)
+    q = int(0.0016 * sr)
+    lifter = np.zeros(N_FFT)
+    lifter[:q] = 1.0
+    lifter[-q + 1:] = 1.0
+    env_power = np.exp(2.0 * np.fft.rfft(ceps * lifter[:, None], axis=0).real)
+    hf = env_power[freqs >= HF_SPLIT_HZ].sum(axis=0)
+    lf = env_power[(freqs >= 80) & (freqs < HF_SPLIT_HZ)].sum(axis=0)
     flux = np.r_[0.0, np.sqrt(np.mean(np.diff(logS, axis=1) ** 2, axis=0))]
 
     return {
         "rms_db": 20 * np.log10(np.sqrt(P.sum(axis=0) / N_FFT) + 1e-10),
+        # Speech level in the 80-2000 Hz band, where vowel energy dominates: a gain change
+        # shows in full, while a loss of consonant / high-frequency energy (a clarity
+        # problem) does not masquerade as a volume drop.
+        "level_db": 10 * np.log10(P[(freqs >= 80) & (freqs < 2000)].sum(axis=0) / N_FFT + 1e-10),
         "centroid": librosa.feature.spectral_centroid(S=S, sr=sr)[0],
         "flatness": librosa.feature.spectral_flatness(S=S)[0],
         "contrast": librosa.feature.spectral_contrast(S=S, sr=sr, fmin=150.0, n_bands=5).mean(axis=0),
@@ -180,7 +213,7 @@ def extract(audio_path: str, alignment, pause_gap_s: float = 0.15) -> ClipFeatur
 
         f0_w = f0[sl]
         voiced = f0_w[f0_w > 0]
-        energy = 10 ** (spec["rms_db"][sl] / 10)
+        energy = 10 ** (spec["level_db"][sl] / 10)
 
         words_out.append(WordFeatures(
             word_idx=idx,
@@ -190,7 +223,7 @@ def extract(audio_path: str, alignment, pause_gap_s: float = 0.15) -> ClipFeatur
             f0_hz=float(np.median(voiced)) if len(voiced) else 0.0,
             f0_values=[float(v) for v in f0_w],
             rms_db=float(10 * np.log10(np.mean(energy) + 1e-12)),
-            duration_s=round(end - start, 3),
+            duration_s=float(getattr(wa, "articulation_s", 0.0) or round(end - start, 3)),
             pause_before_s=round(max(0.0, start - prev_end), 3) if prev_end is not None else 0.0,
             mfcc_mean=spec["mfcc"][:, sl].mean(axis=1).tolist(),
             spectral_centroid=_mean(spec["centroid"][sl]),

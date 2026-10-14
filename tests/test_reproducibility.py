@@ -58,3 +58,37 @@ def test_config_thresholds_valid():
         assert set(k) == set(FLAW_TYPES)
     assert CFG["normalization"]["clarity_feature"] in CLARITY_FEATURES
     assert CFG["normalization"].get("clarity_sign", 1.0) in (1.0, -1.0)
+
+
+def test_flaw_generators_are_bit_reproducible():
+    """Every generator (incl. Praat PSOLA resynthesis) gives identical audio for the same clip seed."""
+    import importlib.util
+    import random
+    import soundfile as sf
+
+    spec = importlib.util.spec_from_file_location("gen", ROOT / "scripts" / "03_generate_bad_clips.py")
+    gen = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(gen)
+    y, sr = sf.read(ROOT / "dataset" / "audio" / "text_06_good.wav", dtype="float32")
+    y = y[: sr * 20]
+    clarity = CFG["flaw_params"]["clarity"]["moderate"]
+    for fn in (lambda: gen.apply_pacing(y, sr, 0.75, 0.2, 0.7),
+               lambda: gen.apply_pitch_monotone(y, sr, 0.4, 0.2, 0.7),
+               lambda: gen.apply_clarity(y, sr, clarity, 0.2, 0.7),
+               lambda: gen.apply_volume(y, sr, -10, 0.2, 0.3)):
+        random.seed("clip")
+        a, la = fn()
+        random.seed("clip")
+        b, lb = fn()
+        assert np.array_equal(a, b) and la == lb
+
+
+def test_dataset_matches_manifest():
+    """Every audio/label/alignment/config file matches dataset/MANIFEST.sha256."""
+    import importlib.util
+
+    spec = importlib.util.spec_from_file_location("manifest", ROOT / "scripts" / "build_manifest.py")
+    mod = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(mod)
+    problems = mod.check()
+    assert not problems, problems[:10]

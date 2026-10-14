@@ -179,6 +179,10 @@ def main():
                       f"C cross-speaker IoU={c['target_iou']} FP={c['fp_seconds']:5.1f}s", flush=True)
             grad += gradient_check(rows_b, prefix)
         results["real_same_speaker"] = {"summary": summarize(rows_b), "per_clip": rows_b}
+        # real01 and its flaws are part of calibration (scripts/04): report the held-out reader alone too
+        held = [r for r in rows_b if not r["clip_id"].startswith("real01")]
+        results["real_same_speaker_heldout"] = {"summary": summarize(held), "per_clip": held,
+                                                "note": "real02 only; real01 is used for calibration"}
         clean_c = [r for r in rows_c if r["target_iou"] is None]
         results["real_cross_speaker"] = {
             "summary": summarize(rows_c),
@@ -191,7 +195,8 @@ def main():
 
     (LABELS / "heldout_results.json").write_text(json.dumps(results, indent=2))
     print("\n=== Summary ===")
-    for key in ("heldout_tts", "heldout_orators", "real_same_speaker", "real_cross_speaker", "mode_b"):
+    for key in ("heldout_tts", "heldout_orators", "real_same_speaker", "real_same_speaker_heldout",
+                "real_cross_speaker", "mode_b"):
         if key in results:
             s = results[key]["summary"]
             print(f"{key:20s} mean target IoU={s['mean_target_iou']}  mean FP={s['mean_fp_seconds']}s  (n={s['n_clips']})")

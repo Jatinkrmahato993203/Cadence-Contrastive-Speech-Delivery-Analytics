@@ -1,0 +1,46 @@
+name: tests
+
+# Runs the full suite — unit tests, real-audio detection tests, determinism tests
+# and the dataset manifest check — on Linux and Windows, so results are verified
+# to be reproducible across environments, not only on the development machine.
+on:
+  push:
+  pull_request:
+
+jobs:
+  test:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    env:
+      CADENCE_TORCH_THREADS: "4"
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          lfs: true                       # dataset audio is stored in Git LFS
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version-file: .python-version
+          cache: pip
+
+      - name: Install system packages (Linux)
+        if: runner.os == 'Linux'
+        run: sudo apt-get update && sudo apt-get install -y ffmpeg libsndfile1
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt --extra-index-url https://download.pytorch.org/whl/cpu
+
+      - name: Cache Whisper model
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/whisper
+          key: whisper-base.en
+
+      - name: Dataset manifest
+        run: python scripts/build_manifest.py --check
+
+      - name: Tests
+        run: pytest -q tests/

@@ -8,11 +8,12 @@
   "split": "calibration",
   "flaw_regions": [
     {
-      "start_s": 14.491,
-      "end_s": 21.737,
-      "mechanism": "gain_-6dB_bounded_14.49to21.74s"
+      "start_s": 14.585,
+      "end_s": 21.705,
+      "mechanism": "gain_-6dB_bounded_14.59to21.70s"
     }
   ],
+  "label_timeline": "output",
   "transcript_path": "dataset/transcripts/text_04.txt",
   "audio_path": "dataset/audio/text_04_volume_mild.wav"
 }

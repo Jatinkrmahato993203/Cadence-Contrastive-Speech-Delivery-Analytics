@@ -8,22 +8,22 @@
   "split": "calibration",
   "flaw_regions": [
     {
-      "start_s": 29.58,
-      "end_s": 30.885,
-      "mechanism": "silence_splice_1.30s_at_29.580s"
+      "start_s": 22.045,
+      "end_s": 23.483,
+      "mechanism": "silence_splice_1.44s_at_src_22.045s"
     },
     {
-      "start_s": 35.345,
-      "end_s": 36.753,
-      "mechanism": "silence_splice_1.41s_at_34.040s"
+      "start_s": 36.738,
+      "end_s": 38.62,
+      "mechanism": "silence_splice_1.88s_at_src_35.300s"
     },
     {
-      "start_s": 45.253,
-      "end_s": 47.149,
-      "mechanism": "silence_splice_1.90s_at_42.540s"
+      "start_s": 41.505,
+      "end_s": 42.733,
+      "mechanism": "silence_splice_1.23s_at_src_38.185s"
     }
   ],
+  "label_timeline": "output",
   "transcript_path": "dataset/transcripts/text_01.txt",
-  "audio_path": "dataset/audio/text_01_pause_egregious.wav",
-  "label_timeline": "output"
+  "audio_path": "dataset/audio/text_01_pause_egregious.wav"
 }

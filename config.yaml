@@ -4,30 +4,30 @@ aligner:
   model: base.en
   uncertain_threshold: 0.25
 normalization:
-  clarity_feature: hnr_db
+  clarity_feature: hf_ratio_db
   clarity_sign: 1.0
 grounding:
   k_noise:
     pitch: 3.5
-    energy: 4.0
+    energy: 3.5
     rate: 1.5
     pause: 1.5
-    clarity: 4.0
+    clarity: 3.5
   merge_gap_ms: 300
   smoothing_words: 3
   pause_gap_threshold_s: 0.15
   floors:
-    pitch: 0.2806
-    energy: 5.5114
-    rate: 0.0981
-    pause: 0.14
-    clarity: 1.2629
+    pitch: 0.3648
+    energy: 4.7217
+    rate: 0.0696
+    pause: 0.19
+    clarity: 2.0434
   floors_mode_b:
     pitch: 2.0
     energy: 4.0
-    rate: 0.55
+    rate: 0.6
     pause: 1.2
-    clarity: 7.5
+    clarity: 31.3835
   rate_window_words: 5
   min_run_words:
     pitch: 2
@@ -35,12 +35,12 @@ grounding:
     rate: 6
     pause: 1
     clarity: 2
-  same_recording_max_dist: 12.35
+  same_recording_max_dist: 11.03
   k_same_recording: 3.0
   k_long:
-    pitch: 3.5
+    pitch: 3.0
     energy: 8.0
-    rate: 5.0
+    rate: 3.0
     clarity: 5.0
 flaw_params:
   pacing:
@@ -85,20 +85,18 @@ flaw_params:
       fraction: 0.3
   clarity:
     near_perfect:
-      crossfade_ms:
-      - 15
-      - 25
-      smoothing_bins: 3
-      transient_db: -2
+      centralize: 0.3
+      undershoot_ms: 16
+      hf_loss_db: -4.0
+      transient_db: -3.0
     moderate:
-      crossfade_ms:
-      - 40
-      - 60
-      smoothing_bins: 7
-      transient_db: -4
+      centralize: 0.6
+      undershoot_ms: 32
+      hf_loss_db: -8.0
+      transient_db: -6.0
     egregious:
-      crossfade_ms:
-      - 70
-      - 90
-      smoothing_bins: 15
-      transient_db: -8
+      centralize: 0.9
+      undershoot_ms: 56
+      hf_loss_db: -14.0
+      transient_db: -10.0
+  nearperfect_rate: 1.07

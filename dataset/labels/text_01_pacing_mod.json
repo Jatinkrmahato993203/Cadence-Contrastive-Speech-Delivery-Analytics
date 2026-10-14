@@ -8,9 +8,9 @@
   "split": "calibration",
   "flaw_regions": [
     {
-      "start_s": 10.69,
-      "end_s": 42.758,
-      "mechanism": "time_stretch_0.75x_bounded_10.69to42.76s"
+      "start_s": 10.605,
+      "end_s": 42.772,
+      "mechanism": "time_stretch_0.75x_bounded_10.61to42.77s"
     }
   ],
   "label_timeline": "output",

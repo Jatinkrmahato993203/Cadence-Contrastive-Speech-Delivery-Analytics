@@ -213,3 +213,19 @@ def test_edited_copy_uses_floors_and_other_recording_adapts():
     assert copy.same_recording and not other.same_recording
     assert copy.thresholds["energy"] == CFG["grounding"]["floors"]["energy"]
     assert other.thresholds["energy"] > CFG["grounding"]["floors"]["energy"]
+
+
+def test_edge_refinement_recovers_exact_slowdown_boundaries():
+    """A slowdown on words 20-39 must be reported from word 20 to word 39, not blurred by the 5-word window."""
+    b, u = _words(80), _words(80)
+    for w in u[20:40]:
+        w.duration_s *= 1.5
+    t = 0.0
+    for w in u:                       # rebuild timings so the slowdown is real on the timeline
+        t += w.pause_duration_s
+        w.start, w.end = t, t + w.duration_s
+        t = w.end
+    res = ground(_clip(u), "A", 1, "calibration", baseline_norm_clip=_clip(b), cfg=CFG)
+    rate = [r for r in res.flaw_regions if r.flaw_type == "rate"]
+    assert len(rate) == 1
+    assert rate[0].start_s == pytest.approx(u[20].start) and rate[0].end_s == pytest.approx(u[39].end)

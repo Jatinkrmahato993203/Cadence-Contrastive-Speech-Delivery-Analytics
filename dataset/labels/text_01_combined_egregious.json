@@ -8,37 +8,37 @@
   "split": "calibration",
   "flaw_regions": [
     {
-      "start_s": 5.345,
-      "end_s": 13.362,
-      "mechanism": "gain_-18dB_bounded_5.34to13.36s"
+      "start_s": 5.205,
+      "end_s": 15.177,
+      "mechanism": "gain_-18dB_bounded_5.21to13.48s"
     },
     {
-      "start_s": 13.362,
-      "end_s": 31.241,
-      "mechanism": "f0_variance_compress_0.10_bounded_13.36to29.40s"
+      "start_s": 7.885,
+      "end_s": 9.577,
+      "mechanism": "silence_splice_1.69s_at_src_7.885s"
     },
     {
-      "start_s": 27.6,
-      "end_s": 29.445,
-      "mechanism": "silence_splice_1.84s_at_27.600s"
+      "start_s": 15.177,
+      "end_s": 33.051,
+      "mechanism": "f0_variance_compress_0.10_bounded_13.48to29.57s"
     },
     {
-      "start_s": 31.241,
-      "end_s": 47.008,
-      "mechanism": "clarity_xfade85ms_smooth15bin_bounded_29.40to42.76s"
+      "start_s": 21.217,
+      "end_s": 23.001,
+      "mechanism": "silence_splice_1.78s_at_src_19.525s"
     },
     {
-      "start_s": 31.425,
-      "end_s": 32.712,
-      "mechanism": "silence_splice_1.29s_at_29.580s"
+      "start_s": 33.051,
+      "end_s": 47.313,
+      "mechanism": "clarity_undershoot_c0.90_u56ms_hf-14dB_bounded_29.57to42.55s"
     },
     {
-      "start_s": 38.152,
-      "end_s": 39.27,
-      "mechanism": "silence_splice_1.12s_at_35.020s"
+      "start_s": 39.721,
+      "end_s": 41.013,
+      "mechanism": "silence_splice_1.29s_at_src_36.245s"
     }
   ],
+  "label_timeline": "output",
   "transcript_path": "dataset/transcripts/text_01.txt",
-  "audio_path": "dataset/audio/text_01_combined_egregious.wav",
-  "label_timeline": "output"
+  "audio_path": "dataset/audio/text_01_combined_egregious.wav"
 }

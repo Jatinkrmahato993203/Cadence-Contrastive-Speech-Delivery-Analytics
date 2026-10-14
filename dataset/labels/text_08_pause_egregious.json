@@ -8,22 +8,22 @@
   "split": "heldout",
   "flaw_regions": [
     {
-      "start_s": 34.28,
-      "end_s": 35.602,
-      "mechanism": "silence_splice_1.32s_at_34.280s"
+      "start_s": 18.185,
+      "end_s": 19.305,
+      "mechanism": "silence_splice_1.12s_at_src_18.185s"
     },
     {
-      "start_s": 35.822,
-      "end_s": 36.923,
-      "mechanism": "silence_splice_1.10s_at_34.500s"
+      "start_s": 47.745,
+      "end_s": 48.934,
+      "mechanism": "silence_splice_1.19s_at_src_46.625s"
     },
     {
-      "start_s": 49.263,
-      "end_s": 50.996,
-      "mechanism": "silence_splice_1.73s_at_46.840s"
+      "start_s": 55.039,
+      "end_s": 56.129,
+      "mechanism": "silence_splice_1.09s_at_src_52.730s"
     }
   ],
+  "label_timeline": "output",
   "transcript_path": "dataset/transcripts/text_08.txt",
-  "audio_path": "dataset/audio/text_08_pause_egregious.wav",
-  "label_timeline": "output"
+  "audio_path": "dataset/audio/text_08_pause_egregious.wav"
 }

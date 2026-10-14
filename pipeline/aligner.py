@@ -56,7 +56,7 @@ DATASET_DIR = ROOT / "dataset"
 DATASET_CACHE_DIR = DATASET_DIR / "alignments"
 RUNTIME_CACHE_DIR = ROOT / ".cache" / "alignments"
 
-ALIGNER_VERSION = "whisper-global-dtw-v3"   # windowed evidence + one global DTW; cache stores pre-snap timings
+ALIGNER_VERSION = "whisper-global-dtw-v4"   # windowed evidence + one global DTW; cache stores pre-snap timings
 SR = 16000
 HOP_S = 0.01
 
@@ -78,10 +78,11 @@ def transcript_words(text: str) -> list[str]:
 @dataclass
 class WordAlignment:
     word: str
-    start: float          # seconds
+    start: float          # seconds (silence-snapped: used for pauses, regions, display)
     end: float            # seconds
     score: float          # forced-alignment token probability, 0-1
     uncertain: bool = False
+    articulation_s: float = 0.0   # time spent articulating the word (see articulation_times)
 
 
 @dataclass
@@ -138,15 +139,25 @@ _MODELS: dict = {}
 
 
 def _get_model(name: str):
+    import torch
     import whisper
 
+    # Fixed thread count: CPU reductions can differ in the last bits between thread
+    # counts, which DTW can turn into a different path.
+    torch.set_num_threads(int(__import__("os").environ.get("CADENCE_TORCH_THREADS", "4")))
     if name not in _MODELS:
         _MODELS[name] = whisper.load_model(name, device="cpu")
     return _MODELS[name]
 
 
 def _recognize(model, audio: np.ndarray, prompt: Optional[str]) -> list[dict]:
-    """Free-decoding pass; returns canonical tokens with coarse times."""
+    """
+    Free-decoding pass; returns canonical tokens with coarse times.
+
+    Greedy decoding only (temperature=0, no fallback): Whisper's default retries a
+    struggling segment at temperatures 0.2-1.0, i.e. by random sampling, which made
+    the anchors — and so the word timings — differ between runs.
+    """
     res = model.transcribe(
         audio,
         initial_prompt=prompt,
@@ -154,6 +165,7 @@ def _recognize(model, audio: np.ndarray, prompt: Optional[str]) -> list[dict]:
         condition_on_previous_text=False,
         fp16=False,
         language="en",
+        temperature=0.0,
     )
     out = []
     for seg in res.get("segments", []):
@@ -477,6 +489,33 @@ def _acoustic_fallback(audio: np.ndarray, transcript: Optional[str]) -> list[dic
     return out
 
 
+def articulation_times(raw: list[dict], db: np.ndarray, min_pause_s: float = 0.12) -> list[float]:
+    """
+    Per-word articulation time = the raw DTW interval minus any silence of at least
+    120 ms inside it (a pause the DTW attached to the word).
+
+    Deliberately NOT the snapped interval: snapping keeps a word's longest voiced run,
+    a discontinuous choice that flips when an edit nudges a quiet consonant across the
+    silence threshold (per-word duration jitter up to 0.7 log2 on edited human speech,
+    vs 0.09-0.21 for this measure), which read as false "pacing" flaws.
+    """
+    silent = local_silence_mask(db)
+    min_run = int(round(min_pause_s / HOP_S))
+    out = []
+    for w in raw:
+        i0, i1 = max(int(w["start"] / HOP_S), 0), min(int(w["end"] / HOP_S) + 1, len(silent))
+        long_sil, run = 0, 0
+        for v in list(silent[i0:i1]) + [False]:
+            if v:
+                run += 1
+            else:
+                if run >= min_run:
+                    long_sil += run
+                run = 0
+        out.append(round(max(0.03, (i1 - i0 - long_sil) * HOP_S), 3))
+    return out
+
+
 # -- Cache ------------------------------------------------------------------------
 
 def _cache_location(audio_path: str, key: str) -> Path:
@@ -547,14 +586,17 @@ def align(
 
     # Snapping is cheap and deterministic, so it runs on every load: its
     # parameters can change without re-running Whisper.
-    raw = snap_to_silences(raw, frame_db(audio), len(audio) / SR)
+    db = frame_db(audio)
+    artic = articulation_times(raw, db)
+    raw = snap_to_silences(raw, db, len(audio) / SR)
     words = [
         WordAlignment(
             word=w["word"], start=float(w["start"]), end=float(w["end"]),
             score=float(w["score"]),
             uncertain=float(w["score"]) < uncertain_threshold,
+            articulation_s=a,
         )
-        for w in raw
+        for w, a in zip(raw, artic)
     ]
 
     uncertain_spans: list[tuple[float, float]] = []

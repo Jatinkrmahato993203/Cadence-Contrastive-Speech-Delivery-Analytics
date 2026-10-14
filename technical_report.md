@@ -30,9 +30,18 @@ moon" three times). Texts 1–8 remain TTS.
 #### 1.2 Flaw gradient (Requirement 1b)
 Every baseline gets 17 variants: mild / moderate / egregious versions of five flaws
 (pacing, pitch monotony, pauses, volume, clarity), a combined-egregious clip and a
-"near-perfect" clip (identical to `pacing_mild`; excluded from summary means).
+"near-perfect" clip (1.07× pacing, half the mild deviation).
 Flaws are applied to bounded windows, so most of each clip stays clean. Parameters
-are in `dataset/README.md`. Generation is deterministic (`random.seed(clip_id)`).
+are in `dataset/README.md`. Edit windows are snapped to gaps between words and only the
+window is resynthesized, so audio outside it is bit-identical to the baseline.
+
+The clarity flaw models articulatory undershoot on the cepstral spectral envelope
+(formant centralization, temporal smoothing, high-frequency consonant loss) while
+keeping the harmonic fine structure, plus softened plosive bursts at acoustic landmarks.
+An earlier version blurred the whole STFT magnitude, which destroyed harmonics: pitch
+tracking failed inside clarity edits and alignment confidence collapsed (46–57% of
+words low-confidence). The new edit keeps 98% of voiced frames with a 0.02 semitone
+median F0 change.
 
 #### 1.3 Labels (Requirement 1c)
 Ground truth comes from the transform itself, on the flawed clip's output timeline.
@@ -50,8 +59,9 @@ Free-decoding word timestamps (Whisper `word_timestamps=True`) drop and mis-hear
 words, which breaks word-for-word comparison. Cadence forces the given transcript
 onto the audio with Whisper `base.en`:
 
-1. **Anchors** — Whisper transcribes the clip; recognized words are matched to the
-   transcript (difflib) to estimate where each token lies.
+1. **Anchors** — Whisper transcribes the clip with greedy decoding (temperature 0,
+   no sampling fallback); recognized words are matched to the transcript (difflib) to
+   estimate where each token lies.
 2. **Windowed evidence** — 30 s windows every 15 s, placed by time. In each window
    the decoder receives the transcript tokens expected within ±3 s; the
    alignment-head cross-attention gives a token × frame evidence matrix
@@ -76,13 +86,20 @@ cuts (cut points moved when audio elsewhere changed), shorter audio-defined chun
 Words whose token probability is < 0.25 are marked *uncertain* and shown as grey
 bands in the dashboard.
 
+**Determinism.** Whisper's default decoding retries difficult segments by random
+sampling (temperatures 0.2–1.0); with it, aligning the same audio in fresh processes
+gave different word timings for 2 of 4 test clips. With greedy decoding and a fixed
+torch thread count (`CADENCE_TORCH_THREADS`, default 4), repeated runs and runs with
+4 or 8 threads are bit-identical; `tests/test_detection.py::test_alignment_is_deterministic`
+guards it.
+
 #### 2.2 Features (`pipeline/features.py`)
 One STFT (32 ms window, 10 ms hop) and one Praat analysis per clip, pooled over
 each aligned word:
 
 | Feature | Method |
 |---|---|
-| F0 contour | Praat autocorrelation pitch, 60–500 Hz, silence threshold 1% of peak |
+| F0 contour | Praat autocorrelation pitch with a speaker-adaptive range (two-pass, floor 0.72×q35, ceiling 1.9×q65 — De Looze & Hirst), silence threshold 1% of peak |
 | HNR | Praat cross-correlation harmonicity, silence threshold 1% of peak |
 | Spectral centroid, flatness, contrast, flux, >3 kHz energy ratio | from the STFT magnitude |
 | MFCC (13) | from a 40-band mel spectrogram |
@@ -144,6 +161,12 @@ Flagged words form same-sign runs (≥ 2 words; ≥ 6 for rate, since pacing is
 sustained and human phrase-final lengthening spans a few words; 1 for pauses),
 merged across gaps < 300 ms.
 
+**Edge refinement.** Detection runs on smoothed or windowed series, which blur a
+region's edges by a few words. Each edge is re-estimated within ±6 words on the
+unsmoothed per-word deltas (for rate: the single-word duration ratio) as the split that
+best separates reference-level words from words at the region's level (least squares
+on a two-level step).
+
 **Long-scale detector (different recordings and Mode B).** Natural differences
 between two readers are mostly word-to-word fluctuation; a delivery flaw is usually
 sustained over a phrase. Each feature's deltas are also averaged over 15 words, with
@@ -182,74 +205,75 @@ exactly 20 (explicit NaN-safe base case).
 
 | Evaluation set | Clips | Mean target IoU | Mean false-positive seconds / clip |
 |---|---|---|---|
-| Real orators — JFK, Reagan, Eisenhower — held out (reference = same recording) | 51 | 0.80 | 13.7 |
-| TTS held-out texts 6 & 8 (reference = same recording) | 34 | 0.88 | 10.9 |
-| Human LibriVox readers, same-speaker reference | 32 | 0.85 | 14.4 |
-| Human readers vs the TTS baseline (different voice) | 34 | 0.17 | 5.3 |
-| Mode B — no reference recording, all held-out audio | 119 | 0.22 | 19.1 |
+| Real orators — JFK, Reagan, Eisenhower — held out (reference = same recording) | 51 | 0.73 | 10.4 |
+| TTS held-out texts 6 & 8 (reference = same recording) | 34 | 0.91 | 3.3 |
+| Human LibriVox reader (real02, held out), same-speaker reference | 16 | 0.88 | 17.2 |
+| Human LibriVox readers incl. real01 (calibration), same-speaker reference | 32 | 0.92 | 11.5 |
+| Human readers vs the TTS baseline (different voice) | 34 | 0.24 | 7.7 |
+| Mode B — no reference recording, all held-out audio | 119 | 0.22 | 15.8 |
 
 #### 6.2 Real orators (texts 9-11, held out) — target IoU (false-positive seconds) per tier
 
 | Flaw | mild | moderate | egregious |
 |---|---|---|---|
-| pacing | 0.66 (8 s) | 0.83 (24 s) | 0.83 (24 s) |
-| pitch | 0.61 (2 s) | 0.94 (4 s) | 0.95 (6 s) |
-| pause | 0.57 (1 s) | 0.63 (3 s) | 0.98 (10 s) |
-| volume | 0.85 (4 s) | 0.89 (7 s) | 0.97 (20 s) |
-| clarity | 0.65 (6 s) | 0.84 (30 s) | 0.91 (55 s) |
-| combined | — | — | 0.67 (29 s) |
+| pacing | 0.88 (6 s) | 0.97 (9 s) | 0.98 (9 s) |
+| pitch | 0.77 (3 s) | 0.94 (2 s) | 0.91 (3 s) |
+| pause | 0.28 (1 s) | 0.63 (8 s) | 0.76 (15 s) |
+| volume | 0.91 (8 s) | 0.96 (5 s) | 0.98 (12 s) |
+| clarity | 0.26 (0 s) | 0.32 (15 s) | 0.56 (44 s) |
+| combined | — | — | 0.62 (37 s) |
 
 #### 6.2b Held-out TTS texts — target IoU (false-positive seconds) per tier
 
 | Flaw | mild | moderate | egregious |
 |---|---|---|---|
-| pacing | 0.89 (10 s) | 0.86 (8 s) | 0.92 (29 s) |
-| pitch | 0.92 (3 s) | 0.98 (2 s) | 0.99 (3 s) |
-| pause | 0.92 (0 s) | 0.59 (2 s) | 0.86 (4 s) |
-| volume | 0.96 (0 s) | 0.98 (1 s) | 0.94 (8 s) |
-| clarity | 0.70 (8 s) | 0.97 (18 s) | 0.90 (72 s) |
-| combined | — | — | 0.75 (21 s) |
+| pacing | 0.92 (6 s) | 0.98 (5 s) | 1.00 (9 s) |
+| pitch | 0.99 (1 s) | 0.97 (1 s) | 0.98 (3 s) |
+| pause | 0.45 (0 s) | 0.96 (1 s) | 0.97 (1 s) |
+| volume | 1.00 (0 s) | 0.95 (1 s) | 0.97 (0 s) |
+| clarity | 0.61 (0 s) | 0.95 (3 s) | 0.97 (20 s) |
+| combined | — | — | 0.84 (7 s) |
 
 #### 6.3 Human recordings, same-speaker reference
 
 | Flaw | mild | moderate | egregious |
 |---|---|---|---|
-| pacing | 0.48 (9 s) | 0.98 (17 s) | 0.96 (22 s) |
-| pitch | 0.72 (19 s) | 0.93 (7 s) | 0.96 (3 s) |
-| pause | 0.45 (1 s) | 0.96 (1 s) | 0.71 (4 s) |
-| volume | 0.95 (2 s) | 0.95 (3 s) | 0.99 (16 s) |
-| clarity | 0.73 (8 s) | 0.95 (33 s) | 0.99 (63 s) |
-| combined | — | — | 0.81 (21 s) |
+| pacing | 0.88 (8 s) | 1.00 (5 s) | 0.99 (9 s) |
+| pitch | 0.91 (11 s) | 0.97 (10 s) | 0.96 (24 s) |
+| pause | 0.87 (0 s) | 0.95 (2 s) | 0.97 (1 s) |
+| volume | 0.96 (1 s) | 0.97 (5 s) | 1.00 (4 s) |
+| clarity | 0.61 (0 s) | 0.97 (4 s) | 1.00 (57 s) |
+| combined | — | — | 0.77 (43 s) |
 
 #### 6.4 Human recordings against the TTS baseline
 
 | Flaw | mild | moderate | egregious |
 |---|---|---|---|
-| pacing | 0.00 (7 s) | 0.00 (5 s) | 0.00 (2 s) |
-| pitch | 0.12 (6 s) | 0.12 (7 s) | 0.00 (7 s) |
-| pause | 0.00 (5 s) | 0.00 (3 s) | 0.59 (4 s) |
-| volume | 0.05 (5 s) | 0.49 (4 s) | 0.47 (7 s) |
-| clarity | 0.00 (4 s) | 0.19 (9 s) | 0.18 (10 s) |
-| combined | — | — | 0.57 (3 s) |
+| pacing | 0.00 (17 s) | 0.00 (9 s) | 0.00 (12 s) |
+| pitch | 0.06 (6 s) | 0.54 (7 s) | 0.18 (5 s) |
+| pause | 0.00 (11 s) | 0.00 (4 s) | 0.79 (5 s) |
+| volume | 0.40 (6 s) | 0.50 (9 s) | 0.50 (3 s) |
+| clarity | 0.00 (6 s) | 0.00 (6 s) | 0.01 (18 s) |
+| combined | — | — | 0.80 (5 s) |
 
-Clean human readings compared with the TTS baseline (both used to set k, so in-sample): `real01_good` scores 99.1/100 with 1.0 s of 64 s flagged; `real02_good` scores 98.7/100 with 4.7 s of 114 s flagged.
+Clean human readings compared with the TTS baseline (both used to set k, so in-sample): `real01_good` scores 99.2/100 with 0.4 s of 64 s flagged; `real02_good` scores 98.9/100 with 1.9 s of 114 s flagged.
 
 #### 6.4b Mode B (no reference recording)
 
 | Flaw | mild | moderate | egregious |
 |---|---|---|---|
-| pacing | 0.03 (7 s) | 0.14 (12 s) | 0.25 (23 s) |
-| pitch | 0.00 (10 s) | 0.00 (13 s) | 0.01 (30 s) |
-| pause | 0.00 (10 s) | 0.02 (12 s) | 0.57 (9 s) |
-| volume | 0.40 (12 s) | 0.74 (13 s) | 0.91 (13 s) |
-| clarity | 0.03 (13 s) | 0.01 (26 s) | 0.00 (53 s) |
-| combined | — | — | 0.44 (58 s) |
+| pacing | 0.09 (9 s) | 0.12 (15 s) | 0.34 (23 s) |
+| pitch | 0.00 (12 s) | 0.00 (13 s) | 0.00 (37 s) |
+| pause | 0.00 (10 s) | 0.00 (11 s) | 0.54 (12 s) |
+| volume | 0.42 (13 s) | 0.71 (11 s) | 0.95 (11 s) |
+| clarity | 0.00 (15 s) | 0.00 (16 s) | 0.00 (12 s) |
+| combined | — | — | 0.35 (36 s) |
 
 #### 6.5 Severity gradient
-Score falls monotonically mild → moderate → egregious in 30/35 cases.
+Score falls monotonically mild → moderate → egregious in 34/35 cases.
 
 #### 6.6 Calibrated parameters
-Clarity measure `hnr_db`; floors `{'pitch': 0.2806, 'energy': 5.5114, 'rate': 0.0981, 'pause': 0.14, 'clarity': 1.2629}`; k (different recording) `{'pitch': 3.5, 'energy': 4.0, 'rate': 1.5, 'pause': 1.5, 'clarity': 4.0}`; k (edited copy) `3.0`; same-recording gate (timbre distance) `12.35`.
+Clarity measure `hf_ratio_db`; floors `{'pitch': 0.3648, 'energy': 4.7217, 'rate': 0.0696, 'pause': 0.19, 'clarity': 2.0434}`; k (different recording) `{'pitch': 3.5, 'energy': 3.5, 'rate': 1.5, 'pause': 1.5, 'clarity': 3.5}`; k (edited copy) `3.0`; same-recording gate (timbre distance) `11.03`.
 <!-- RESULTS:END -->
 
 ### 7. Limitations and next steps
@@ -271,6 +295,12 @@ Clarity measure `hnr_db`; floors `{'pitch': 0.2806, 'energy': 5.5114, 'rate': 0.
   as large as moderate synthetic flaws, so thresholds must widen; k is fitted on
   only two human readings (in-sample for the clean pairs).
 * *Mild pauses* (0.2–0.35 s) are still found only about half the time.
+* *Clarity boundaries* are the least precise: 92% of held-out clarity regions are found,
+  median edge error 0.4–1.1 s but a 90th percentile of 5–11 s. Making the clarity
+  measure F0-invariant (spectral envelope) removed false clarity flags on a shifted
+  voice, at the cost of a higher threshold and lower orator IoU (0.78 → 0.73).
+* *Boundary precision* (held-out, median / 90th percentile): pauses 5–13 / 19–71 ms,
+  volume 38–43 ms / ~1.2 s, pitch 250–457 ms / ~1.4 s, rate 176–382 ms / 1.8–5.6 s.
 * *Mode B* cannot separate monotone pitch, pacing or clarity changes from a speaker's
   natural variation, and flags 15–25 s of the presidents' own dramatic delivery.
 * *Collateral detections* — spectral smoothing (clarity edits) also disturbs pitch
@@ -289,14 +319,30 @@ Clarity measure `hnr_db`; floors `{'pitch': 0.2806, 'energy': 5.5114, 'rate': 0.
 3. A listener study to validate the flaw regions and the explanations.
 4. Disfluency detection (fillers, repetitions), which the benchmark does not cover.
 
-### 8. Reproduction
+### 8. Reproducibility
+
+| Layer | Guarantee | Check |
+|---|---|---|
+| Flaw generation | Python and Praat random generators seeded with the clip id; edits resynthesize only their window | `test_flaw_generators_are_bit_reproducible` |
+| Alignment | greedy decoding, fixed thread count, cache keyed by audio + transcript + aligner version | `test_alignment_is_deterministic` |
+| Grounding / scoring | pure functions of the features | `test_pipeline_is_deterministic`; dashboard re-run button |
+| Data | SHA-256 of every audio, label, alignment, TextGrid and config file, line endings normalized | `dataset/MANIFEST.sha256`, `test_dataset_matches_manifest` |
+| Environment | `.python-version`, pinned `requirements.txt`, full `requirements.lock.txt` | CI on Linux and Windows (`.github/workflows/tests.yml`) |
+
+Not yet verified: the CI workflow has not been run (it needs a push to GitHub); cross-OS
+bit-identity of Whisper/Praat floating point is therefore untested. Rebuilding the TTS
+baselines needs Microsoft's online TTS service, and the presidential sources are
+downloaded from Wikimedia Commons.
+
+### 9. Reproduction
 ```bash
 python scripts/generate_dataset.py             # TTS baselines (requires network for edge-tts)
-python scripts/03_generate_bad_clips.py        # TTS flaw variants
+python scripts/regenerate_flaws.py            # every flaw variant, bit-reproducible
 python scripts/prepare_real_speakers.py        # human recordings: trim + flaw variants
 python scripts/precompute_alignments.py        # forced alignment cache (~1 h on CPU)
 python scripts/04_extract_features.py --calibrate
 python scripts/05_evaluate_heldout.py
+python scripts/build_manifest.py --check
 pytest tests/
 streamlit run app/streamlit_app.py
 ```

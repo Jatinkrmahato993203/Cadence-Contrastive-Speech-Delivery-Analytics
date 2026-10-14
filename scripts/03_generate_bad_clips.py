@@ -158,91 +158,122 @@ def load_phone_timestamps(text_id: int) -> list[dict]:
     return intervals
 
 
-# -- Flaw 1: Pacing (time-bounded time-stretch) --------------------------------
+# -- Shared helpers --------------------------------------------------------------
+
+SPLICE_MS = 10
+
+
+def _seed_praat() -> None:
+    """
+    Praat's overlap-add resynthesis draws random numbers when durations change, so
+    two identical calls differ unless its generator is seeded. The seed is taken
+    from Python's `random`, which generate_set seeds with the clip id.
+    """
+    from parselmouth.praat import run
+    run(f"random_initializeWithSeedUnsafelyButPredictably ({random.randint(1, 2**31 - 1)})")
+
+
+def snap_to_gaps(t0: float, t1: float, word_ts: list[dict]) -> tuple[float, float]:
+    """Move a window's edges to the nearest gap between words, so no edit starts or ends mid-word."""
+    if not word_ts or len(word_ts) < 2:
+        return t0, t1
+    edges = [word_ts[0]["start"]] + [
+        (word_ts[i]["end"] + word_ts[i + 1]["start"]) / 2 for i in range(len(word_ts) - 1)
+    ] + [word_ts[-1]["end"]]
+    a = min(edges, key=lambda g: abs(g - t0))
+    b = min(edges, key=lambda g: abs(g - t1))
+    return (a, b) if b > a else (t0, t1)
+
+
+def _window(y: np.ndarray, sr: int, start_frac: float, end_frac: float, word_ts) -> tuple[int, int]:
+    dur = len(y) / sr
+    t0, t1 = snap_to_gaps(dur * start_frac, dur * end_frac, word_ts or [])
+    return int(t0 * sr), int(t1 * sr)
+
+
+def splice_edit(y: np.ndarray, sr: int, i0: int, i1: int, edit) -> tuple[np.ndarray, int, int]:
+    """
+    Apply *edit* (array -> array, length may change) to y[i0:i1] plus a 10 ms margin
+    on each side, and splice the result back with 10 ms crossfades. Audio outside
+    the window is left bit-identical. Returns (result, out_start, out_end) of the
+    edited span on the output timeline.
+    """
+    n = int(sr * SPLICE_MS / 1000)
+    a, b = max(0, i0 - n), min(len(y), i1 + n)
+    out = np.asarray(edit(y[a:b].astype(np.float64)), dtype=np.float64)
+    na, nb = i0 - a, b - i1
+    if len(out) < na + nb + 1:
+        return y.copy(), i0, i1
+    ramp_a, ramp_b = np.linspace(0, 1, na), np.linspace(1, 0, nb)
+    head = y[a:i0] * (1 - ramp_a) + out[:na] * ramp_a
+    tail = out[len(out) - nb:] * ramp_b + y[i1:b] * (1 - ramp_b)
+    result = np.concatenate([y[:a], head, out[na:len(out) - nb], tail, y[b:]]).astype(np.float32)
+    return result, i0, i0 + (len(out) - na - nb)
+
+
+# -- Flaw 1: Pacing (deterministic PSOLA over a bounded window) ------------------
 
 def apply_pacing(
     y: np.ndarray, sr: int, rate: float,
-    start_frac: float = 0.20, end_frac: float = 0.65,
+    start_frac: float = 0.20, end_frac: float = 0.65, word_ts: list[dict] | None = None,
 ) -> tuple[np.ndarray, list[dict]]:
     """
-    Time-stretch speech by *rate* (PSOLA, pitch preserved) over a bounded window [start_frac, end_frac].
-    Smoothly crossfades back into normal speech speed at boundaries.
+    Change speaking rate by *rate* (< 1 slower) over a window snapped to word gaps.
+    Praat Manipulation + DurationTier + overlap-add resynthesis (PSOLA, pitch kept),
+    with Praat's random generator seeded so the result is bit-reproducible.
     """
     import parselmouth
     from parselmouth.praat import call
-    total_dur = len(y) / sr
-    t0 = total_dur * start_frac
-    t1 = total_dur * end_frac
-    i0 = int(t0 * sr)
-    i1 = int(t1 * sr)
 
-    pre = y[:i0]
-    seg = y[i0:i1]
-    post = y[i1:]
+    def stretch(seg):
+        _seed_praat()
+        snd = parselmouth.Sound(seg, sampling_frequency=float(sr))
+        manip = call(snd, "To Manipulation", 0.01, 60, 600)
+        tier = call("Create DurationTier", "stretch", snd.xmin, snd.xmax)
+        call(tier, "Add point", (snd.xmin + snd.xmax) / 2, 1.0 / rate)
+        call([manip, tier], "Replace duration tier")
+        return call(manip, "Get resynthesis (overlap-add)").values.flatten()
 
-    # PSOLA (Praat "Lengthen (overlap-add)") keeps the harmonic structure of voiced
-    # speech intact. librosa's phase vocoder smeared harmonics ("phasiness"), so a
-    # pacing flaw also degraded clarity — an artifact real slow speech does not have.
-    snd = parselmouth.Sound(seg.astype(np.float64), sampling_frequency=float(sr))
-    stretched_seg = call(snd, "Lengthen (overlap-add)", 75, 600, 1.0 / rate).values.flatten().astype(np.float32)
-    xfade_len = min(int(0.015 * sr), len(stretched_seg) // 4)
-    if xfade_len > 0 and len(pre) >= xfade_len:
-        fade_in = np.linspace(0.0, 1.0, xfade_len)
-        stretched_seg[:xfade_len] = stretched_seg[:xfade_len] * fade_in + pre[-xfade_len:] * (1.0 - fade_in)
-
-    result = np.concatenate([pre, stretched_seg, post])
-    new_t1 = round(t0 + len(stretched_seg) / sr, 3)
-    regions = [{
-        "start_s": round(t0, 3),
-        "end_s": new_t1,
-        "mechanism": f"time_stretch_{rate}x_bounded_{t0:.2f}to{new_t1:.2f}s",
-    }]
-    return result, regions
+    i0, i1 = _window(y, sr, start_frac, end_frac, word_ts)
+    result, o0, o1 = splice_edit(y, sr, i0, i1, stretch)
+    t0, t1 = o0 / sr, o1 / sr
+    return result, [{"start_s": round(t0, 3), "end_s": round(t1, 3),
+                     "mechanism": f"time_stretch_{rate}x_bounded_{t0:.2f}to{t1:.2f}s"}]
 
 
-# -- Flaw 2: Pitch / Monotone (time-bounded F0 variance compression) -----------
+# -- Flaw 2: Pitch / monotone (F0 variance compression over a bounded window) ----
 
 def apply_pitch_monotone(
     y: np.ndarray, sr: int, variance_fraction: float,
-    start_frac: float = 0.20, end_frac: float = 0.65,
+    start_frac: float = 0.20, end_frac: float = 0.65, word_ts: list[dict] | None = None,
 ) -> tuple[np.ndarray, list[dict]]:
     """
-    Compress F0 variance toward mean F0 by *variance_fraction* over window [start_frac, end_frac].
-    Uses Praat's conditional Formula for exact temporal boundaries.
+    Compress F0 movement toward the speaker's mean F0 by *variance_fraction* inside
+    a window snapped to word gaps (Praat Manipulation, overlap-add resynthesis of the
+    window only; the rest of the recording is untouched).
     """
-    try:
-        import parselmouth
-        from parselmouth.praat import call
-    except ImportError:
-        return y, []
+    import parselmouth
+    from parselmouth.praat import call
 
-    total_dur = len(y) / sr
-    t0 = total_dur * start_frac
-    t1 = total_dur * end_frac
+    full = parselmouth.Sound(y.astype(np.float64), sampling_frequency=float(sr))
+    pitch = full.to_pitch(time_step=0.01, pitch_floor=60.0, pitch_ceiling=600.0).selected_array["frequency"]
+    voiced = pitch[pitch > 0]
+    mean_f0 = float(np.mean(voiced)) if len(voiced) else 150.0
 
-    snd = parselmouth.Sound(values=y.astype(np.float64), sampling_frequency=float(sr))
-    manipulation = call(snd, "To Manipulation", 0.01, 75, 600)
-    pitch_tier = call(manipulation, "Extract pitch tier")
+    def flatten(seg):
+        _seed_praat()
+        snd = parselmouth.Sound(seg, sampling_frequency=float(sr))
+        manip = call(snd, "To Manipulation", 0.01, 60, 600)
+        tier = call(manip, "Extract pitch tier")
+        call(tier, "Formula", f"{mean_f0:.3f} + (self - {mean_f0:.3f}) * {variance_fraction:.3f}")
+        call([tier, manip], "Replace pitch tier")
+        return call(manip, "Get resynthesis (overlap-add)").values.flatten()
 
-    n_points = call(pitch_tier, "Get number of points")
-    if n_points == 0:
-        return y, []
-
-    freqs = [call(pitch_tier, "Get value at index", i + 1) for i in range(n_points)]
-    mean_f0 = float(np.mean([f for f in freqs if f > 0])) if any(f > 0 for f in freqs) else 150.0
-
-    call(pitch_tier, "Formula",
-         f"if x >= {t0:.4f} and x <= {t1:.4f} then {mean_f0:.2f} + (self - {mean_f0:.2f}) * {variance_fraction:.3f} else self fi")
-    call([pitch_tier, manipulation], "Replace pitch tier")
-    result_snd = call(manipulation, "Get resynthesis (overlap-add)")
-    result_y = result_snd.values.flatten().astype(np.float32)
-
-    regions = [{
-        "start_s": round(t0, 3),
-        "end_s": round(t1, 3),
-        "mechanism": f"f0_variance_compress_{variance_fraction:.2f}_bounded_{t0:.2f}to{t1:.2f}s",
-    }]
-    return result_y, regions
+    i0, i1 = _window(y, sr, start_frac, end_frac, word_ts)
+    result, o0, o1 = splice_edit(y, sr, i0, i1, flatten)
+    t0, t1 = o0 / sr, o1 / sr
+    return result, [{"start_s": round(t0, 3), "end_s": round(t1, 3),
+                     "mechanism": f"f0_variance_compress_{variance_fraction:.2f}_bounded_{t0:.2f}to{t1:.2f}s"}]
 
 
 # -- Flaw 3: Pauses (splice at acoustic word boundaries) ------------------------
@@ -337,131 +368,111 @@ def shift_for_insertions(regions: list[dict], pause_regions: list[dict]) -> list
     ]
 
 
-# -- Flaw 4: Volume (time-bounded gain reduction) -------------------------------
+# -- Flaw 4: Volume (gain envelope) ----------------------------------------------
 
 def apply_volume(
     y: np.ndarray, sr: int,
-    gain_db: float, start_frac: float = 0.15, fraction: float = 0.25,
+    gain_db: float, start_frac: float = 0.15, fraction: float = 0.25, word_ts: list[dict] | None = None,
 ) -> tuple[np.ndarray, list[dict]]:
-    """
-    Apply gain reduction of *gain_db* dB over a bounded window [start_frac, start_frac + fraction].
-    """
-    total = len(y)
-    region_len = int(total * fraction)
-    start_idx = int(total * start_frac)
-    end_idx = min(start_idx + region_len, total)
-
-    gain_linear = 10 ** (gain_db / 20.0)
+    """Reduce level by *gain_db* over a window snapped to word gaps, with 20 ms fades."""
+    i0, i1 = _window(y, sr, start_frac, start_frac + fraction, word_ts)
+    g = 10 ** (gain_db / 20.0)
+    env = np.full(i1 - i0, g, dtype=np.float32)
+    x = int(0.02 * sr)
+    if len(env) > 2 * x:
+        env[:x] = np.linspace(1.0, g, x)
+        env[-x:] = np.linspace(g, 1.0, x)
     result = y.copy()
-
-    # Fade in / out at boundaries to avoid clicks
-    xfade_len = int(0.02 * sr)
-    env = np.ones(end_idx - start_idx, dtype=np.float32) * gain_linear
-    if len(env) > 2 * xfade_len:
-        env[:xfade_len] = np.linspace(1.0, gain_linear, xfade_len)
-        env[-xfade_len:] = np.linspace(gain_linear, 1.0, xfade_len)
-    result[start_idx:end_idx] *= env
-
-    start_s = start_idx / sr
-    end_s = end_idx / sr
-    regions = [{
-        "start_s": round(start_s, 3),
-        "end_s": round(end_s, 3),
-        "mechanism": f"gain_{gain_db}dB_bounded_{start_s:.2f}to{end_s:.2f}s",
-    }]
-    return result, regions
+    result[i0:i1] *= env
+    t0, t1 = i0 / sr, i1 / sr
+    return result, [{"start_s": round(t0, 3), "end_s": round(t1, 3),
+                     "mechanism": f"gain_{gain_db}dB_bounded_{t0:.2f}to{t1:.2f}s"}]
 
 
-# -- Flaw 5: Clarity (time-bounded crossfade + STFT blur + plosive softening) ---
+# -- Flaw 5: Clarity (articulatory undershoot) ------------------------------------
 
-def apply_clarity(
-    y: np.ndarray, sr: int,
-    phone_timestamps: list[dict],
-    crossfade_ms_range: tuple[int, int],
-    smoothing_bins: int,
-    transient_db: float,
-    start_frac: float = 0.20,
-    end_frac: float = 0.65,
-) -> tuple[np.ndarray, list[dict]]:
+def plosive_landmarks(seg: np.ndarray, sr: int) -> list[int]:
     """
-    Reduces articulatory clarity over the bounded window [start_frac, end_frac]:
-    1. Phone-boundary crossfade: blends adjacent phones
-    2. STFT magnitude smoothing: blurs formant peaks
-    3. Transient softening on stop-consonant bursts
+    Sample indices of stop-consonant bursts: an abrupt broadband energy rise
+    (>= 15 dB within 20 ms) out of a closure (>= 25 dB below the local maximum).
+    Acoustic landmarks — no phone transcription needed.
+    """
+    hop, win = int(0.005 * sr), int(0.010 * sr)
+    if len(seg) < 4 * win:
+        return []
+    seg = np.ascontiguousarray(seg, dtype=np.float64)
+    n = (len(seg) - win) // hop + 1
+    frames = np.lib.stride_tricks.as_strided(seg, shape=(n, win), strides=(seg.strides[0] * hop, seg.strides[0]))
+    db = 10 * np.log10(np.mean(frames ** 2, axis=1) + 1e-12)
+    loud = np.max(db)
+    out, last = [], -10**9
+    for i in range(4, n):
+        if db[i] - db[i - 4] >= 15.0 and db[i - 4] <= loud - 25.0 and i - last > 20:
+            out.append(i * hop)
+            last = i
+    return out
+
+
+def articulation_blur(seg: np.ndarray, sr: int, centralize: float, undershoot_ms: float,
+                      hf_loss_db: float) -> np.ndarray:
+    """
+    Model slurred / mumbled articulation by editing ONLY the spectral envelope of each
+    frame (formants, consonant spectra) and keeping its fine structure (harmonics):
+      * centralization - blend the envelope toward a frequency-smoothed copy
+        (weaker formant peaks, the acoustic signature of vowel undershoot);
+      * undershoot     - smooth the envelope over time (sluggish articulators,
+        smeared transitions between sounds);
+      * consonant loss - attenuate energy above 2 kHz (hf_loss_db reached at 6 kHz).
+    Voicing and F0 are preserved, so pitch tracking is not disturbed.
     """
     import librosa
-    from scipy.signal import fftconvolve
+    from scipy.ndimage import gaussian_filter1d, uniform_filter1d
 
-    total_dur = len(y) / sr
-    t0 = total_dur * start_frac
-    t1 = total_dur * end_frac
-    i0 = int(t0 * sr)
-    i1 = int(t1 * sr)
+    n_fft, hop = 512, 128
+    S = librosa.stft(np.asarray(seg, dtype=np.float32), n_fft=n_fft, hop_length=hop)
+    mag, phase = np.abs(S) + 1e-9, np.angle(S)
+    L = np.log(mag)
+    ceps = np.fft.irfft(L, n=n_fft, axis=0)
+    lifter = np.zeros(n_fft)
+    q = int(0.0016 * sr)                                   # 1.6 ms: envelope vs fine structure
+    lifter[:q] = 1.0
+    lifter[-q + 1:] = 1.0
+    env = np.fft.rfft(ceps * lifter[:, None], axis=0).real
+    fine = L - env
+    env = (1 - centralize) * env + centralize * gaussian_filter1d(env, sigma=12, axis=0)
+    k = max(1, int(round(undershoot_ms / (1000 * hop / sr))))
+    if k > 1:
+        env = uniform_filter1d(env, size=k, axis=1, mode="nearest")
+    f = librosa.fft_frequencies(sr=sr, n_fft=n_fft)
+    env += (hf_loss_db * np.clip((f - 2000.0) / 4000.0, 0, 1) / 20.0 * np.log(10))[:, None]
+    return librosa.istft(np.exp(env + fine) * np.exp(1j * phase), hop_length=hop, length=len(seg))
 
-    result = y.copy()
-    crossfade_ms = random.randint(*crossfade_ms_range)
-    crossfade_samples = int(crossfade_ms * sr / 1000)
 
-    # 1. Phone crossfade within window
-    for i in range(1, len(phone_timestamps) - 1):
-        ph_st = phone_timestamps[i]["start"]
-        if ph_st < t0 or ph_st > t1:
-            continue
-        boundary_idx = int(ph_st * sr)
-        half = crossfade_samples // 2
-        lo = max(0, boundary_idx - half)
-        hi = min(len(result), boundary_idx + half)
-        if hi > lo and boundary_idx > lo and boundary_idx < hi:
-            pre_audio = result[lo:boundary_idx]
-            post_audio = result[boundary_idx:hi]
-            fade_len = hi - lo
-            pre_ext = np.interp(np.linspace(0, len(pre_audio) - 1, fade_len), np.arange(len(pre_audio)), pre_audio)
-            post_ext = np.interp(np.linspace(0, len(post_audio) - 1, fade_len), np.arange(len(post_audio)), post_audio)
-            fade = np.linspace(0.0, 1.0, fade_len)
-            result[lo:hi] = pre_ext * (1.0 - fade) + post_ext * fade
+def apply_clarity(
+    y: np.ndarray, sr: int, params: dict,
+    start_frac: float = 0.20, end_frac: float = 0.65, word_ts: list[dict] | None = None,
+) -> tuple[np.ndarray, list[dict]]:
+    """
+    Reduce articulatory clarity inside a window snapped to word gaps: spectral-envelope
+    centralization + temporal undershoot + high-frequency consonant loss
+    (articulation_blur), and softened plosive bursts at acoustic landmarks.
+    """
+    c, u = float(params.get("centralize", 0.6)), float(params.get("undershoot_ms", 32))
+    h, tdb = float(params.get("hf_loss_db", -8.0)), float(params.get("transient_db", -6.0))
+    g = 10 ** (tdb / 20.0)
 
-    # 2. STFT smoothing on target segment [i0:i1]
-    seg = result[i0:i1]
-    if len(seg) > 2048:
-        n_fft = 2048
-        hop_length = 512
-        S = librosa.stft(seg, n_fft=n_fft, hop_length=hop_length)
-        mag = np.abs(S)
-        phase = np.angle(S)
-        kernel = np.ones((smoothing_bins, 1)) / smoothing_bins
-        smoothed_mag = fftconvolve(mag, kernel, mode="same")
-        S_smoothed = smoothed_mag * np.exp(1j * phase)
-        seg_smoothed = librosa.istft(S_smoothed, hop_length=hop_length, length=len(seg))
-        xfade = int(0.02 * sr)
-        if len(seg_smoothed) > 2 * xfade:
-            fade_in = np.linspace(0.0, 1.0, xfade)
-            seg_smoothed[:xfade] = seg_smoothed[:xfade] * fade_in + seg[:xfade] * (1.0 - fade_in)
-            seg_smoothed[-xfade:] = seg_smoothed[-xfade:] * (1.0 - fade_in) + seg[-xfade:] * fade_in
-        result[i0:i1] = seg_smoothed
+    def degrade(seg):
+        out = articulation_blur(seg, sr, c, u, h)
+        burst = int(0.015 * sr)
+        for b in plosive_landmarks(seg, sr):
+            out[b: b + burst] *= g
+        return out
 
-    # 3. Transient softening on stop plosives within window
-    plosives = {"p", "b", "t", "d", "k", "g"}
-    gain_linear = 10 ** (transient_db / 20.0)
-    for ph in phone_timestamps:
-        ph_st = ph.get("start", 0.0)
-        if ph_st < t0 or ph_st > t1:
-            continue
-        ph_text = ph.get("phone", "").lower()
-        is_plosive = (
-            (ph_text in plosives) or
-            (any(ph_text.startswith(p) for p in plosives) and not ph_text.startswith("ph"))
-        )
-        if is_plosive:
-            idx_start = int(ph_st * sr)
-            idx_end = min(idx_start + int(0.02 * sr), len(result))
-            result[idx_start:idx_end] *= gain_linear
-
-    regions = [{
-        "start_s": round(t0, 3),
-        "end_s": round(t1, 3),
-        "mechanism": f"clarity_xfade{crossfade_ms}ms_smooth{smoothing_bins}bin_bounded_{t0:.2f}to{t1:.2f}s",
-    }]
-    return result.astype(np.float32), regions
+    i0, i1 = _window(y, sr, start_frac, end_frac, word_ts)
+    result, o0, o1 = splice_edit(y, sr, i0, i1, degrade)
+    t0, t1 = o0 / sr, o1 / sr
+    return result, [{"start_s": round(t0, 3), "end_s": round(t1, 3),
+                     "mechanism": f"clarity_undershoot_c{c:.2f}_u{u:.0f}ms_hf{h:.0f}dB_bounded_{t0:.2f}to{t1:.2f}s"}]
 
 
 # -- Flaw 6: Combined egregious -------------------------------------------------
@@ -472,49 +483,39 @@ def apply_combined_egregious(
     phone_timestamps: list[dict],
     config: dict,
 ) -> tuple[np.ndarray, list[dict]]:
-    """Compound flaw chaining pacing + pitch + pauses across distinct time-bounded intervals."""
+    """Volume drop, monotone stretch, slurred stretch and long pauses in distinct windows."""
     params = config.get("flaw_params", {})
+    w = word_timestamps
     all_regions = []
 
-    # 1. Volume drop over 10% to 25%
-    vol_db = params.get("volume", {}).get("egregious", {}).get("db", -18)
-    y, r_vol = apply_volume(y, sr, gain_db=vol_db, start_frac=0.10, fraction=0.15)
-    all_regions.extend(r_vol)
+    y, r = apply_volume(y, sr, params.get("volume", {}).get("egregious", {}).get("db", -18),
+                        start_frac=0.10, fraction=0.15, word_ts=w)
+    all_regions.extend(r)
+    y, r = apply_pitch_monotone(y, sr, params.get("pitch", {}).get("egregious", 0.10),
+                                start_frac=0.25, end_frac=0.55, word_ts=w)
+    all_regions.extend(r)
+    y, r = apply_clarity(y, sr, params.get("clarity", {}).get("egregious", {}),
+                         start_frac=0.55, end_frac=0.80, word_ts=w)
+    all_regions.extend(r)
 
-    # 2. Pitch monotone over 25% to 55%
-    pitch_var = params.get("pitch", {}).get("egregious", 0.10)
-    y, r_pitch = apply_pitch_monotone(y, sr, pitch_var, start_frac=0.25, end_frac=0.55)
-    all_regions.extend(r_pitch)
-
-    # 3. Clarity degradation over 55% to 80%
-    clar_cfg = params.get("clarity", {}).get("egregious", {})
-    y, r_clar = apply_clarity(
-        y, sr, phone_timestamps,
-        clar_cfg.get("crossfade_ms", [70, 90]),
-        clar_cfg.get("smoothing_bins", 15),
-        clar_cfg.get("transient_db", -8.0),
-        start_frac=0.55, end_frac=0.80,
-    )
-    all_regions.extend(r_clar)
-
-    # 4. Awkward pause splices
     pause_cfg = params.get("pause", {}).get("egregious", {})
-    count = pause_cfg.get("count", 2)
-    dur_range = pause_cfg.get("duration_range", [1.0, 1.8])
-    y, r_pause = apply_pause(y, sr, word_timestamps, count=count, duration_range=dur_range)
+    y, r_pause = apply_pause(y, sr, w, count=pause_cfg.get("count", 2),
+                             duration_range=pause_cfg.get("duration_range", [1.0, 1.8]))
     # Earlier regions were labelled on the pre-splice timeline
     all_regions = shift_for_insertions(all_regions, r_pause) + r_pause
-
     return y.astype(np.float32), sorted(all_regions, key=lambda r: r["start_s"])
 
 
 # -- Flaw 7: Near-perfect ------------------------------------------------------
 
-def apply_near_perfect(y: np.ndarray, sr: int, config: dict) -> tuple[np.ndarray, list[dict]]:
-    """Apply mild / near-perfect delivery perturbation over bounded window."""
-    params = config.get("flaw_params", {})
-    rate = params.get("pacing", {}).get("near_perfect", [0.88, 1.12])[1]
-    return apply_pacing(y, sr, rate, start_frac=0.25, end_frac=0.60)
+def apply_near_perfect(y: np.ndarray, sr: int, config: dict,
+                       word_ts: list[dict] | None = None) -> tuple[np.ndarray, list[dict]]:
+    """
+    A barely-noticeable rate change (default 1.07x, half the mild tier's deviation),
+    so the gradient has a point between the clean baseline and the mild tier.
+    """
+    rate = float(config.get("flaw_params", {}).get("nearperfect_rate", 1.07))
+    return apply_pacing(y, sr, rate, start_frac=0.25, end_frac=0.60, word_ts=word_ts)
 
 
 # -- Label writer --------------------------------------------------------------
@@ -587,85 +588,52 @@ def generate_set(
         write_label(clip_id, suffix, regions, meta, transcript_rel,
                     out_path.relative_to(ROOT).as_posix(), labels_dir)
 
-    # 1. Standard Moderate Tier
+    P = lambda f, tier, default: params.get(f, {}).get(tier, default)
+    w = word_ts
+
+    # 1. Moderate tier
     generate_and_save("pacing_mod", lambda: apply_pacing(
-        y, sr, params.get("pacing", {}).get("moderate", [0.75, 1.30])[0], start_frac=0.20, end_frac=0.65))
-
+        y, sr, P("pacing", "moderate", [0.75, 1.30])[0], 0.20, 0.65, w))
     generate_and_save("pitch_mod", lambda: apply_pitch_monotone(
-        y, sr, params.get("pitch", {}).get("moderate", 0.40), start_frac=0.20, end_frac=0.65))
-
-    pause_mod_cfg = params.get("pause", {}).get("moderate", {})
+        y, sr, P("pitch", "moderate", 0.40), 0.20, 0.65, w))
+    pm = P("pause", "moderate", {})
     generate_and_save("pause_mod", lambda: apply_pause(
-        y, sr, word_ts,
-        pause_mod_cfg.get("count", 1),
-        pause_mod_cfg.get("duration_range", [0.40, 0.80])))
-
-    vol_cfg = params.get("volume", {}).get("moderate", {})
+        y, sr, w, pm.get("count", 1), pm.get("duration_range", [0.40, 0.80])))
+    vm = P("volume", "moderate", {})
     generate_and_save("volume_mod", lambda: apply_volume(
-        y, sr, vol_cfg.get("db", -10), start_frac=0.15, fraction=vol_cfg.get("fraction", 0.20)))
-
-    clar_cfg = params.get("clarity", {}).get("moderate", {})
+        y, sr, vm.get("db", -10), 0.15, vm.get("fraction", 0.20), w))
     generate_and_save("clarity_mod", lambda: apply_clarity(
-        y, sr, phone_ts,
-        clar_cfg.get("crossfade_ms", [40, 60]),
-        clar_cfg.get("smoothing_bins", 7),
-        clar_cfg.get("transient_db", -4.0),
-        start_frac=0.20, end_frac=0.65))
+        y, sr, P("clarity", "moderate", {}), 0.20, 0.65, w))
+    generate_and_save("combined_egregious", lambda: apply_combined_egregious(y, sr, w, phone_ts, config))
+    generate_and_save("nearperfect", lambda: apply_near_perfect(y, sr, config, w))
 
-    generate_and_save("combined_egregious", lambda: apply_combined_egregious(
-        y, sr, word_ts, phone_ts, config))
-
-    generate_and_save("nearperfect", lambda: apply_near_perfect(y, sr, config))
-
-    # 2. Gradient: Mild Tier
+    # 2. Mild tier
     generate_and_save("pacing_mild", lambda: apply_pacing(
-        y, sr, params.get("pacing", {}).get("near_perfect", [0.88, 1.12])[1], start_frac=0.25, end_frac=0.60))
-
+        y, sr, P("pacing", "near_perfect", [0.85, 1.15])[1], 0.25, 0.60, w))
     generate_and_save("pitch_mild", lambda: apply_pitch_monotone(
-        y, sr, params.get("pitch", {}).get("near_perfect", 0.70), start_frac=0.25, end_frac=0.60))
-
-    pause_mild_cfg = params.get("pause", {}).get("near_perfect", {})
+        y, sr, P("pitch", "near_perfect", 0.70), 0.25, 0.60, w))
+    pn = P("pause", "near_perfect", {})
     generate_and_save("pause_mild", lambda: apply_pause(
-        y, sr, word_ts,
-        pause_mild_cfg.get("count", 1),
-        pause_mild_cfg.get("duration_range", [0.20, 0.35])))
-
-    vol_mild_cfg = params.get("volume", {}).get("near_perfect", {})
+        y, sr, w, pn.get("count", 1), pn.get("duration_range", [0.20, 0.35])))
+    vn = P("volume", "near_perfect", {})
     generate_and_save("volume_mild", lambda: apply_volume(
-        y, sr, vol_mild_cfg.get("db", -6), start_frac=0.20, fraction=vol_mild_cfg.get("fraction", 0.15)))
-
-    clar_mild_cfg = params.get("clarity", {}).get("near_perfect", {})
+        y, sr, vn.get("db", -6), 0.20, vn.get("fraction", 0.15), w))
     generate_and_save("clarity_mild", lambda: apply_clarity(
-        y, sr, phone_ts,
-        clar_mild_cfg.get("crossfade_ms", [15, 25]),
-        clar_mild_cfg.get("smoothing_bins", 3),
-        clar_mild_cfg.get("transient_db", -2.0),
-        start_frac=0.25, end_frac=0.60))
+        y, sr, P("clarity", "near_perfect", {}), 0.25, 0.60, w))
 
-    # 3. Gradient: Egregious Tier
+    # 3. Egregious tier
     generate_and_save("pacing_egregious", lambda: apply_pacing(
-        y, sr, params.get("pacing", {}).get("egregious", [0.65, 1.50])[0], start_frac=0.15, end_frac=0.75))
-
+        y, sr, P("pacing", "egregious", [0.65, 1.50])[0], 0.15, 0.75, w))
     generate_and_save("pitch_egregious", lambda: apply_pitch_monotone(
-        y, sr, params.get("pitch", {}).get("egregious", 0.10), start_frac=0.15, end_frac=0.75))
-
-    pause_egr_cfg = params.get("pause", {}).get("egregious", {})
+        y, sr, P("pitch", "egregious", 0.10), 0.15, 0.75, w))
+    pe = P("pause", "egregious", {})
     generate_and_save("pause_egregious", lambda: apply_pause(
-        y, sr, word_ts,
-        pause_egr_cfg.get("count", 3),
-        pause_egr_cfg.get("duration_range", [1.0, 2.0])))
-
-    vol_egr_cfg = params.get("volume", {}).get("egregious", {})
+        y, sr, w, pe.get("count", 3), pe.get("duration_range", [1.0, 2.0])))
+    ve = P("volume", "egregious", {})
     generate_and_save("volume_egregious", lambda: apply_volume(
-        y, sr, vol_egr_cfg.get("db", -18), start_frac=0.10, fraction=vol_egr_cfg.get("fraction", 0.30)))
-
-    clar_egr_cfg = params.get("clarity", {}).get("egregious", {})
+        y, sr, ve.get("db", -18), 0.10, ve.get("fraction", 0.30), w))
     generate_and_save("clarity_egregious", lambda: apply_clarity(
-        y, sr, phone_ts,
-        clar_egr_cfg.get("crossfade_ms", [70, 90]),
-        clar_egr_cfg.get("smoothing_bins", 15),
-        clar_egr_cfg.get("transient_db", -8.0),
-        start_frac=0.15, end_frac=0.75))
+        y, sr, P("clarity", "egregious", {}), 0.15, 0.75, w))
 
 
 def main():
@@ -680,7 +648,7 @@ def main():
     with open(CONFIG_PATH) as f:
         config = yaml.safe_load(f)
 
-    text_ids = [args.text] if args.text else list(range(1, 9))
+    text_ids = [args.text] if args.text else list(range(1, 12))
     force = not args.no_force
 
     for tid in text_ids:

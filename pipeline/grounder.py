@@ -509,6 +509,63 @@ def k_for(g: dict, feature: str) -> float:
     return float(k.get(feature, 3.0) if isinstance(k, dict) else k)
 
 
+REFINE_RADIUS = 6   # words searched on each side of a detected edge
+
+
+def refine_edges(regions: list[FlawRegion], x: np.ndarray, ref: float, u_words) -> list[FlawRegion]:
+    """
+    Re-estimate each region's start and end on the UNSMOOTHED per-word deltas *x*.
+    Detection runs on smoothed / windowed series, which blur edges by a few words.
+    Within +/-REFINE_RADIUS words of each edge, choose the split that best separates
+    words at the reference level *ref* from words at the region's own level (least
+    squares on a two-level step). Pause regions are never passed here.
+    """
+    n = len(x)
+    xv = np.where(np.isfinite(x), x, ref)
+    out = []
+    for r in regions:
+        i, j = r.word_indices[0], r.word_indices[-1] + 1
+        if j - i < 2:
+            out.append(r)
+            continue
+        level = float(np.median(xv[i:j]))
+
+        def sse(seg_ref, seg_flaw):
+            return float(np.sum((seg_ref - ref) ** 2) + np.sum((seg_flaw - level) ** 2))
+
+        a = max(0, i - REFINE_RADIUS)
+        hi_start = min(j - 1, i + REFINE_RADIUS)
+        best_s = min(range(a, hi_start + 1), key=lambda s_: sse(xv[a:s_], xv[s_:min(j, s_ + REFINE_RADIUS)]))
+        b = min(n, j + REFINE_RADIUS)
+        lo_end = max(best_s + 1, j - REFINE_RADIUS)
+        best_e = min(range(lo_end, b + 1), key=lambda e_: sse(xv[e_:b], xv[max(best_s, e_ - REFINE_RADIUS):e_]))
+        idx = list(range(best_s, best_e))
+        out.append(FlawRegion(
+            flaw_type=r.flaw_type, start_s=round(float(u_words[best_s].start), 3),
+            end_s=round(float(u_words[best_e - 1].end), 3), word_indices=idx,
+            mean_delta=r.mean_delta, direction=r.direction, uncertain=r.uncertain,
+            uploaded_mean=r.uploaded_mean, baseline_mean=r.baseline_mean,
+            threshold=r.threshold, severity=r.severity,
+        ))
+    return out
+
+
+def per_word_evidence(feature: str, raw: np.ndarray, u_words, b_words, pairs) -> np.ndarray:
+    """Most localized per-word series for edge refinement (rate: single-word duration ratio)."""
+    if feature != "rate":
+        return raw
+    du = np.array([w.duration_s or (w.end - w.start) for w in u_words], float)
+    if b_words is None:
+        c = robust_center(np.log2(du + 0.05))
+        return c - np.log2(du + 0.05)
+    out = np.full(len(u_words), np.nan)
+    for i, j in enumerate(pairs):
+        if j is not None:
+            bd = b_words[j].duration_s or (b_words[j].end - b_words[j].start)
+            out[i] = _safe_log2_ratio(bd, du[i], eps=0.05)
+    return out
+
+
 # -- Public API ---------------------------------------------------------------------------------
 
 def ground(
@@ -576,6 +633,14 @@ def ground(
                 {**min_consec, feature: max(min_consec.get(feature, 2), width // 2)}, merge_gap_s)
             regions = _merge_regions(regions + long_regions, merge_gap_s)
             flags = [a or b for a, b in zip(flags, long_flags)]
+        if feature != "pause" and regions and bool(g.get("refine_edges", True)):
+            ev = per_word_evidence(feature, raw[feature], u_words, b_words, pairs)
+            flagged = np.zeros(len(ev), bool)
+            for r in regions:
+                flagged[r.word_indices[0]: r.word_indices[-1] + 1] = True
+            rest = ev[~flagged & np.isfinite(ev)]
+            ref = float(np.median(rest)) if len(rest) else 0.0
+            regions = _merge_regions(refine_edges(regions, ev, ref, u_words), merge_gap_s)
         all_regions.extend(regions)
         word_deviant[feature] = flags
         word_deltas[feature] = [float(x) if np.isfinite(x) else 0.0 for x in d]

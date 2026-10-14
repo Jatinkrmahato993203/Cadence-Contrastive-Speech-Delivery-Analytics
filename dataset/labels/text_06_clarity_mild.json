@@ -8,11 +8,12 @@
   "split": "heldout",
   "flaw_regions": [
     {
-      "start_s": 15.336,
-      "end_s": 36.806,
-      "mechanism": "clarity_xfade20ms_smooth3bin_bounded_15.34to36.81s"
+      "start_s": 15.065,
+      "end_s": 36.755,
+      "mechanism": "clarity_undershoot_c0.30_u16ms_hf-4dB_bounded_15.06to36.76s"
     }
   ],
+  "label_timeline": "output",
   "transcript_path": "dataset/transcripts/text_06.txt",
   "audio_path": "dataset/audio/text_06_clarity_mild.wav"
 }

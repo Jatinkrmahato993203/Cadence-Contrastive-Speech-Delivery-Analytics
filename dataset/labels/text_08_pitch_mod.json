@@ -8,11 +8,12 @@
   "split": "heldout",
   "flaw_regions": [
     {
-      "start_s": 15.293,
-      "end_s": 49.702,
-      "mechanism": "f0_variance_compress_0.40_bounded_15.29to49.70s"
+      "start_s": 15.285,
+      "end_s": 49.875,
+      "mechanism": "f0_variance_compress_0.40_bounded_15.29to49.88s"
     }
   ],
+  "label_timeline": "output",
   "transcript_path": "dataset/transcripts/text_08.txt",
   "audio_path": "dataset/audio/text_08_pitch_mod.wav"
 }

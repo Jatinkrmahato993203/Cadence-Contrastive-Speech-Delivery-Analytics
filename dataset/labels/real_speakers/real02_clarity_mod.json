@@ -8,9 +8,9 @@
   "split": "real_speaker",
   "flaw_regions": [
     {
-      "start_s": 22.872,
-      "end_s": 74.334,
-      "mechanism": "clarity_xfade46ms_smooth7bin_bounded_22.87to74.33s"
+      "start_s": 22.785,
+      "end_s": 74.285,
+      "mechanism": "clarity_undershoot_c0.60_u32ms_hf-8dB_bounded_22.79to74.28s"
     }
   ],
   "label_timeline": "output",

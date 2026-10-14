@@ -131,3 +131,41 @@ def test_pause_labels_match_silence_in_audio():
         for r in label["flaw_regions"]:
             seg = y[int(r["start_s"] * sr) + 5: int(r["end_s"] * sr) - 5]
             assert np.mean(np.abs(seg) < 1e-3) > 0.98, (label["clip_id"], r)
+
+
+def test_alignment_is_deterministic(tmp_path):
+    """Two uncached alignments of the same audio (fresh decode each time) are identical."""
+    import soundfile as sf
+    y, sr = sf.read(AUDIO / "text_09_pause_egregious.wav", dtype="float32")
+    clip = tmp_path / "clip.wav"
+    sf.write(clip, y[: sr * 30], sr, subtype="PCM_16")
+    tx = " ".join(BUNDLED[9].split()[:70])
+    a = align(str(clip), tx, cfg=CFG, use_cache=False)
+    b = align(str(clip), tx, cfg=CFG, use_cache=False)
+    assert [(w.word, w.start, w.end) for w in a.words] == [(w.word, w.start, w.end) for w in b.words]
+
+
+@pytest.mark.parametrize("semitones,gain_db", [(5, -10), (-5, 6)])
+def test_speaker_agnostic_register_and_level(tmp_path, semitones, gain_db):
+    """
+    The same delivery in a different voice register and recording level (F0 shifted by
+    +/-5 semitones, level changed) must not be reported as flawed: at most 3% of the
+    clip may be flagged when compared with the original recording.
+    """
+    import parselmouth
+    import soundfile as sf
+    from parselmouth.praat import call
+
+    y, sr = sf.read(AUDIO / "text_06_good.wav", dtype="float64")
+    snd = parselmouth.Sound(y, sampling_frequency=sr)
+    manip = call(snd, "To Manipulation", 0.01, 60, 600)
+    tier = call(manip, "Extract pitch tier")
+    call(tier, "Multiply frequencies", snd.xmin, snd.xmax, 2 ** (semitones / 12))
+    call([tier, manip], "Replace pitch tier")
+    out = call(manip, "Get resynthesis (overlap-add)").values.flatten() * 10 ** (gain_db / 20)
+    voice = tmp_path / "other_register.wav"
+    sf.write(voice, np.clip(out, -1, 1), sr, subtype="PCM_16")
+
+    res = analyze(voice, BUNDLED[6], cfg=CFG)
+    flagged = sum(r.end_s - r.start_s for r in res.grounding.flaw_regions)
+    assert flagged <= 0.03 * res.duration_s, (round(flagged, 1), [(r.flaw_type, r.start_s, r.end_s) for r in res.grounding.flaw_regions])

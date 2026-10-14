@@ -8,9 +8,9 @@
   "split": "heldout",
   "flaw_regions": [
     {
-      "start_s": 10.045,
-      "end_s": 50.227,
-      "mechanism": "clarity_xfade81ms_smooth15bin_bounded_10.05to50.23s"
+      "start_s": 10.085,
+      "end_s": 50.205,
+      "mechanism": "clarity_undershoot_c0.90_u56ms_hf-14dB_bounded_10.09to50.20s"
     }
   ],
   "label_timeline": "output",

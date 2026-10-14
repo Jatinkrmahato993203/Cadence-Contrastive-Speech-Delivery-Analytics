@@ -27,7 +27,8 @@ TIERS = (("near_perfect", "mild"), ("moderate", "moderate"), ("egregious", "egre
 def _summary_table(r: dict) -> str:
     rows = [("Real orators — JFK, Reagan, Eisenhower — held out (reference = same recording)", "heldout_orators"),
             ("TTS held-out texts 6 & 8 (reference = same recording)", "heldout_tts"),
-            ("Human LibriVox readers, same-speaker reference", "real_same_speaker"),
+            ("Human LibriVox reader (real02, held out), same-speaker reference", "real_same_speaker_heldout"),
+            ("Human LibriVox readers incl. real01 (calibration), same-speaker reference", "real_same_speaker"),
             ("Human readers vs the TTS baseline (different voice)", "real_cross_speaker"),
             ("Mode B — no reference recording, all held-out audio", "mode_b")]
     out = ["| Evaluation set | Clips | Mean target IoU | Mean false-positive seconds / clip |",

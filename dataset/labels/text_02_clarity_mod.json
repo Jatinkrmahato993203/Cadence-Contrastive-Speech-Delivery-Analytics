@@ -8,11 +8,12 @@
   "split": "calibration",
   "flaw_regions": [
     {
-      "start_s": 14.318,
-      "end_s": 46.535,
-      "mechanism": "clarity_xfade47ms_smooth7bin_bounded_14.32to46.53s"
+      "start_s": 14.345,
+      "end_s": 46.325,
+      "mechanism": "clarity_undershoot_c0.60_u32ms_hf-8dB_bounded_14.35to46.33s"
     }
   ],
+  "label_timeline": "output",
   "transcript_path": "dataset/transcripts/text_02.txt",
   "audio_path": "dataset/audio/text_02_clarity_mod.wav"
 }

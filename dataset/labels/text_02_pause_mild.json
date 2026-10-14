@@ -8,11 +8,12 @@
   "split": "calibration",
   "flaw_regions": [
     {
-      "start_s": 56.74,
-      "end_s": 57.026,
-      "mechanism": "silence_splice_0.29s_at_56.740s"
+      "start_s": 39.845,
+      "end_s": 40.054,
+      "mechanism": "silence_splice_0.21s_at_src_39.845s"
     }
   ],
+  "label_timeline": "output",
   "transcript_path": "dataset/transcripts/text_02.txt",
   "audio_path": "dataset/audio/text_02_pause_mild.wav"
 }

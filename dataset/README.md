@@ -33,13 +33,13 @@ time-bounded ground-truth regions on the clip's own timeline.
 
 | Flaw | mild (`*_mild`, tier `near_perfect`) | moderate (`*_mod`) | egregious (`*_egregious`) | Mechanism |
 |---|---|---|---|---|
-| Pacing | 1.15× faster | 0.75× (slower) | 0.65× | Praat PSOLA "Lengthen (overlap-add)" over a bounded window (25–60 / 20–65 / 15–75 % of the clip); replaced librosa's phase vocoder, whose "phasiness" also degraded clarity |
-| Pitch | keep 70 % of F0 variance | 35 % (TTS) / 40 % (human) | 10 % | Praat pitch-tier compression toward the mean, bounded window |
+| Pacing | 1.15× faster | 0.75× (slower) | 0.65× | Praat Manipulation + duration tier, overlap-add (PSOLA) resynthesis with Praat's random generator seeded per clip; window 25–60 / 20–65 / 15–75 % of the clip |
+| Pitch | keep 70 % of F0 variance | 40 % | 10 % | Praat pitch-tier compression toward the speaker's mean F0, overlap-add resynthesis of the window only |
 | Pauses | 1 × 0.20–0.35 s | 1 × 0.4–0.8 s | 3 × 1.0–2.0 s | digital-silence splice at a word start |
 | Volume | −6 dB over 15 % | −10 dB over 20 % | −18 dB over 30 % | gain envelope with short fades |
-| Clarity | 15–25 ms x-fade, 3-bin | 40–60 ms, 7-bin | 70–90 ms, 15-bin | phone-boundary crossfade + STFT magnitude smoothing + plosive softening |
+| Clarity | centralize 0.3, undershoot 16 ms, −4 dB HF, −3 dB bursts | 0.6, 32 ms, −8 dB, −6 dB | 0.9, 56 ms, −14 dB, −10 dB | articulatory undershoot: the cepstral spectral ENVELOPE of each frame is centralized (formant blur), smoothed over time (sluggish articulators) and tilted above 2 kHz (consonant loss), while the fine structure (harmonics) is kept, so voicing and F0 are untouched; plosive bursts found as acoustic landmarks are softened |
 | Combined | — | — | volume −18 dB + pitch 10 % + clarity (egregious) + 2 pauses | chained, distinct windows |
-| Near-perfect | 1.15× pacing over 25–60 % | | | **identical to `pacing_mild`** (same parameters); kept for compatibility, excluded from summary means |
+| Near-perfect | 1.07× pacing over 25–60 % | | | half the mild tier's deviation: a point between the clean baseline and the mild tier |
 
 ## Labels
 
@@ -65,7 +65,12 @@ time-bounded ground-truth regions on the clip's own timeline.
   inserted silences. `scripts/repair_splice_labels.py` rewrote the 16 affected labels;
   every pause window in every label is verified to be digital silence in the audio
   (`tests/test_detection.py::test_pause_labels_match_silence_in_audio`).
-* Generation is deterministic per clip (`random.seed(clip_id)`).
+* Every edit window is snapped to the nearest gap between words, and only the window is
+  resynthesized: audio outside it is bit-identical to the baseline (10 ms crossfades).
+* Generation is bit-reproducible: Python's and Praat's random generators are seeded with
+  the clip id (Praat's PSOLA otherwise differs between identical calls); a test checks it.
+* `scripts/regenerate_flaws.py` rebuilds every flawed clip from the baselines;
+  `dataset/MANIFEST.sha256` (scripts/build_manifest.py) records a hash of every file.
 
 ## Splits
 
@@ -81,8 +86,8 @@ time-bounded ground-truth regions on the clip's own timeline.
 |---|---|
 | `transcripts/text_NN.txt` | ground-truth transcripts |
 | `alignments/*.json` | cached transcript-forced word alignments (keyed by audio + transcript + aligner version) |
-| `textgrids/text_NN.TextGrid` | word anchors the TTS flaws were generated from (Whisper free-decoding timestamps; the phone tier is a letter-group approximation used only to place clarity edits) |
-| `textgrids/realNN.TextGrid` | forced-alignment word tier for the human recordings (same letter-group phone tier) |
+| `textgrids/text_NN.TextGrid` | word tier of the transcript-forced alignment of each GOOD baseline (the timings the flaws were generated from) |
+| `textgrids/realNN.TextGrid` | the same for the LibriVox recordings |
 | `labels/*_features.json` | per-word normalized features for every TTS clip |
 | `labels/calibration_report.json` | chosen clarity measure, floors, k_noise |
 | `labels/heldout_results.json` | held-out and human-recording evaluation |
